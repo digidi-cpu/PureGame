@@ -1,0 +1,77 @@
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; }
+
+:root {
+  --cosmic-primary: #6c63ff;
+  --cosmic-secondary: #ff6b9d;
+  --cosmic-accent: #00f3ff;
+  --cosmic-success: #4CAF50;
+  --cosmic-error: #f44336;
+}
+
+body {
+  font-family: 'Exo 2', sans-serif;
+  background: #0a0a1a;
+  color: #fff;
+  height: 100vh; width: 100vw;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+.mobile-app { width: 100%; height: 100%; position: relative; }
+
+/* Экраны */
+.screen { display: flex; flex-direction: column; width: 100%; height: 100%; justify-content: center; align-items: center; }
+.screen:not(.active) { display: none !important; }
+
+.title { font-family: 'Orbitron', monospace; font-size: 4rem; color: var(--cosmic-accent); margin-bottom: 5px; text-shadow: 0 0 20px rgba(0,243,255,0.5); }
+.subtitle { font-size: 1.2rem; color: rgba(255,255,255,0.6); margin-bottom: 30px; }
+
+.btn {
+  background: linear-gradient(135deg, var(--cosmic-primary), var(--cosmic-secondary));
+  color: #fff; border: none; padding: 18px 40px; font-size: 1.2em; font-weight: 700;
+  border-radius: 12px; cursor: pointer; font-family: 'Orbitron', monospace;
+  box-shadow: 0 10px 20px rgba(108,99,255,0.3); transition: transform 0.1s;
+}
+.btn:active { transform: scale(0.95); }
+
+/* Игровое поле */
+.fullscreen-game { position: fixed; inset: 0; background: #0a0a1a; transition: background 0.5s ease; box-sizing: border-box; }
+.fullscreen-area { flex: 1; position: relative; width: 100%; overflow: hidden; }
+.bg-canvas { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+#playCanvas { position: absolute; inset: 0; z-index: 100; pointer-events: none; }
+
+/* UI */
+.minimal-stats-vertical { position: absolute; top: 15px; left: 15px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+.minimal-stat-vertical { background: rgba(10,10,26,.9); padding: 8px 10px; border-radius: 10px; border: 1px solid var(--cosmic-primary); display: flex; align-items: center; gap: 6px; min-width: 70px; }
+.minimal-value { font-weight: 700; color: var(--cosmic-accent); font-family: 'Orbitron', monospace; }
+
+/* Игровые объекты (ФИКС МОРГАНИЯ: добавлено top: 0) */
+.rocket, .planet { position: absolute; top: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; will-change: transform; transition: none; z-index: 10; }
+.rocket-text, .planet-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-weight: 800; color: #fff; font-family: 'Orbitron', monospace; font-size: 1.15em; background: rgba(0,0,0,.5); padding: 4px 8px; border-radius: 6px; pointer-events: none; white-space: nowrap; }
+
+.rocket { width: 100px; height: 65px; border-radius: 14px; background: linear-gradient(180deg, rgba(108,99,255,0.3), rgba(108,99,255,0.1)); border: 1px solid rgba(108,99,255,0.6); }
+.rocket.selected { box-shadow: 0 0 0 2px var(--cosmic-accent), 0 0 20px rgba(0,243,255,0.5); z-index: 15; }
+
+.planet { width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(0,243,255,0.4), rgba(0,243,255,0.1)); border: 1px solid rgba(0,243,255,0.5); }
+
+/* Эффекты ответов */
+.correct { filter: drop-shadow(0 0 15px var(--cosmic-success)); }
+.wrong { filter: drop-shadow(0 0 15px var(--cosmic-error)); }
+
+/* ЗАМОРОЗКА */
+.bonus-ice { background: radial-gradient(circle at 30% 30%, #e0f7fa, #00bcd4); border: 2px solid #fff; box-shadow: 0 0 15px #00e5ff; font-size: 2.2em; border-radius: 50%; z-index: 20; }
+.bonus-pulse { display: block; animation: pulse-inner 1s infinite alternate; }
+@keyframes pulse-inner { from { transform: scale(1); text-shadow: 0 0 10px #fff; } to { transform: scale(1.2); text-shadow: 0 0 20px #00e5ff; } }
+.timer-ice { color: #00f3ff !important; text-shadow: 0 0 10px #00f3ff, 0 0 20px #ffffff; position: relative; }
+.timer-ice::after { content: '❄️'; position: absolute; top: -15px; right: -15px; font-size: 0.8em; animation: pulse-inner 1s infinite; }
+
+/* Screen Shake */
+@keyframes shake-s { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } }
+@keyframes shake-h { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-8px, 8px); } 40% { transform: translate(8px, -8px); } 60% { transform: translate(-8px, -8px); } 80% { transform: translate(8px, 8px); } }
+.shake-s { animation: shake-s 0.25s linear; }
+.shake-h { animation: shake-h 0.3s linear; }
+
+/* Модалка */
+.modal { position: fixed; inset: 0; background: rgba(5,5,16,.9); display: none; justify-content: center; align-items: center; z-index: 3000; }
+.modal-content { background: linear-gradient(135deg, rgba(22,22,46,.95), rgba(16,16,36,.98)); padding: 30px; border-radius: 20px; border: 2px solid var(--cosmic-primary); text-align: center; }
+.result-stats { margin: 20px 0; font-size: 1.5em; }

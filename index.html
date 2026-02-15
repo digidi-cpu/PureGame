@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Digit - Sandbox</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div id="mobileApp" class="mobile-app">
+    
+    <div id="startScreen" class="screen active">
+      <h1 class="title">DIGIT</h1>
+      <p class="subtitle">Sandbox Edition</p>
+      <button id="startGameBtn" class="btn btn-primary">PLAY GAME</button>
+    </div>
+
+    <div id="gameScreen" class="screen fullscreen-game">
+      <div id="fullscreenGameArea" class="game-area fullscreen-area">
+        <canvas id="playBgCanvas" class="bg-canvas"></canvas>
+        <canvas id="playCanvas"></canvas>
+      </div>
+      
+      <div class="minimal-stats-vertical">
+        <div class="minimal-stat-vertical"><div class="minimal-icon">⏱️</div><div class="minimal-value" id="timer">40</div></div>
+        <div class="minimal-stat-vertical"><div class="minimal-icon">⭐</div><div class="minimal-value" id="score">0</div></div>
+        <div class="minimal-stat-vertical"><div class="minimal-icon">⚡</div><div class="minimal-value" id="multiplier">1</div></div>
+      </div>
+    </div>
+
+    <div id="resultModal" class="modal">
+      <div class="modal-content">
+        <h2>TIME'S UP!</h2>
+        <div class="result-stats">
+          <div class="result-stat"><span class="stat-label">Score:</span><span class="stat-value" id="finalScore">0</span></div>
+        </div>
+        <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
