@@ -120,10 +120,17 @@ class GameSandbox {
     this.columns = 6; this.columnWidth = 0; this.gameSize = { w: 0, h: 0 };
     this.inputLockUntil = 0;
 
+    // Инициализируем два фона
     this.bg = new MinimalSpaceBG('playBgCanvas');
+    this.startBg = new MinimalSpaceBG('startBgCanvas'); // Фон для главного меню
+    
     this.fx = new JuiceFX();
     
     this.bindUI();
+    
+    // Запускаем звезды в главном меню сразу при загрузке
+    this.startBg.init();
+    this.startBg.start();
   }
 
   bindUI() {
@@ -147,6 +154,9 @@ class GameSandbox {
   startGame() {
     document.getElementById("startScreen").classList.remove("active");
     document.getElementById("gameScreen").classList.add("active");
+    
+    // Выключаем анимацию звезд главного меню ради производительности
+    if (this.startBg) this.startBg.pause(); 
     
     requestAnimationFrame(() => {
       this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;

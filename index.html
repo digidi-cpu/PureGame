@@ -11,11 +11,14 @@
 
   <div id="mobileApp" class="mobile-app">
     
-    
     <div id="startScreen" class="screen active">
-      <div class="season-badge">🔥 SEASON 1 APPROACHES</div>
-      <h1 class="title">DIGIT</h1>
-      <button id="startGameBtn" class="btn btn-primary">START TRAINING</button>
+      <canvas id="startBgCanvas" class="bg-canvas"></canvas>
+      
+      <div style="z-index: 10; display: flex; flex-direction: column; align-items: center; text-align: center;">
+        <div class="season-badge">🔥 SEASON 1 APPROACHES</div>
+        <h1 class="title">DIGIT</h1>
+        <button id="startGameBtn" class="btn btn-primary" style="margin-top: 20px;">START TRAINING</button>
+      </div>
     </div>
 
     <div id="gameScreen" class="screen fullscreen-game">
@@ -45,5 +48,4 @@
 
   <script src="game.js"></script>
 </body>
-
 </html>
