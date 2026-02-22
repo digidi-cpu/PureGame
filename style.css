@@ -1,11 +1,11 @@
 * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; }
 
 :root {
-  --cosmic-primary: #6c63ff;
-  --cosmic-secondary: #ff6b9d;
-  --cosmic-accent: #00f3ff;
-  --cosmic-success: #4CAF50;
-  --cosmic-error: #f44336;
+  --cosmic-primary: #ff6b35;
+  --cosmic-secondary: #ff8c00;
+  --cosmic-accent: #ffcc00;
+  --cosmic-success: #ffaa00;
+  --cosmic-error: #8b0000;
 }
 
 body {
@@ -76,21 +76,21 @@ body {
 
 /* UI */
 .minimal-stats-vertical { position: absolute; top: 15px; left: 15px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
-.minimal-stat-vertical { background: rgba(10,10,26,.9); padding: 8px 10px; border-radius: 10px; border: 1px solid var(--cosmic-primary); display: flex; align-items: center; gap: 6px; min-width: 70px; }
-.minimal-value { font-weight: 700; color: var(--cosmic-accent); font-family: 'Orbitron', monospace; }
+.minimal-stat-vertical { background: rgba(26,10,10,.9); padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255, 107, 53, 0.7); display: flex; align-items: center; gap: 6px; min-width: 70px; }
+.minimal-value { font-weight: 700; color: #ffcc00; font-family: 'Orbitron', monospace; }
 
 /* Игровые объекты (ФИКС МОРГАНИЯ: добавлено top: 0) */
 .rocket, .planet { position: absolute; top: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; will-change: transform; transition: none; z-index: 10; }
 .rocket-text, .planet-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-weight: 800; color: #fff; font-family: 'Orbitron', monospace; font-size: 1.15em; background: rgba(0,0,0,.5); padding: 4px 8px; border-radius: 6px; pointer-events: none; white-space: nowrap; }
 
-.rocket { width: 100px; height: 65px; border-radius: 14px; background: linear-gradient(180deg, rgba(108,99,255,0.3), rgba(108,99,255,0.1)); border: 1px solid rgba(108,99,255,0.6); }
-.rocket.selected { box-shadow: 0 0 0 2px var(--cosmic-accent), 0 0 20px rgba(0,243,255,0.5); z-index: 15; }
+.rocket { width: 100px; height: 65px; border-radius: 14px; background: linear-gradient(180deg, rgba(255, 107, 53, 0.45), rgba(255, 69, 0, 0.2)); border: 1px solid rgba(255, 140, 0, 0.7); }
+.rocket.selected { box-shadow: 0 0 0 2px #ffcc00, 0 0 25px rgba(255, 140, 0, 0.6); z-index: 15; }
 
-.planet { width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(0,243,255,0.4), rgba(0,243,255,0.1)); border: 1px solid rgba(0,243,255,0.5); }
+.planet { width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255, 140, 0, 0.5), rgba(255, 69, 0, 0.2)); border: 1px solid rgba(255, 165, 0, 0.6); }
 
 /* Эффекты ответов */
-.correct { filter: drop-shadow(0 0 15px var(--cosmic-success)); }
-.wrong { filter: drop-shadow(0 0 15px var(--cosmic-error)); }
+.correct { filter: drop-shadow(0 0 15px #ffaa00); }
+.wrong { filter: drop-shadow(0 0 15px #8b0000); }
 
 /* ЗАМОРОЗКА */
 .bonus-ice { background: radial-gradient(circle at 30% 30%, #e0f7fa, #00bcd4); border: 2px solid #fff; box-shadow: 0 0 15px #00e5ff; font-size: 2.2em; border-radius: 50%; z-index: 20; }
@@ -107,5 +107,5 @@ body {
 
 /* Модалка */
 .modal { position: fixed; inset: 0; background: rgba(5,5,16,.9); display: none; justify-content: center; align-items: center; z-index: 3000; }
-.modal-content { background: linear-gradient(135deg, rgba(22,22,46,.95), rgba(16,16,36,.98)); padding: 30px; border-radius: 20px; border: 2px solid var(--cosmic-primary); text-align: center; }
+.modal-content { background: linear-gradient(135deg, rgba(46,22,22,.95), rgba(36,16,16,.98)); padding: 30px; border-radius: 20px; border: 2px solid rgba(255, 107, 53, 0.8); text-align: center; }
 .result-stats { margin: 20px 0; font-size: 1.5em; }

@@ -73,8 +73,8 @@ class JuiceFX {
     const area = document.getElementById('fullscreenGameArea');
     if (area && this.canvas) { this.width = area.clientWidth; this.height = area.clientHeight; this.canvas.width = this.width; this.canvas.height = this.height; }
   }
-  shoot(x1, y1, x2, y2, color = '#00f3ff') { this.lasers.push({ x1, y1, x2, y2, life: 1.0, color }); }
-  explode(x, y, color = '#00f3ff', amount = 15) {
+  shoot(x1, y1, x2, y2, color = '#ff8c00') { this.lasers.push({ x1, y1, x2, y2, life: 1.0, color }); }
+  explode(x, y, color = '#ff3333', amount = 15) {
     for (let i = 0; i < amount; i++) {
       const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 5 + 2;
       this.particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 1.0, decay: Math.random() * 0.03 + 0.02, color, size: Math.random() * 3 + 1 });
@@ -210,7 +210,7 @@ class GameSandbox {
        fs.style.border = 'none'; fs.style.boxShadow = 'none';
        timerEl.classList.remove('timer-ice');
        if (this.streak >= 5) bg = 'radial-gradient(circle at center, #550000 0%, #2a0000 45%, #000000 100%)'; 
-       else if (this.streak >= 2) bg = 'radial-gradient(circle at center, #220044 0%, #110022 50%, #000000 100%)'; 
+       else if (this.streak >= 2) bg = 'radial-gradient(circle at center, #441100 0%, #221100 50%, #000000 100%)'; 
     }
     fs.style.background = bg;
   }
@@ -353,7 +353,7 @@ class GameSandbox {
     if (equalsNum(p.answer, r.answer)) {
       const rX = r.node.offsetLeft + r.node.offsetWidth / 2; const rY = r.y + r.node.offsetHeight / 2;
       const pX = p.node.offsetLeft + p.node.offsetWidth / 2; const pY = p.y + p.node.offsetHeight / 2;
-      this.fx.shoot(rX, rY, pX, pY, '#00f3ff'); this.fx.explode(pX, pY, '#00f3ff', 20); this.fx.explode(rX, rY, '#ffffff', 10);
+      this.fx.shoot(rX, rY, pX, pY, '#ff8c00'); this.fx.explode(pX, pY, '#ff3333', 20); this.fx.explode(rX, rY, '#ffcc00', 10);
       this.applyCorrect(planetId);
     } else {
       this.applyWrong(planetId);
