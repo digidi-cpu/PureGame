@@ -6,6 +6,11 @@
   --cosmic-accent: #ffcc00;
   --cosmic-success: #ffaa00;
   --cosmic-error: #8b0000;
+  --planet-crater: #150524;
+  --planet-base: #3a1066;
+  --planet-surface: #6b1cb0;
+  --planet-glow: #b526ff;
+  --planet-highlight: #f4d7ff;
 }
 
 body {
@@ -81,7 +86,11 @@ body {
 
 /* Игровые объекты (ФИКС МОРГАНИЯ: добавлено top: 0) */
 .rocket, .planet { position: absolute; top: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; will-change: transform; transition: none; z-index: 10; }
-.planet-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-weight: 800; color: #fff; font-family: 'Orbitron', monospace; font-size: 1.15em; background: rgba(0,0,0,.5); padding: 4px 8px; border-radius: 6px; pointer-events: none; white-space: nowrap; }
+.planet-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-weight: 800; color: #fff; font-family: 'Orbitron', monospace; font-size: 1.15em; background: rgba(21, 5, 36, 0.75); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border: 1px solid var(--planet-glow); box-shadow: 0 0 10px rgba(181, 38, 255, 0.3); padding: 6px 12px; border-radius: 50%; pointer-events: none; white-space: nowrap; z-index: 10; }
+
+.planet { width: 80px; height: 80px; }
+.planet .planet-svg-wrap { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+.planet .planet-svg-wrap .entity-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 .rocket { width: 90px; height: 90px; }
 .rocket .entity-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; filter: drop-shadow(0 0 8px rgba(255, 140, 0, 0.4)); }
@@ -89,7 +98,7 @@ body {
 .rocket.selected .entity-svg { filter: drop-shadow(0 0 15px var(--cosmic-accent)); }
 .rocket-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-weight: 800; color: #ffffff; font-family: 'Orbitron', monospace; font-size: 1.15em; background: rgba(10, 10, 26, 0.75); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border: 1px solid var(--cosmic-accent); box-shadow: 0 0 10px rgba(255, 204, 0, 0.3); padding: 6px 12px; border-radius: 8px; pointer-events: none; white-space: nowrap; z-index: 10; }
 
-.planet { width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255, 140, 0, 0.5), rgba(255, 69, 0, 0.2)); border: 1px solid rgba(255, 165, 0, 0.6); }
+/* .planet size and .planet-svg-wrap are above; no solid background so SVG shows */
 
 /* Эффекты ответов */
 .correct { filter: drop-shadow(0 0 15px #ffaa00); }
