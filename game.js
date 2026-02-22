@@ -265,7 +265,7 @@ class GameSandbox {
     setTimeout(() => { el.style.opacity = "0"; setTimeout(() => el.remove(), 600); }, 400);
   }
 
-  laneToX(lane) { return Math.round(10 + lane * this.columnWidth + (this.columnWidth - 90) / 2); }
+  laneToX(lane, entityWidth) { const w = entityWidth ?? 85; return Math.round(10 + lane * this.columnWidth + (this.columnWidth - w) / 2); }
   isLaneFree(lane, SAFE_Y = 160) { let free = true; this.active.forEach(e => { if (e.lane === lane && e.y < SAFE_Y) free = false; }); return free; }
   pickFreeLane(SAFE_Y = 160) {
     for (let tries = 0; tries < this.columns * 2; tries++) { const l = Math.floor(Math.random() * this.columns); if (this.isLaneFree(l, SAFE_Y)) return l; }
@@ -313,7 +313,7 @@ class GameSandbox {
 
     const randomSvg = ROCKET_SVGS[Math.floor(Math.random() * ROCKET_SVGS.length)];
     const el = document.createElement("div"); el.className = "rocket"; el.id = `rocket-${id}`;
-    el.style.left = `${this.laneToX(lane)}px`; el.innerHTML = `${randomSvg}<div class="rocket-text">${example}</div>`;
+    el.style.left = `${this.laneToX(lane, 85)}px`; el.innerHTML = `${randomSvg}<div class="rocket-text">${example}</div>`;
     
     const yStart = -90, yEnd = this.gameSize.h + 140;
     const vy = ((yEnd - yStart) / (ENTITY_LIFETIME_MS / 1000)) * Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
@@ -344,12 +344,11 @@ class GameSandbox {
       if (Math.random() < 0.3) { answer = randInt(1, 50); isBomb = ![...this.correctAnswers.values()].some(v => equalsNum(v, answer)); }
       else { const pool = [...this.correctAnswers.values()]; answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 50); }
       const randomPlanetSvg = PLANET_SVGS_WRAPPED[Math.floor(Math.random() * PLANET_SVGS_WRAPPED.length)];
-      const randomDeg = Math.floor(Math.random() * 360);
-      contentHtml = `<div class="planet-svg-wrap" style="transform: rotate(${randomDeg}deg)">${randomPlanetSvg}</div><div class="planet-text">${isBomb ? "⛔" : (Number.isInteger(answer) ? answer : answer.toFixed(1))}</div>`;
+      contentHtml = `<div class="planet-svg-wrap">${randomPlanetSvg}</div><div class="planet-text">${isBomb ? "⛔" : (Number.isInteger(answer) ? answer : answer.toFixed(1))}</div>`;
     }
 
     const el = document.createElement("div"); el.className = className; el.id = `planet-${id}`;
-    el.style.left = `${this.laneToX(lane)}px`; el.innerHTML = contentHtml;
+    el.style.left = `${this.laneToX(lane, 90)}px`; el.innerHTML = contentHtml;
     
     const yStart = -90, yEnd = this.gameSize.h + 140;
     const vy = ((yEnd - yStart) / (ENTITY_LIFETIME_MS / 1000)) * Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
