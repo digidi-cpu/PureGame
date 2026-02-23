@@ -395,61 +395,62 @@ startGame() {
     // Выключаем анимацию звезд главного меню ради производительности
     if (this.startBg) this.startBg.pause();
 
-    requestAnimationFrame((now) => {
-      this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
-      this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
+    requestAnimationFrame(() => {
+      requestAnimationFrame((now) => {
+        this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
+        this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
 
-      this.clearGameArea();
-      this.updateUI();
-      this.updateGameSize();
+        this.clearGameArea();
+        this.updateUI();
+        this.updateGameSize();
 
-      this.bg.init();
-      this.bg.start();
-      this.lastRAF = now;
+        this.bg.init();
+        this.bg.start();
+        this.lastRAF = now;
 
-      // Warm-up phase: show overlay, lock input, spawn first rocket, run loop, do NOT start timer yet
-      this.isWarmup = true;
-      const overlay = document.getElementById("warmupOverlay");
-      const countdownEl = document.getElementById("warmupCountdown");
-      overlay.classList.remove("hidden");
-      overlay.classList.remove("hiding");
-      countdownEl.textContent = "3";
-      countdownEl.classList.add("warmup-tick");
+        this.isWarmup = true;
+        const overlay = document.getElementById("warmupOverlay");
+        const countdownEl = document.getElementById("warmupCountdown");
+        overlay.classList.remove("hidden");
+        overlay.classList.remove("hiding");
+        countdownEl.textContent = "3";
+        countdownEl.classList.add("warmup-tick");
 
-      // Fix first example: reset spawn timers, planet slightly after rocket
-      this.lastRocketSpawnAt = now;
-      this.lastPlanetSpawnAt = now + 200;
-      this.spawnRocket();
+        this.lastRocketSpawnAt = now;
+        this.lastPlanetSpawnAt = now + 200;
+        this.spawnRocket();
 
-      this.startMainLoop();
+        this.startMainLoop();
 
-      const steps = ["3", "2", "1", "START!"];
-      let step = 0;
-      const tick = () => {
-        step++;
-        if (step < steps.length) {
-          countdownEl.classList.remove("warmup-tick");
-          void countdownEl.offsetWidth;
-          countdownEl.textContent = steps[step];
-          countdownEl.classList.add("warmup-tick");
-          setTimeout(tick, 1000);
-        } else {
-          overlay.classList.add("hiding");
-          setTimeout(() => {
-            overlay.classList.add("hidden");
-            overlay.classList.remove("hiding");
-            this.isWarmup = false;
-            this.startTimer();
-          }, 500);
-        }
-      };
-      setTimeout(tick, 1000);
+        const steps = ["3", "2", "1", "START!"];
+        let step = 0;
+        const tick = () => {
+          step++;
+          if (step < steps.length) {
+            countdownEl.classList.remove("warmup-tick");
+            void countdownEl.offsetWidth;
+            countdownEl.textContent = steps[step];
+            countdownEl.classList.add("warmup-tick");
+            setTimeout(tick, 1000);
+          } else {
+            overlay.classList.add("hiding");
+            setTimeout(() => {
+              overlay.classList.add("hidden");
+              overlay.classList.remove("hiding");
+              this.isWarmup = false;
+              this.startTimer();
+            }, 500);
+          }
+        };
+        setTimeout(tick, 1000);
+      });
     });
   }
 
   clearGameArea() {
     this.active.forEach(e => e.node?.remove());
     this.active.clear(); this.correctAnswers.clear();
+    this.idSeq = 0;
     cancelAnimationFrame(this.rafId); clearInterval(this.timerId);
     const area = document.getElementById("fullscreenGameArea");
     if (area) area.querySelectorAll('.rocket, .planet, .bonus-ice').forEach(n => n.remove());
