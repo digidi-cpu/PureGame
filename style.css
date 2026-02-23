@@ -120,7 +120,7 @@ body {
 .rocket, .planet { position: absolute; top: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; will-change: transform; transition: none; z-index: 10; }
 .planet-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-weight: 800; color: #fff; font-family: 'Orbitron', monospace; font-size: 1.15em; background: rgba(21, 5, 36, 0.75); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border: 1px solid var(--planet-glow); box-shadow: 0 0 10px rgba(181, 38, 255, 0.3); padding: 6px 12px; border-radius: 50%; pointer-events: none; white-space: nowrap; z-index: 10; }
 
-.planet { width: 90px; height: 90px; }
+.planet { width: 85px; height: 85px; }
 .planet .planet-svg-wrap { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 .planet .planet-svg-wrap .entity-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
@@ -152,4 +152,5 @@ body {
 /* Модалка */
 .modal { position: fixed; inset: 0; background: rgba(5,5,16,.9); display: none; justify-content: center; align-items: center; z-index: 3000; }
 .modal-content { background: linear-gradient(135deg, rgba(46,22,22,.95), rgba(36,16,16,.98)); padding: 30px; border-radius: 20px; border: 2px solid rgba(255, 107, 53, 0.8); text-align: center; }
+
 .result-stats { margin: 20px 0; font-size: 1.5em; }

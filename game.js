@@ -1,6 +1,6 @@
 // game.js — Clean Sandbox with JuiceFX, Freeze, and Flicker Fix
 
-const ENTITY_LIFETIME_MS = 8800;
+const ENTITY_LIFETIME_MS = 11500;
 const ROCKET_SPAWN_MS    = 1100;
 const PLANET_SPAWN_MS    = 950;
 const INPUT_LOCK_MS      = 140;
@@ -353,7 +353,7 @@ class GameSandbox {
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
     this.lastRAF = 0; this.lastRocketSpawnAt = 0; this.lastPlanetSpawnAt = 0;
     
-    this.maxRockets = 8; this.maxPlanets = 9;
+    this.maxRockets = 10; this.maxPlanets = 12;
     this.columns = 6; this.columnWidth = 0; this.gameSize = { w: 0, h: 0 };
     this.inputLockUntil = 0;
 
@@ -388,14 +388,14 @@ class GameSandbox {
     }
   }
 
-  startGame() {
+startGame() {
     document.getElementById("startScreen").classList.remove("active");
     document.getElementById("gameScreen").classList.add("active");
 
     // Выключаем анимацию звезд главного меню ради производительности
     if (this.startBg) this.startBg.pause();
 
-    requestAnimationFrame(() => {
+    requestAnimationFrame((now) => {
       this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
       this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
 
@@ -405,8 +405,7 @@ class GameSandbox {
 
       this.bg.init();
       this.bg.start();
-
-      this.lastRAF = performance.now();
+      this.lastRAF = now;
 
       // Warm-up phase: show overlay, lock input, spawn first rocket, run loop, do NOT start timer yet
       this.isWarmup = true;
@@ -417,8 +416,11 @@ class GameSandbox {
       countdownEl.textContent = "3";
       countdownEl.classList.add("warmup-tick");
 
+      // Fix first example: reset spawn timers, planet slightly after rocket
+      this.lastRocketSpawnAt = now;
+      this.lastPlanetSpawnAt = now + 200;
       this.spawnRocket();
-      this.lastRocketSpawnAt = performance.now();
+
       this.startMainLoop();
 
       const steps = ["3", "2", "1", "START!"];
@@ -674,4 +676,6 @@ class GameSandbox {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
+
 
