@@ -387,14 +387,15 @@ class GameSandbox {
     }
   }
 
-  startGame() {
+startGame() {
     document.getElementById("startScreen").classList.remove("active");
     document.getElementById("gameScreen").classList.add("active");
     
     // Выключаем анимацию звезд главного меню ради производительности
     if (this.startBg) this.startBg.pause(); 
     
-    requestAnimationFrame(() => {
+    // Используем параметр now, который передает requestAnimationFrame
+    requestAnimationFrame((now) => {
       this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
       this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
       
@@ -405,7 +406,18 @@ class GameSandbox {
       this.bg.init(); 
       this.bg.start();
       
-      this.lastRAF = performance.now();
+      this.lastRAF = now;
+
+      // --- 🐛 ФИКС ПЕРВОГО ПРИМЕРА ---
+      // 1. Сбрасываем таймеры спавна на текущее время
+      this.lastRocketSpawnAt = now;
+      // Даем планете микро-задержку, чтобы она точно появилась после ракеты
+      this.lastPlanetSpawnAt = now + 200; 
+      
+      // 2. Принудительно спавним первую ракету, чтобы создать правильный ответ в пуле
+      this.spawnRocket();
+      // -------------------------------
+
       this.startMainLoop();
       this.startTimer();
     });
@@ -638,5 +650,6 @@ class GameSandbox {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
