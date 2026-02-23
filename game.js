@@ -1,6 +1,6 @@
 // game.js — Clean Sandbox with JuiceFX, Freeze, and Flicker Fix
 
-const ENTITY_LIFETIME_MS = 8800;
+const ENTITY_LIFETIME_MS = 11500;
 const ROCKET_SPAWN_MS    = 1100;
 const PLANET_SPAWN_MS    = 950;
 const INPUT_LOCK_MS      = 140;
@@ -352,7 +352,7 @@ class GameSandbox {
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
     this.lastRAF = 0; this.lastRocketSpawnAt = 0; this.lastPlanetSpawnAt = 0;
     
-    this.maxRockets = 8; this.maxPlanets = 9;
+    this.maxRockets = 10; this.maxPlanets = 12;
     this.columns = 6; this.columnWidth = 0; this.gameSize = { w: 0, h: 0 };
     this.inputLockUntil = 0;
 
@@ -638,4 +638,5 @@ class GameSandbox {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
