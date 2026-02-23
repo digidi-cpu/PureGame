@@ -11,6 +11,12 @@
   --planet-surface: #6b1cb0;
   --planet-glow: #b526ff;
   --planet-highlight: #f4d7ff;
+  /* Rocket Fiery Palette - Season 1 */
+  --rocket-shadow-deep: #2b0802;
+  --rocket-shadow: #7a1503;
+  --rocket-surface: #d63806;
+  --rocket-highlight: #ff8c00;
+  --rocket-glow: #ffebb5;
 }
 
 body {
