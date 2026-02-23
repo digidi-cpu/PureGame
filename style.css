@@ -85,6 +85,32 @@ body {
 .bg-canvas { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 #playCanvas { position: absolute; inset: 0; z-index: 100; pointer-events: none; }
 
+/* Warm-up overlay (3-2-1-START) */
+.warmup-overlay {
+  position: absolute; inset: 0; z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(5, 5, 20, 0.75);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  opacity: 1; transition: opacity 0.5s ease-out;
+  pointer-events: auto;
+}
+.warmup-overlay.hiding { opacity: 0; }
+.warmup-overlay.hidden { display: none !important; }
+.warmup-countdown {
+  font-family: 'Orbitron', monospace; font-weight: 900; font-size: clamp(4rem, 15vw, 8rem);
+  color: #fff; text-align: center; line-height: 1;
+  background: linear-gradient(to bottom, #ffcc00, #ff8c00);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 40px rgba(255, 140, 0, 0.6), 0 0 80px rgba(255, 204, 0, 0.4);
+}
+.warmup-countdown.warmup-tick { animation: warmup-pop 0.9s ease-out; }
+@keyframes warmup-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.15); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 /* UI */
 .minimal-stats-vertical { position: absolute; top: 15px; left: 15px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
 .minimal-stat-vertical { background: rgba(26,10,10,.9); padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255, 107, 53, 0.7); display: flex; align-items: center; gap: 6px; min-width: 70px; }

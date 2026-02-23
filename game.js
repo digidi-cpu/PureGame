@@ -348,6 +348,7 @@ class GameSandbox {
   constructor() {
     this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
     this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = false;
+    this.isWarmup = false;
     
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
     this.lastRAF = 0; this.lastRocketSpawnAt = 0; this.lastPlanetSpawnAt = 0;
@@ -390,24 +391,57 @@ class GameSandbox {
   startGame() {
     document.getElementById("startScreen").classList.remove("active");
     document.getElementById("gameScreen").classList.add("active");
-    
+
     // Выключаем анимацию звезд главного меню ради производительности
-    if (this.startBg) this.startBg.pause(); 
-    
+    if (this.startBg) this.startBg.pause();
+
     requestAnimationFrame(() => {
       this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
       this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
-      
-      this.clearGameArea(); 
-      this.updateUI(); 
-      this.updateGameSize(); 
-      
-      this.bg.init(); 
+
+      this.clearGameArea();
+      this.updateUI();
+      this.updateGameSize();
+
+      this.bg.init();
       this.bg.start();
-      
+
       this.lastRAF = performance.now();
+
+      // Warm-up phase: show overlay, lock input, spawn first rocket, run loop, do NOT start timer yet
+      this.isWarmup = true;
+      const overlay = document.getElementById("warmupOverlay");
+      const countdownEl = document.getElementById("warmupCountdown");
+      overlay.classList.remove("hidden");
+      overlay.classList.remove("hiding");
+      countdownEl.textContent = "3";
+      countdownEl.classList.add("warmup-tick");
+
+      this.spawnRocket();
+      this.lastRocketSpawnAt = performance.now();
       this.startMainLoop();
-      this.startTimer();
+
+      const steps = ["3", "2", "1", "START!"];
+      let step = 0;
+      const tick = () => {
+        step++;
+        if (step < steps.length) {
+          countdownEl.classList.remove("warmup-tick");
+          void countdownEl.offsetWidth;
+          countdownEl.textContent = steps[step];
+          countdownEl.classList.add("warmup-tick");
+          setTimeout(tick, 1000);
+        } else {
+          overlay.classList.add("hiding");
+          setTimeout(() => {
+            overlay.classList.add("hidden");
+            overlay.classList.remove("hiding");
+            this.isWarmup = false;
+            this.startTimer();
+          }, 500);
+        }
+      };
+      setTimeout(tick, 1000);
     });
   }
 
@@ -523,6 +557,7 @@ class GameSandbox {
     el.style.transform = `translate3d(0, ${yStart}px, 0) scale(1)`;
     
     el.addEventListener("pointerdown", () => {
+      if (this.isWarmup) return;
       const now = performance.now(); if (now < this.inputLockUntil) return; this.inputLockUntil = now + INPUT_LOCK_MS;
       this.selectRocket(id);
     });
@@ -558,6 +593,7 @@ class GameSandbox {
     el.style.transform = `translate3d(0, ${yStart}px, 0) scale(1)`;
     
     el.addEventListener("pointerdown", () => {
+      if (this.isWarmup) return;
       const now = performance.now(); if (now < this.inputLockUntil) return; this.inputLockUntil = now + INPUT_LOCK_MS;
       if (isFreezeBonus) this.activateFreeze(id); else this.tryAnswer(id);
     });
