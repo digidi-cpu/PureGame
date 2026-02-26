@@ -626,7 +626,7 @@ startGame() {
   }
 
   tryAnswer(planetId) {
-    if (!this.selectedRocket) return;
+    if (this.selectedRocket === null) return;
     const p = this.active.get(planetId); const r = this.active.get(this.selectedRocket);
     if (!p || !r) return;
 
@@ -662,7 +662,7 @@ startGame() {
   applyBomb(planetId) {
     this.streak = 0; this.multiplier = 1; this.score = Math.max(0, this.score - 5);
     this.shakeScreen('hard'); this.updateAtmosphere(); this.updateUI();
-    this.fadeAndRemove(planetId); if (this.selectedRocket) { const r = this.active.get(this.selectedRocket); r.node.classList.remove("selected"); } this.selectedRocket = null;
+    this.fadeAndRemove(planetId); if (this.selectedRocket !== null) { const r = this.active.get(this.selectedRocket); r.node.classList.remove("selected"); } this.selectedRocket = null;
   }
 
   fadeAndRemove(id) {
