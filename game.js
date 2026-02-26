@@ -1,8 +1,8 @@
 // game.js — Clean Sandbox with JuiceFX, Freeze, and Flicker Fix
 
 const ENTITY_LIFETIME_MS = 11500;
-const ROCKET_SPAWN_MS    = 1100;
-const PLANET_SPAWN_MS    = 950;
+const ROCKET_SPAWN_MS    = 900;
+const PLANET_SPAWN_MS    = 800;
 const INPUT_LOCK_MS      = 140;
 
 const ROCKET_SVGS_RAW = [
@@ -353,7 +353,7 @@ class GameSandbox {
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
     this.lastRAF = 0; this.lastRocketSpawnAt = 0; this.lastPlanetSpawnAt = 0;
     
-    this.maxRockets = 10; this.maxPlanets = 12;
+    this.maxRockets = 12; this.maxPlanets = 15;
     this.columns = 6; this.columnWidth = 0; this.gameSize = { w: 0, h: 0 };
     this.inputLockUntil = 0;
 
@@ -504,8 +504,8 @@ startGame() {
   }
 
   laneToX(lane, entityWidth) { const w = entityWidth ?? 85; return Math.round(10 + lane * this.columnWidth + (this.columnWidth - w) / 2); }
-  isLaneFree(lane, SAFE_Y = 160) { let free = true; this.active.forEach(e => { if (e.lane === lane && e.y < SAFE_Y) free = false; }); return free; }
-  pickFreeLane(SAFE_Y = 160) {
+  isLaneFree(lane, SAFE_Y = 105) { let free = true; this.active.forEach(e => { if (e.lane === lane && e.y < SAFE_Y) free = false; }); return free; }
+  pickFreeLane(SAFE_Y = 105) {
     for (let tries = 0; tries < this.columns * 2; tries++) { const l = Math.floor(Math.random() * this.columns); if (this.isLaneFree(l, SAFE_Y)) return l; }
     return null;
   }
@@ -581,7 +581,12 @@ startGame() {
       answer = -9999; contentHtml = '<div class="bonus-pulse">❄️</div>'; className = 'planet bonus-ice';
     } else {
       if (Math.random() < 0.3) { answer = randInt(1, 50); isBomb = ![...this.correctAnswers.values()].some(v => equalsNum(v, answer)); }
-      else { const pool = [...this.correctAnswers.values()]; answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 50); }
+      else {
+        const hasMatchingPlanet = (ans) => { for (const e of this.active.values()) { if (e.type === "planet" && e.answer !== undefined && equalsNum(e.answer, ans)) return true; } return false; };
+        const starvingAnswers = [...this.correctAnswers.values()].filter(a => !hasMatchingPlanet(a));
+        const pool = starvingAnswers.length ? starvingAnswers : [...this.correctAnswers.values()];
+        answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 50);
+      }
       const randomPlanetSvg = PLANET_SVGS_WRAPPED[Math.floor(Math.random() * PLANET_SVGS_WRAPPED.length)];
       contentHtml = `<div class="planet-svg-wrap">${randomPlanetSvg}</div><div class="planet-text">${isBomb ? "⛔" : (Number.isInteger(answer) ? answer : answer.toFixed(1))}</div>`;
     }
