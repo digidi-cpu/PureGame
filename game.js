@@ -533,7 +533,7 @@ startGame() {
 
   countType(type) { let n = 0; this.active.forEach(e => (n += e.type === type ? 1 : 0)); return n; }
 
-  startMainLoop() {
+startMainLoop() {
     const loop = (now) => {
       if (!this.isPlaying) return;
       this.fx.update(); this.fx.draw();
@@ -552,88 +552,189 @@ startGame() {
 
       const entities = Array.from(this.active.values());
       for (const e of entities) {
+        // 1. Двигаем по горизонтали (если у объекта есть vx, как у кометы)
+        if (e.vx !== undefined) {
+          e.x += e.vx * dtSec * timeFactor;
+        }
+
+        // 2. Двигаем по вертикали (как и раньше)
         e.y += e.vy * dtSec * timeFactor;
+
         if (!e.node?.parentNode || e.solved) continue;
-        if (e.y >= this.gameSize.h + 140) { this.removeEntity(e.id); continue; }
-        e.node.style.transform = `translate3d(0, ${e.y}px, 0) scale(${e.scale})`;
+
+        // 3. Проверка выхода за границы экрана
+        if (e.y >= this.gameSize.h + 140 || e.x > this.gameSize.w + 200 || e.x < -200) { 
+          this.removeEntity(e.id); 
+          continue; 
+        }
+
+        // 4. ОБНОВЛЕНИЕ ТРАНСФОРМАЦИИ
+        const posX = e.x !== undefined ? e.x : 0; 
+        e.node.style.transform = `translate3d(${posX}px, ${e.y}px, 0) scale(${e.scale})`;
       }
 
-      if (this.countType("rocket") < this.maxRockets && now - this.lastRocketSpawnAt >= dynamicRocketDelay) { if (this.spawnRocket()) this.lastRocketSpawnAt = now; }
-      if (this.countType("planet") + this.countType("bonus") < this.maxPlanets && now - this.lastPlanetSpawnAt >= dynamicPlanetDelay) { if (this.spawnPlanet()) this.lastPlanetSpawnAt = now; }
-      
+      // Спавн ракет и планет
+      if (this.countType("rocket") < this.maxRockets && now - this.lastRocketSpawnAt >= dynamicRocketDelay) { 
+        if (this.spawnRocket()) this.lastRocketSpawnAt = now; 
+      }
+      if (this.countType("planet") + this.countType("bonus") < this.maxPlanets && now - this.lastPlanetSpawnAt >= dynamicPlanetDelay) { 
+        if (this.spawnPlanet()) this.lastPlanetSpawnAt = now; 
+      }
+
+      // --- ДОБАВЛЯЕМ СЮДА: Спавн диагональной кометы ---
+      // Шанс примерно 0.15% каждый кадр (~раз в 15-20 секунд), если сейчас не заморозка и кометы еще нет на экране
+      if (Math.random() < 0.0015 && this.countType("bonus") < 1 && !isFrozen) {
+        this.spawnComet();
+      }
+      // ------------------------------------------------
+
       this.rafId = requestAnimationFrame(loop);
     };
     this.rafId = requestAnimationFrame(loop);
   }
 
-  spawnRocket() {
-    const id = this.idSeq++; const { example, answer } = generateExample();
-    const lane = this.pickFreeLane(); if (lane === null) return false;
+ spawnRocket() {
+    const id = this.idSeq++; 
+    const { example, answer } = generateExample();
+    const lane = this.pickFreeLane(); 
+    if (lane === null) return false;
 
     const randomSvg = ROCKET_SVGS[Math.floor(Math.random() * ROCKET_SVGS.length)];
-    const el = document.createElement("div"); el.className = "rocket"; el.id = `rocket-${id}`;
-    el.style.left = `${this.laneToX(lane, 85)}px`; el.innerHTML = `${randomSvg}<div class="rocket-text">${example}</div>`;
+    const el = document.createElement("div"); 
+    el.className = "rocket"; 
+    el.id = `rocket-${id}`;
     
-    const yStart = -90, yEnd = this.gameSize.h + 140;
+    // Рассчитываем X координату
+    const xStart = this.laneToX(lane, 85);
+    const yStart = -90;
+    const yEnd = this.gameSize.h + 140;
     const vy = ((yEnd - yStart) / (ENTITY_LIFETIME_MS / 1000)) * Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
+
+    // Устанавливаем left в 0, чтобы всем управлял transform
+    el.style.left = `0px`; 
+    el.innerHTML = `${randomSvg}<div class="rocket-text">${example}</div>`;
     
-    // ФИКС МОРГАНИЯ (Начальный сдвиг до добавления на экран)
-    el.style.transform = `translate3d(0, ${yStart}px, 0) scale(1)`;
+    // ФИКС МОРГАНИЯ: теперь используем xStart вместо 0
+    el.style.transform = `translate3d(${xStart}px, ${yStart}px, 0) scale(1)`;
     
     el.addEventListener("pointerdown", () => {
       if (this.isWarmup) return;
-      const now = performance.now(); if (now < this.inputLockUntil) return; this.inputLockUntil = now + INPUT_LOCK_MS;
+      const now = performance.now(); 
+      if (now < this.inputLockUntil) return; 
+      this.inputLockUntil = now + INPUT_LOCK_MS;
       this.selectRocket(id);
     });
     
     document.getElementById("fullscreenGameArea").appendChild(el);
-    this.active.set(id, { id, type:"rocket", node: el, answer, lane, y: yStart, vy, scale: 1, solved:false });
+    
+    // ВАЖНО: Добавляем x: xStart для корректной работы цикла движения
+    this.active.set(id, { id, type:"rocket", node: el, answer, lane, x: xStart, y: yStart, vy, scale: 1, solved:false });
     this.correctAnswers.set(id, answer);
     return true;
   }
 
-  spawnPlanet() {
-    const id = this.idSeq++; const lane = this.pickFreeLane(); if (lane === null) return false;
-    const isFreezeBonus = Math.random() < 0.05; 
-    
-    let answer, isBomb = false, contentHtml = '', className = 'planet';
+spawnPlanet() {
+    const id = this.idSeq++; 
+    const lane = this.pickFreeLane(); 
+    if (lane === null) return false;
 
-    if (isFreezeBonus) {
-      answer = -9999; 
-      contentHtml = `<div class="bonus-pulse" style="width: 100%; height: 100%;">${FREEZE_SVG}</div>`; 
-      className = 'planet bonus-ice';
+    let answer, isBomb = false, contentHtml = '';
+
+    if (Math.random() < 0.3) { 
+      answer = randInt(1, 50); 
+      isBomb = ![...this.correctAnswers.values()].some(v => equalsNum(v, answer)); 
     } else {
-      if (Math.random() < 0.3) { answer = randInt(1, 50); isBomb = ![...this.correctAnswers.values()].some(v => equalsNum(v, answer)); }
-      else {
-        const hasMatchingPlanet = (ans) => { for (const e of this.active.values()) { if (e.type === "planet" && e.answer !== undefined && equalsNum(e.answer, ans)) return true; } return false; };
-        const starvingAnswers = [...this.correctAnswers.values()].filter(a => !hasMatchingPlanet(a));
-        const pool = starvingAnswers.length ? starvingAnswers : [...this.correctAnswers.values()];
-        answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 50);
-      }
-      const randomPlanetSvg = PLANET_SVGS_WRAPPED[Math.floor(Math.random() * PLANET_SVGS_WRAPPED.length)];
-      contentHtml = `<div class="planet-svg-wrap">${randomPlanetSvg}</div><div class="planet-text">${isBomb ? "⛔" : (Number.isInteger(answer) ? answer : answer.toFixed(1))}</div>`;
+      const hasMatchingPlanet = (ans) => { 
+        for (const e of this.active.values()) { 
+          if (e.type === "planet" && e.answer !== undefined && equalsNum(e.answer, ans)) return true; 
+        } 
+        return false; 
+      };
+      const starvingAnswers = [...this.correctAnswers.values()].filter(a => !hasMatchingPlanet(a));
+      const pool = starvingAnswers.length ? starvingAnswers : [...this.correctAnswers.values()];
+      answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 50);
     }
 
-    const el = document.createElement("div"); el.className = className; el.id = `planet-${id}`;
-    el.style.left = `${this.laneToX(lane, 90)}px`; el.innerHTML = contentHtml;
+    const randomPlanetSvg = PLANET_SVGS_WRAPPED[Math.floor(Math.random() * PLANET_SVGS_WRAPPED.length)];
+    contentHtml = `<div class="planet-svg-wrap">${randomPlanetSvg}</div><div class="planet-text">${isBomb ? "⛔" : (Number.isInteger(answer) ? answer : answer.toFixed(1))}</div>`;
+
+    const el = document.createElement("div"); 
+    el.className = "planet"; 
+    el.id = `planet-${id}`;
     
-    const yStart = -90, yEnd = this.gameSize.h + 140;
+    const xStart = this.laneToX(lane, 90);
+    const yStart = -90;
+    const yEnd = this.gameSize.h + 140;
     const vy = ((yEnd - yStart) / (ENTITY_LIFETIME_MS / 1000)) * Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
     
-    // ФИКС МОРГАНИЯ (Начальный сдвиг до добавления на экран)
-    el.style.transform = `translate3d(0, ${yStart}px, 0) scale(1)`;
+    el.style.left = `0px`;
+    el.innerHTML = contentHtml;
+    el.style.transform = `translate3d(${xStart}px, ${yStart}px, 0) scale(1)`;
     
     el.addEventListener("pointerdown", () => {
       if (this.isWarmup) return;
-      const now = performance.now(); if (now < this.inputLockUntil) return; this.inputLockUntil = now + INPUT_LOCK_MS;
-      if (isFreezeBonus) this.activateFreeze(id); else this.tryAnswer(id);
+      const now = performance.now(); 
+      if (now < this.inputLockUntil) return; 
+      this.inputLockUntil = now + INPUT_LOCK_MS;
+      this.tryAnswer(id);
     });
     
     document.getElementById("fullscreenGameArea").appendChild(el);
-    this.active.set(id, { id, type: isFreezeBonus ? "bonus" : "planet", node: el, answer, isBomb, lane, y: yStart, vy, scale: 1, solved:false });
+    this.active.set(id, { id, type: "planet", node: el, answer, isBomb, lane, x: xStart, y: yStart, vy, scale: 1, solved:false });
     return true;
   }
 
+  spawnComet() {
+  const id = this.idSeq++;
+  const area = document.getElementById("fullscreenGameArea");
+  
+  // 1. Определяем случайные точки старта и финиша
+  const isFromLeft = Math.random() < 0.5;
+  let xStart, yStart, xEnd, yEnd;
+
+  if (isFromLeft) {
+    xStart = -100; 
+    yStart = randInt(50, this.gameSize.h / 2);
+    xEnd = this.gameSize.w + 100;
+    yEnd = randInt(this.gameSize.h / 2, this.gameSize.h - 50);
+  } else {
+    xStart = randInt(0, this.gameSize.w / 2);
+    yStart = -100;
+    xEnd = this.gameSize.w + 100;
+    yEnd = randInt(this.gameSize.h / 3, this.gameSize.h);
+  }
+
+  // 2. Считаем угол поворота (чтобы летела носом вперед)
+  const angleRad = Math.atan2(yEnd - yStart, xEnd - xStart);
+  const angleDeg = angleRad * (180 / Math.PI);
+
+  // 3. Создаем элемент
+  const el = document.createElement("div");
+  el.className = "planet bonus-ice";
+  el.id = `comet-${id}`;
+  el.style.left = `0px`; // Будем двигать через translate3d(x, y)
+  el.innerHTML = `<div class="bonus-pulse" style="transform: rotate(${angleDeg}deg)">${FREEZE_SVG}</div>`;
+  
+  el.addEventListener("pointerdown", (e) => {
+    e.stopPropagation(); // Чтобы не кликнуть случайно по планете под ней
+    if (this.isWarmup) return;
+    this.activateFreeze(id);
+  });
+
+  area.appendChild(el);
+
+  // 4. Настраиваем скорость (комета летит быстрее планет)
+  const duration = 3.5; // Секунды на пролет экрана
+  const vx = (xEnd - xStart) / duration;
+  const vy = (yEnd - yStart) / duration;
+
+  this.active.set(id, { 
+    id, type: "bonus", node: el, 
+    x: xStart, y: yStart, 
+    vx, vy, 
+    scale: 1, solved: false 
+  });
+}
   activateFreeze(id) {
     const node = this.active.get(id)?.node;
     if (node) this.fx.explode(node.offsetLeft + 40, node.offsetTop + 40, '#00f3ff', 30);
@@ -705,6 +806,7 @@ startGame() {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
