@@ -708,7 +708,7 @@ spawnComet() {
 
     // 2. Считаем угол поворота (чтобы летела носом вперед)
     const angleRad = Math.atan2(yEnd - yStart, xEnd - xStart);
-    const angleDeg = angleRad * (180 / Math.PI);
+    const angleDeg = angleRad * (180 / Math.PI) + 45;
 
     // 3. Создаем элемент
     const el = document.createElement("div");
@@ -820,6 +820,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
