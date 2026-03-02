@@ -737,9 +737,11 @@ spawnComet() {
       scale: 1, solved: false 
     });
   }
-  activateFreeze(id) {
-    const node = this.active.get(id)?.node;
-    if (node) this.fx.explode(node.offsetLeft + 40, node.offsetTop + 40, '#00f3ff', 30);
+activateFreeze(id) {
+    const e = this.active.get(id);
+    // Используем e.x и e.y вместо offsetLeft / offsetTop
+    if (e && e.node) this.fx.explode(e.x + 40, e.y + 40, '#00f3ff', 30);
+    
     this.fadeAndRemove(id);
     this.freezeUntil = performance.now() + 5000;
     this.updateAtmosphere();
@@ -775,13 +777,16 @@ tryAnswer(planetId) {
     }
   }
 
-  applyCorrect(planetId) {
+applyCorrect(planetId) {
     const r = this.active.get(this.selectedRocket); const p = this.active.get(planetId);
     this.streak++; this.multiplier = Math.min(10, Math.floor(this.streak / 2) + 1);
     const pts = 1 * this.multiplier; this.score += pts;
     
     this.updateAtmosphere(); r.node.classList.add("correct"); p.node.classList.add("correct");
-    this.showScorePopup(p.node.offsetLeft + 40, p.y + 40, `+${pts}`);
+    
+    // ИСПРАВЛЕНИЕ: Используем p.x вместо p.node.offsetLeft
+    this.showScorePopup(p.x + 40, p.y + 40, `+${pts}`);
+    
     this.updateUI(); this.fadeAndRemove(this.selectedRocket); this.fadeAndRemove(planetId); this.selectedRocket = null;
   }
 
@@ -815,6 +820,7 @@ tryAnswer(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
