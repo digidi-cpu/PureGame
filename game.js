@@ -684,57 +684,59 @@ spawnPlanet() {
     return true;
   }
 
-  spawnComet() {
-  const id = this.idSeq++;
-  const area = document.getElementById("fullscreenGameArea");
-  
-  // 1. Определяем случайные точки старта и финиша
-  const isFromLeft = Math.random() < 0.5;
-  let xStart, yStart, xEnd, yEnd;
+spawnComet() {
+    const id = this.idSeq++;
+    const area = document.getElementById("fullscreenGameArea");
+    
+    // 1. Определяем случайные точки старта и финиша
+    const isFromLeft = Math.random() < 0.5;
+    let xStart, yStart, xEnd, yEnd;
 
-  if (isFromLeft) {
-    xStart = -100; 
-    yStart = randInt(50, this.gameSize.h / 2);
-    xEnd = this.gameSize.w + 100;
-    yEnd = randInt(this.gameSize.h / 2, this.gameSize.h - 50);
-  } else {
-    xStart = randInt(0, this.gameSize.w / 2);
-    yStart = -100;
-    xEnd = this.gameSize.w + 100;
-    yEnd = randInt(this.gameSize.h / 3, this.gameSize.h);
+    if (isFromLeft) {
+      // ДИАГОНАЛЬ 1: Слева-сверху -> Вправо-вниз
+      xStart = -100; 
+      yStart = randInt(-50, 100); // Появляется в самом верху
+      xEnd = this.gameSize.w + 100;
+      yEnd = randInt(this.gameSize.h - 150, this.gameSize.h + 50); // Улетает в самый низ
+    } else {
+      // ДИАГОНАЛЬ 2: Справа-сверху -> Влево-вниз
+      xStart = this.gameSize.w + 100;
+      yStart = randInt(-50, 100); // Появляется в самом верху
+      xEnd = -100;
+      yEnd = randInt(this.gameSize.h - 150, this.gameSize.h + 50); // Улетает в самый низ
+    }
+
+    // 2. Считаем угол поворота (чтобы летела носом вперед)
+    const angleRad = Math.atan2(yEnd - yStart, xEnd - xStart);
+    const angleDeg = angleRad * (180 / Math.PI);
+
+    // 3. Создаем элемент
+    const el = document.createElement("div");
+    el.className = "planet bonus-ice";
+    el.id = `comet-${id}`;
+    el.style.left = `0px`; // Будем двигать через translate3d(x, y)
+    el.innerHTML = `<div class="bonus-pulse" style="transform: rotate(${angleDeg}deg)">${FREEZE_SVG}</div>`;
+    
+    el.addEventListener("pointerdown", (e) => {
+      e.stopPropagation(); // Чтобы не кликнуть случайно по планете под ней
+      if (this.isWarmup) return;
+      this.activateFreeze(id);
+    });
+
+    area.appendChild(el);
+
+    // 4. Настраиваем скорость (комета летит быстрее планет)
+    const duration = 3.5; // Секунды на пролет экрана
+    const vx = (xEnd - xStart) / duration;
+    const vy = (yEnd - yStart) / duration;
+
+    this.active.set(id, { 
+      id, type: "bonus", node: el, 
+      x: xStart, y: yStart, 
+      vx, vy, 
+      scale: 1, solved: false 
+    });
   }
-
-  // 2. Считаем угол поворота (чтобы летела носом вперед)
-  const angleRad = Math.atan2(yEnd - yStart, xEnd - xStart);
-  const angleDeg = angleRad * (180 / Math.PI);
-
-  // 3. Создаем элемент
-  const el = document.createElement("div");
-  el.className = "planet bonus-ice";
-  el.id = `comet-${id}`;
-  el.style.left = `0px`; // Будем двигать через translate3d(x, y)
-  el.innerHTML = `<div class="bonus-pulse" style="transform: rotate(${angleDeg}deg)">${FREEZE_SVG}</div>`;
-  
-  el.addEventListener("pointerdown", (e) => {
-    e.stopPropagation(); // Чтобы не кликнуть случайно по планете под ней
-    if (this.isWarmup) return;
-    this.activateFreeze(id);
-  });
-
-  area.appendChild(el);
-
-  // 4. Настраиваем скорость (комета летит быстрее планет)
-  const duration = 3.5; // Секунды на пролет экрана
-  const vx = (xEnd - xStart) / duration;
-  const vy = (yEnd - yStart) / duration;
-
-  this.active.set(id, { 
-    id, type: "bonus", node: el, 
-    x: xStart, y: yStart, 
-    vx, vy, 
-    scale: 1, solved: false 
-  });
-}
   activateFreeze(id) {
     const node = this.active.get(id)?.node;
     if (node) this.fx.explode(node.offsetLeft + 40, node.offsetTop + 40, '#00f3ff', 30);
@@ -749,7 +751,7 @@ spawnPlanet() {
     const r = this.active.get(id); if (r) { r.scale = 1.08; r.node.classList.add("selected"); this.selectedRocket = id; }
   }
 
-  tryAnswer(planetId) {
+tryAnswer(planetId) {
     if (this.selectedRocket === null) return;
     const p = this.active.get(planetId); const r = this.active.get(this.selectedRocket);
     if (!p || !r) return;
@@ -757,9 +759,16 @@ spawnPlanet() {
     if (p.isBomb) { this.applyBomb(planetId); return; }
 
     if (equalsNum(p.answer, r.answer)) {
-      const rX = r.node.offsetLeft + r.node.offsetWidth / 2; const rY = r.y + r.node.offsetHeight / 2;
-      const pX = p.node.offsetLeft + p.node.offsetWidth / 2; const pY = p.y + p.node.offsetHeight / 2;
-      this.fx.shoot(rX, rY, pX, pY, '#ff8c00'); this.fx.explode(pX, pY, '#ff3333', 20); this.fx.explode(rX, rY, '#ffcc00', 10);
+      // ИСПРАВЛЕНИЕ: Используем r.x и p.x вместо offsetLeft!
+      const rX = r.x + r.node.offsetWidth / 2; 
+      const rY = r.y + r.node.offsetHeight / 2;
+      const pX = p.x + p.node.offsetWidth / 2; 
+      const pY = p.y + p.node.offsetHeight / 2;
+      
+      this.fx.shoot(rX, rY, pX, pY, '#ff8c00'); 
+      this.fx.explode(pX, pY, '#ff3333', 20); 
+      this.fx.explode(rX, rY, '#ffcc00', 10);
+      
       this.applyCorrect(planetId);
     } else {
       this.applyWrong(planetId);
@@ -806,6 +815,7 @@ spawnPlanet() {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
