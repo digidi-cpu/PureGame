@@ -5,6 +5,27 @@ const ROCKET_SPAWN_MS    = 900;
 const PLANET_SPAWN_MS    = 800;
 const INPUT_LOCK_MS      = 140;
 
+
+const FREEZE_SVG = `<svg class="entity-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<g fill="#62bbc7"><path d="M25.5 8.3L4.9 48.4v10.7h10.7z"></path><path d="M55.7 38.5L4.9 48.4v10.7h10.7z"></path></g>
+<g fill="#6dd1de"><path d="M39.7 8.3L4.9 48.4v10.7h10.7z"></path><path d="M55.7 24.3L15.6 59.1H4.9V48.4z"></path></g>
+<path fill="#7df0ff" d="M62 2L4.9 48.4v10.7h10.7z"></path>
+<path fill="#c2f8ff" d="M33.4 30.6L4.9 48.4v10.7h10.7z"></path>
+<circle cx="9.6" cy="54.4" r="7.6" fill="#7df0ff"></circle>
+<circle cx="9.6" cy="54.4" r="6.7" fill="#5995c1"></circle>
+<circle cx="9.4" cy="49.9" r="1.5" fill="#4b7ea3"></circle>
+<circle cx="9.3" cy="49.6" r="1.2" fill="#5995c1"></circle>
+<circle cx="14.2" cy="52.7" r="1" fill="#4b7ea3"></circle>
+<circle cx="14.1" cy="52.5" r=".8" fill="#5995c1"></circle>
+<circle cx="11.7" cy="58.8" r="1.5" fill="#4b7ea3"></circle>
+<circle cx="11.7" cy="58.5" r="1.2" fill="#5995c1"></circle>
+<circle cx="4.7" cy="52.9" r="1" fill="#4b7ea3"></circle>
+<circle cx="4.6" cy="52.7" r=".8" fill="#5995c1"></circle>
+<circle cx="7.9" cy="56.2" r="2.5" fill="#4b7ea3"></circle>
+<circle cx="7.7" cy="55.7" r="2" fill="#5995c1"></circle>
+<g fill="#c2f8ff"><path d="M10.839 32.64l2.05-2.05l2.051 2.05l-2.05 2.05z"></path><path d="M29.377 24.22l2.05-2.05l2.05 2.049l-2.049 2.051z"></path><path d="M27.925 12.961l2.05-2.051l2.051 2.05l-2.05 2.051z"></path><path d="M50.306 20.113l2.051-2.05l2.05 2.05l-2.05 2.051z"></path><path d="M44.1 36.943l2.05-2.05l2.05 2.05l-2.05 2.05z"></path><path d="M20.226 29.961l.99-.99l.99.99l-.99.99z"></path><path d="M18.15 24.315l.989-.99l.99.99l-.99.99z"></path><path d="M34.877 38.507l.99-.99l.99.991l-.99.99z"></path><path d="M31.036 47.394l.99-.99l.99.99l-.99.99z"></path><path d="M40.322 43.326l.991-.99l.99.991l-.991.99z"></path><path d="M46.138 24.927l.99-.99l.99.991l-.99.99z"></path><path d="M53.346 30.012l.99-.99l.99.99l-.99.99z"></path><path d="M42.317 11.024l.99-.99l.99.99l-.99.99z"></path><path d="M45.103 3.64l.99-.99l.99.99l-.99.99z"></path><path d="M33.896 8.297l.99-.99l.99.99l-.99.99z"></path></g></svg>`;
+
+
 const ROCKET_SVGS_RAW = [
   `<svg class="entity-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
 <path d="m18.79 26.51a9.91 9.91 0 0 1 -.58-9.75c2.62-5.25 9.33-7.55 9.33-7.55a10.75 10.75 0 0 1 -.42-2.5c.17-.25 2.88-1 3.13-.66a13.39 13.39 0 0 1 .46 2.75l1.29.12a8.66 8.66 0 0 1 1.12.21s-.62-5.87-.5-6 4.09-.58 4.21-.33.17 7.5.17 7.5 3.66 1.37 5.5 6.33.5 6.79.5 6.79l-1.38 1.58s7.38 4.16 9 8.58 2.38 11.51-.62 16.8-8.5 11.67-20 10.88-16.17-9.55-17.54-14.21-.3-15.92 6.33-20.54z" fill="#1d1d1b"/>
@@ -578,7 +599,9 @@ startGame() {
     let answer, isBomb = false, contentHtml = '', className = 'planet';
 
     if (isFreezeBonus) {
-      answer = -9999; contentHtml = '<div class="bonus-pulse">❄️</div>'; className = 'planet bonus-ice';
+      answer = -9999; 
+      contentHtml = `<div class="bonus-pulse" style="width: 100%; height: 100%;">${FREEZE_SVG}</div>`; 
+      className = 'planet bonus-ice';
     } else {
       if (Math.random() < 0.3) { answer = randInt(1, 50); isBomb = ![...this.correctAnswers.values()].some(v => equalsNum(v, answer)); }
       else {
@@ -682,6 +705,7 @@ startGame() {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
