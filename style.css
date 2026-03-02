@@ -137,11 +137,33 @@ body {
 .wrong { filter: drop-shadow(0 0 15px #8b0000); }
 
 /* ЗАМОРОЗКА */
-.bonus-ice { background: radial-gradient(circle at 30% 30%, #e0f7fa, #00bcd4); border: 2px solid #fff; box-shadow: 0 0 15px #00e5ff; font-size: 2.2em; border-radius: 50%; z-index: 20; }
-.bonus-pulse { display: block; animation: pulse-inner 1s infinite alternate; }
-@keyframes pulse-inner { from { transform: scale(1); text-shadow: 0 0 10px #fff; } to { transform: scale(1.2); text-shadow: 0 0 20px #00e5ff; } }
-.timer-ice { color: #00f3ff !important; text-shadow: 0 0 10px #00f3ff, 0 0 20px #ffffff; position: relative; }
-.timer-ice::after { content: '❄️'; position: absolute; top: -15px; right: -15px; font-size: 0.8em; animation: pulse-inner 1s infinite; }
+.bonus-ice { 
+  background: transparent; 
+  border: none; 
+  box-shadow: none; 
+  z-index: 20; 
+}
+.bonus-pulse { 
+  display: block; 
+  width: 100%;
+  height: 100%;
+  animation: pulse-inner 1s infinite alternate; 
+}
+@keyframes pulse-inner { 
+  from { 
+    transform: scale(1); 
+    filter: drop-shadow(0 0 5px rgba(0, 243, 255, 0.5)); 
+  } 
+  to { 
+    transform: scale(1.15); 
+    filter: drop-shadow(0 0 15px #00e5ff); 
+  } 
+}
+.timer-ice { 
+  color: #00f3ff !important; 
+  text-shadow: 0 0 10px #00f3ff, 0 0 20px #ffffff; 
+}
+/* Эмодзи возле таймера убрали. Для базовой версии хватит просто изменения цвета таймера. */
 
 /* Screen Shake */
 @keyframes shake-s { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } }
@@ -154,3 +176,4 @@ body {
 .modal-content { background: linear-gradient(135deg, rgba(46,22,22,.95), rgba(36,16,16,.98)); padding: 30px; border-radius: 20px; border: 2px solid rgba(255, 107, 53, 0.8); text-align: center; }
 
 .result-stats { margin: 20px 0; font-size: 1.5em; }
+
