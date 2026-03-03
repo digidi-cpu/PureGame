@@ -507,18 +507,31 @@ startGame() {
     document.getElementById("multiplier").textContent = this.multiplier;
   }
 
-  updateAtmosphere() {
+updateAtmosphere() {
     const fs = document.getElementById('gameScreen');
     const timerEl = document.getElementById('timer');
-    let bg = '#0a0a1a'; let isFrozen = performance.now() < this.freezeUntil;
+    let bg = '#0a0a1a'; 
+    let isFrozen = performance.now() < this.freezeUntil;
 
     if (isFrozen) {
+       // Темно-синий фон
        bg = 'radial-gradient(circle at center, #001f3f 0%, #000a1a 100%)';
-       fs.style.border = '4px solid #00f3ff'; fs.style.boxShadow = 'inset 0 0 50px #00f3ff';
+       
+       // Включаем глобальный ледяной фильтр
+       fs.classList.add('frozen-world'); 
+       
+       // Сбрасываем старые инлайн-стили (на всякий случай, если они остались в кэше)
+       fs.style.border = 'none'; 
+       fs.style.boxShadow = 'none';
+       
        timerEl.classList.add('timer-ice');
     } else {
-       fs.style.border = 'none'; fs.style.boxShadow = 'none';
+       // Выключаем ледяной фильтр
+       fs.classList.remove('frozen-world'); 
+       
        timerEl.classList.remove('timer-ice');
+       
+       // Логика фона для стрик-серий (оставляем твою)
        if (this.streak >= 5) bg = 'radial-gradient(circle at center, #550000 0%, #2a0000 45%, #000000 100%)'; 
        else if (this.streak >= 2) bg = 'radial-gradient(circle at center, #441100 0%, #221100 50%, #000000 100%)'; 
     }
@@ -843,6 +856,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
