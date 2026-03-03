@@ -445,7 +445,8 @@ startGame() {
       requestAnimationFrame((now) => {
         this.score = 0; this.timeLeft = 30; this.streak = 0; this.multiplier = 1;
         this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
-
+        this.activeFreezeType = null;
+        
         this.clearGameArea();
         this.updateUI();
         this.updateGameSize();
@@ -607,11 +608,15 @@ startMainLoop() {
         const posX = e.x !== undefined ? e.x : 0; 
         e.node.style.transform = `translate3d(${posX}px, ${e.y}px, 0) scale(${e.scale})`;
 
-        // --- ШЛЕЙФ ДЛЯ КОМЕТЫ ---
+// --- ШЛЕЙФ ДЛЯ КОМЕТЫ ---
         if (e.type === "bonus" && Math.random() > 0.3) {
-          // Создаем пару льдинок разных оттенков из палитры кометы (центр кометы ~40px)
-          this.fx.trail(posX + 40, e.y + 40, '#c2f8ff'); // Светло-голубой
-          this.fx.trail(posX + 40, e.y + 40, '#00f3ff'); // Неоновый циан
+          // Выбираем цвета шлейфа в зависимости от типа кометы
+          let c1 = '#c2f8ff', c2 = '#00f3ff'; // По умолчанию лед
+          if (e.cometType === 'toxic') { c1 = '#dcfce7'; c2 = '#39ff14'; } // Кислотный
+          else if (e.cometType === 'solar') { c1 = '#fef9c3'; c2 = '#ffcc00'; } // Огненный
+          
+          this.fx.trail(posX + 40, e.y + 40, c1);
+          this.fx.trail(posX + 40, e.y + 40, c2);
         }
       }
 
@@ -767,8 +772,8 @@ spawnComet() {
     const duration = 3.5;
     const vx = (xEnd - xStart) / duration;
     const vy = (yEnd - yStart) / duration;
-
-    this.active.set(id, { id, type: "bonus", node: el, x: xStart, y: yStart, vx, vy, scale: 1, solved: false });
+  
+    this.active.set(id, { id, type: "bonus", cometType: cometType, node: el, x: xStart, y: yStart, vx, vy, scale: 1, solved: false });
   }
 
   activateFreeze(id, type) {
@@ -870,6 +875,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
