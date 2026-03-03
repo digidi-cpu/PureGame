@@ -346,6 +346,22 @@ class JuiceFX {
       const l = this.lasers[i]; l.life -= 0.15; if (l.life <= 0) this.lasers.splice(i, 1);
     }
   }
+  trail(x, y, color = '#7df0ff') {
+    // Добавляем небольшой случайный разброс, чтобы хвост был объемным
+    const offsetX = x + (Math.random() * 30 - 15);
+    const offsetY = y + (Math.random() * 30 - 15);
+    
+    this.particles.push({ 
+      x: offsetX, 
+      y: offsetY, 
+      vx: (Math.random() - 0.5) * 0.5, // Почти не имеют своей скорости, висят на месте
+      vy: (Math.random() - 0.5) * 0.5, 
+      life: 1.0, 
+      decay: Math.random() * 0.04 + 0.02, // Скорость таяния
+      color: color, 
+      size: Math.random() * 3 + 1.5 // Рандомный размер льдинок
+    });
+  }
   draw() {
     if (!this.ctx) return;
     this.ctx.clearRect(0, 0, this.width, this.height);
@@ -568,9 +584,16 @@ startMainLoop() {
           continue; 
         }
 
-        // 4. ОБНОВЛЕНИЕ ТРАНСФОРМАЦИИ
+// 4. ОБНОВЛЕНИЕ ТРАНСФОРМАЦИИ
         const posX = e.x !== undefined ? e.x : 0; 
         e.node.style.transform = `translate3d(${posX}px, ${e.y}px, 0) scale(${e.scale})`;
+
+        // --- ШЛЕЙФ ДЛЯ КОМЕТЫ ---
+        if (e.type === "bonus" && Math.random() > 0.3) {
+          // Создаем пару льдинок разных оттенков из палитры кометы (центр кометы ~40px)
+          this.fx.trail(posX + 40, e.y + 40, '#c2f8ff'); // Светло-голубой
+          this.fx.trail(posX + 40, e.y + 40, '#00f3ff'); // Неоновый циан
+        }
       }
 
       // Спавн ракет и планет
@@ -820,6 +843,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
