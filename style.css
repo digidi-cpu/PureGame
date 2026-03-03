@@ -200,5 +200,45 @@ body {
   filter: sepia(0.6) saturate(2.5) hue-rotate(-15deg) brightness(0.9) contrast(1.1);
 }
 
+/* === 1. ЛЕДЯНАЯ ЗАМОРОЗКА (Cyberpunk) === */
+.frozen-ice {
+  /* Ракеты: Неоново-розовые (Magenta) */
+  --rocket-shadow-deep: #2a002a;
+  --rocket-shadow: #7a0050; 
+  --rocket-surface: #d81b60; 
+  --rocket-highlight: #ff4081; 
+  --rocket-glow: #f8bbd0; 
+
+  /* Планеты: Кристально-синие */
+  --planet-crater: #001122;
+  --planet-base: #003355;
+  --planet-surface: #007799; 
+  --planet-glow: #00bfff; 
+  --planet-highlight: #ccffff; 
+}
+
+/* === 2. ТОКСИЧНАЯ ЗАМОРОЗКА (Acid/Matrix) === */
+.frozen-toxic {
+  /* Ракеты: Тревожно-оранжевые/Желтые (для контраста с зеленью) */
+  --rocket-shadow-deep: #331a00;
+  --rocket-shadow: #804000; 
+  --rocket-surface: #f57c00; 
+  --rocket-highlight: #ffb300; 
+  --rocket-glow: #ffecb3; 
+
+  /* Планеты: Кислотно-зеленые (Toxic) */
+  --planet-crater: #002200;
+  --planet-base: #004d00;
+  --planet-surface: #00aa00; 
+  --planet-glow: #39ff14; 
+  --planet-highlight: #dcfce7; 
+}
+
+/* === 3. СОЛНЕЧНАЯ ВСПЫШКА === */
+/* Здесь оставляем фильтр экрана, он отлично работает с твоей базовой огненной палитрой */
+.frozen-solar {
+  filter: sepia(0.6) saturate(2.5) hue-rotate(-15deg) brightness(0.9) contrast(1.1);
+}
+
 
 
