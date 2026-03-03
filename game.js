@@ -367,7 +367,7 @@ class JuiceFX {
 // Основной движок
 class GameSandbox {
   constructor() {
-    this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
+    this.score = 0; this.timeLeft = 30; this.streak = 0; this.multiplier = 1;
     this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = false;
     this.isWarmup = false;
     
@@ -418,7 +418,7 @@ startGame() {
 
     requestAnimationFrame(() => {
       requestAnimationFrame((now) => {
-        this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
+        this.score = 0; this.timeLeft = 30; this.streak = 0; this.multiplier = 1;
         this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
 
         this.clearGameArea();
@@ -820,6 +820,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
