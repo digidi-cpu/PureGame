@@ -185,21 +185,6 @@ body {
   transition: filter 0.4s ease, background 0.4s ease;
 }
 
-/* 1. Ледяная Комета (Голубая) */
-.frozen-ice {
-  filter: grayscale(0.5) sepia(0.8) hue-rotate(180deg) saturate(2) brightness(0.8);
-}
-
-/* 2. Токсичная Комета (Зеленая) */
-.frozen-toxic {
-  filter: grayscale(0.2) sepia(1) hue-rotate(70deg) saturate(2.5) brightness(0.75);
-}
-
-/* 3. Солнечная Комета (Желтая) */
-.frozen-solar {
-  filter: sepia(0.6) saturate(2.5) hue-rotate(-15deg) brightness(0.9) contrast(1.1);
-}
-
 /* === 1. ЛЕДЯНАЯ ЗАМОРОЗКА (Cyberpunk) === */
 .frozen-ice {
   /* Ракеты: Неоново-розовые (Magenta) */
@@ -239,6 +224,7 @@ body {
 .frozen-solar {
   filter: sepia(0.6) saturate(2.5) hue-rotate(-15deg) brightness(0.9) contrast(1.1);
 }
+
 
 
 
