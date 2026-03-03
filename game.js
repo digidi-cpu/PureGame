@@ -25,6 +25,15 @@ const FREEZE_SVG = `<svg class="entity-svg" viewBox="0 0 64 64" xmlns="http://ww
 <circle cx="7.7" cy="55.7" r="2" fill="#5995c1"></circle>
 <g fill="#c2f8ff"><path d="M10.839 32.64l2.05-2.05l2.051 2.05l-2.05 2.05z"></path><path d="M29.377 24.22l2.05-2.05l2.05 2.049l-2.049 2.051z"></path><path d="M27.925 12.961l2.05-2.051l2.051 2.05l-2.05 2.051z"></path><path d="M50.306 20.113l2.051-2.05l2.05 2.05l-2.05 2.051z"></path><path d="M44.1 36.943l2.05-2.05l2.05 2.05l-2.05 2.05z"></path><path d="M20.226 29.961l.99-.99l.99.99l-.99.99z"></path><path d="M18.15 24.315l.989-.99l.99.99l-.99.99z"></path><path d="M34.877 38.507l.99-.99l.99.991l-.99.99z"></path><path d="M31.036 47.394l.99-.99l.99.99l-.99.99z"></path><path d="M40.322 43.326l.991-.99l.99.991l-.991.99z"></path><path d="M46.138 24.927l.99-.99l.99.991l-.99.99z"></path><path d="M53.346 30.012l.99-.99l.99.99l-.99.99z"></path><path d="M42.317 11.024l.99-.99l.99.99l-.99.99z"></path><path d="M45.103 3.64l.99-.99l.99.99l-.99.99z"></path><path d="M33.896 8.297l.99-.99l.99.99l-.99.99z"></path></g></svg>`;
 
+const COMET_TOXIC_SVG = FREEZE_SVG
+  .replace(/#62bbc7/gi, '#4ade80').replace(/#6dd1de/gi, '#22c55e')
+  .replace(/#7df0ff/gi, '#86efac').replace(/#c2f8ff/gi, '#dcfce7')
+  .replace(/#5995c1/gi, '#16a34a').replace(/#4b7ea3/gi, '#15803d');
+
+const COMET_SOLAR_SVG = FREEZE_SVG
+  .replace(/#62bbc7/gi, '#facc15').replace(/#6dd1de/gi, '#eab308')
+  .replace(/#7df0ff/gi, '#fef08a').replace(/#c2f8ff/gi, '#fef9c3')
+  .replace(/#5995c1/gi, '#ca8a04').replace(/#4b7ea3/gi, '#a16207');
 
 const ROCKET_SVGS_RAW = [
   `<svg class="entity-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
@@ -513,25 +522,21 @@ updateAtmosphere() {
     let bg = '#0a0a1a'; 
     let isFrozen = performance.now() < this.freezeUntil;
 
-    if (isFrozen) {
-       // Темно-синий фон
-       bg = 'radial-gradient(circle at center, #001f3f 0%, #000a1a 100%)';
-       
-       // Включаем глобальный ледяной фильтр
-       fs.classList.add('frozen-world'); 
-       
-       // Сбрасываем старые инлайн-стили (на всякий случай, если они остались в кэше)
-       fs.style.border = 'none'; 
-       fs.style.boxShadow = 'none';
-       
+    // Сначала всегда сбрасываем старые фильтры
+    fs.classList.remove('frozen-ice', 'frozen-toxic', 'frozen-solar');
+
+    if (isFrozen && this.activeFreezeType) {
+       fs.classList.add(`frozen-${this.activeFreezeType}`); // Включаем нужный фильтр
+       fs.style.border = 'none'; fs.style.boxShadow = 'none';
        timerEl.classList.add('timer-ice');
+
+       // Разные радиальные фоны для разных комет
+       if (this.activeFreezeType === 'ice') bg = 'radial-gradient(circle at center, #001f3f 0%, #000a1a 100%)';
+       else if (this.activeFreezeType === 'toxic') bg = 'radial-gradient(circle at center, #002b12 0%, #000a04 100%)';
+       else if (this.activeFreezeType === 'solar') bg = 'radial-gradient(circle at center, #3d1c00 0%, #1a0800 100%)';
+
     } else {
-       // Выключаем ледяной фильтр
-       fs.classList.remove('frozen-world'); 
-       
        timerEl.classList.remove('timer-ice');
-       
-       // Логика фона для стрик-серий (оставляем твою)
        if (this.streak >= 5) bg = 'radial-gradient(circle at center, #550000 0%, #2a0000 45%, #000000 100%)'; 
        else if (this.streak >= 2) bg = 'radial-gradient(circle at center, #441100 0%, #221100 50%, #000000 100%)'; 
     }
@@ -568,6 +573,7 @@ startMainLoop() {
       this.fx.update(); this.fx.draw();
 
       const isFrozen = now < this.freezeUntil;
+      if (!isFrozen) this.activeFreezeType = null;
       const timeFactor = isFrozen ? 0.3 : 1.0; 
       const speedMult = Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
 
@@ -724,64 +730,67 @@ spawnComet() {
     const id = this.idSeq++;
     const area = document.getElementById("fullscreenGameArea");
     
-    // 1. Определяем случайные точки старта и финиша
     const isFromLeft = Math.random() < 0.5;
     let xStart, yStart, xEnd, yEnd;
 
     if (isFromLeft) {
-      // ДИАГОНАЛЬ 1: Слева-сверху -> Вправо-вниз
-      xStart = -100; 
-      yStart = randInt(-50, 100); // Появляется в самом верху
-      xEnd = this.gameSize.w + 100;
-      yEnd = randInt(this.gameSize.h - 150, this.gameSize.h + 50); // Улетает в самый низ
+      xStart = -100; yStart = randInt(-50, 100); 
+      xEnd = this.gameSize.w + 100; yEnd = randInt(this.gameSize.h - 150, this.gameSize.h + 50);
     } else {
-      // ДИАГОНАЛЬ 2: Справа-сверху -> Влево-вниз
-      xStart = this.gameSize.w + 100;
-      yStart = randInt(-50, 100); // Появляется в самом верху
-      xEnd = -100;
-      yEnd = randInt(this.gameSize.h - 150, this.gameSize.h + 50); // Улетает в самый низ
+      xStart = this.gameSize.w + 100; yStart = randInt(-50, 100); 
+      xEnd = -100; yEnd = randInt(this.gameSize.h - 150, this.gameSize.h + 50);
     }
 
-    // 2. Считаем угол поворота (чтобы летела носом вперед)
     const angleRad = Math.atan2(yEnd - yStart, xEnd - xStart);
-    const angleDeg = angleRad * (180 / Math.PI) - 135;
+    const angleDeg = (angleRad * (180 / Math.PI)) - 135;
 
-    // 3. Создаем элемент
+    // Выбираем тип кометы
+    const rand = Math.random();
+    let cometType = 'ice', svg = FREEZE_SVG;
+    if (rand < 0.25) { cometType = 'toxic'; svg = COMET_TOXIC_SVG; }
+    else if (rand < 0.5) { cometType = 'solar'; svg = COMET_SOLAR_SVG; }
+
     const el = document.createElement("div");
     el.className = "planet bonus-ice";
     el.id = `comet-${id}`;
-    el.style.left = `0px`; // Будем двигать через translate3d(x, y)
-    el.innerHTML = `<div class="bonus-pulse" style="transform: rotate(${angleDeg}deg)">${FREEZE_SVG}</div>`;
+    el.style.left = `0px`; 
+    el.innerHTML = `<div class="bonus-pulse" style="transform: rotate(${angleDeg}deg)">${svg}</div>`;
     
     el.addEventListener("pointerdown", (e) => {
-      e.stopPropagation(); // Чтобы не кликнуть случайно по планете под ней
+      e.stopPropagation();
       if (this.isWarmup) return;
-      this.activateFreeze(id);
+      this.activateFreeze(id, cometType); // Передаем тип
     });
 
     area.appendChild(el);
 
-    // 4. Настраиваем скорость (комета летит быстрее планет)
-    const duration = 3.5; // Секунды на пролет экрана
+    const duration = 3.5;
     const vx = (xEnd - xStart) / duration;
     const vy = (yEnd - yStart) / duration;
 
-    this.active.set(id, { 
-      id, type: "bonus", node: el, 
-      x: xStart, y: yStart, 
-      vx, vy, 
-      scale: 1, solved: false 
-    });
+    this.active.set(id, { id, type: "bonus", node: el, x: xStart, y: yStart, vx, vy, scale: 1, solved: false });
   }
-activateFreeze(id) {
+
+  activateFreeze(id, type) {
     const e = this.active.get(id);
-    // Используем e.x и e.y вместо offsetLeft / offsetTop
-    if (e && e.node) this.fx.explode(e.x + 40, e.y + 40, '#00f3ff', 30);
-    
+    if (!e) return;
+
+    let duration = 5000, popupText = "❄️ FROZEN!", explodeColor = '#00f3ff';
+
+    // Настраиваем логику для каждой кометы
+    if (type === 'toxic') {
+        duration = 3500; popupText = "🧪 TOXIC x2!"; explodeColor = '#39ff14';
+    } else if (type === 'solar') {
+        duration = 8000; popupText = "☀️ SOLAR SLOW!"; explodeColor = '#ffcc00';
+    }
+
+    this.fx.explode(e.x + 40, e.y + 40, explodeColor, 30);
     this.fadeAndRemove(id);
-    this.freezeUntil = performance.now() + 5000;
+    
+    this.freezeUntil = performance.now() + duration;
+    this.activeFreezeType = type; // Запоминаем, какой фильтр включить
     this.updateAtmosphere();
-    this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, "❄️ FROZEN!");
+    this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, popupText);
   }
 
   selectRocket(id) {
@@ -816,13 +825,18 @@ tryAnswer(planetId) {
 applyCorrect(planetId) {
     const r = this.active.get(this.selectedRocket); const p = this.active.get(planetId);
     this.streak++; this.multiplier = Math.min(10, Math.floor(this.streak / 2) + 1);
-    const pts = 1 * this.multiplier; this.score += pts;
+    
+    // БАЗОВЫЕ ОЧКИ
+    let pts = 1 * this.multiplier; 
+    
+    // ПРОВЕРЯЕМ ТОКСИЧНУЮ КОМЕТУ
+    if (performance.now() < this.freezeUntil && this.activeFreezeType === 'toxic') {
+        pts *= 2; // Множитель х2 работает!
+    }
+    this.score += pts;
     
     this.updateAtmosphere(); r.node.classList.add("correct"); p.node.classList.add("correct");
-    
-    // ИСПРАВЛЕНИЕ: Используем p.x вместо p.node.offsetLeft
     this.showScorePopup(p.x + 40, p.y + 40, `+${pts}`);
-    
     this.updateUI(); this.fadeAndRemove(this.selectedRocket); this.fadeAndRemove(planetId); this.selectedRocket = null;
   }
 
@@ -856,6 +870,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
