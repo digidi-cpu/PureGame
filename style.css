@@ -180,4 +180,19 @@ body {
 
 .result-stats { margin: 20px 0; font-size: 1.5em; }
 
+/* Плавный переход для всех эффектов на экране игры */
+.fullscreen-game {
+  transition: filter 0.4s ease, background 0.4s ease;
+}
+
+/* Глобальный фильтр заморозки (Deep Freeze) */
+.frozen-world {
+  /* 1. grayscale: обесцвечивает яркие цвета
+    2. sepia + hue-rotate: заливает всё холодным сине-голубым оттенком
+    3. saturate: делает синий цвет более глубоким
+    4. brightness: слегка приглушает свет
+  */
+  filter: grayscale(0.5) sepia(0.8) hue-rotate(180deg) saturate(2) brightness(0.8);
+}
+
 
