@@ -716,8 +716,12 @@ spawnPlanet() {
       answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 50);
     }
 
-    const randomPlanetSvg = PLANET_SVGS_WRAPPED[Math.floor(Math.random() * PLANET_SVGS_WRAPPED.length)];
-    contentHtml = `<div class="planet-svg-wrap">${randomPlanetSvg}</div><div class="planet-text">${isBomb ? "⛔" : (Number.isInteger(answer) ? answer : answer.toFixed(1))}</div>`;
+    if (isBomb) {
+  contentHtml = `<div class="planet-svg-wrap bomb-asteroid">${BOMB_ASTEROID_SVG}</div>`;
+} else {
+  const randomPlanetSvg = PLANET_SVGS_WRAPPED[Math.floor(Math.random() * PLANET_SVGS_WRAPPED.length)];
+  contentHtml = `<div class="planet-svg-wrap">${randomPlanetSvg}</div><div class="planet-text">${Number.isInteger(answer) ? answer : answer.toFixed(1)}</div>`;
+}
 
     const el = document.createElement("div"); 
     el.className = "planet"; 
@@ -889,6 +893,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
