@@ -236,4 +236,7 @@ body {
   to { transform: rotate(360deg); }
 }
 
+.bomb-asteroid .entity-svg {
+  transform: scale(0.75); /* Уменьшаем до 75% от исходного размера */
+}
 
