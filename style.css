@@ -226,5 +226,14 @@ body {
 }
 
 
+.bomb-asteroid {
+  animation: asteroid-spin 12s linear infinite;
+  filter: drop-shadow(0 0 12px rgba(204, 0, 0, 0.4)); /* Легкое красное свечение опасности */
+}
+
+@keyframes asteroid-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
 
