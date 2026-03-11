@@ -228,7 +228,8 @@ body {
 
 .bomb-asteroid {
   animation: asteroid-spin 12s linear infinite;
-  filter: drop-shadow(0 0 12px rgba(204, 0, 0, 0.4)); /* Легкое красное свечение опасности */
+  filter: drop-shadow(0 0 12px rgba(204, 0, 0, 0.4));
+  transform-origin: center center; /* Жестко фиксируем центр вращения */
 }
 
 @keyframes asteroid-spin {
@@ -236,7 +237,10 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* Добавили !important для масштаба, чтобы ничто его не перебило */
 .bomb-asteroid .entity-svg {
-  transform: scale(0.75); /* Уменьшаем до 75% от исходного размера */
+  transform: scale(0.75) !important; 
+  transform-origin: center center !important; /* Центруем масштаб */
 }
+
 
