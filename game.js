@@ -431,6 +431,7 @@ class GameSandbox {
     this.score = 0; this.timeLeft = 30; this.streak = 0; this.multiplier = 1;
     this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = false;
     this.isWarmup = false;
+    this.magnetUntil = 0;
     
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
     this.lastRAF = 0; this.lastRocketSpawnAt = 0; this.lastPlanetSpawnAt = 0;
@@ -789,14 +790,16 @@ spawnComet() {
     const angleRad = Math.atan2(yEnd - yStart, xEnd - xStart);
     const angleDeg = (angleRad * (180 / Math.PI)) - 135;
 
-    // Выбираем тип кометы
+    // --- ИЗМЕНЕНИЕ 1: Выбираем тип кометы (добавлен магнит) ---
     const rand = Math.random();
     let cometType = 'ice', svg = FREEZE_SVG;
     if (rand < 0.25) { cometType = 'toxic'; svg = COMET_TOXIC_SVG; }
     else if (rand < 0.5) { cometType = 'solar'; svg = COMET_SOLAR_SVG; }
+    else if (rand < 0.75) { cometType = 'magnet'; svg = MAGNET_SVG; }
 
     const el = document.createElement("div");
-    el.className = "planet bonus-ice";
+    // --- ИЗМЕНЕНИЕ 2: Динамический класс (теперь не жестко bonus-ice) ---
+    el.className = `planet bonus-${cometType}`;
     el.id = `comet-${id}`;
     el.style.left = `0px`; 
     el.innerHTML = `<div class="bonus-pulse" style="transform: rotate(${angleDeg}deg)">${svg}</div>`;
@@ -804,7 +807,14 @@ spawnComet() {
     el.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       if (this.isWarmup) return;
-      this.activateFreeze(id, cometType); // Передаем тип
+      
+      // --- ИЗМЕНЕНИЕ 3: Логика магнита против логики заморозки ---
+      if (cometType === 'magnet') {
+        this.magnetUntil = performance.now() + 5000; // Врубаем на 5 секунд
+        this.fadeAndRemove(id); // Элегантно убираем саму комету
+      } else {
+        this.activateFreeze(id, cometType); // Старая добрая заморозка
+      }
     });
 
     area.appendChild(el);
@@ -915,6 +925,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
