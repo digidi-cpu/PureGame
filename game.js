@@ -623,6 +623,10 @@ startMainLoop() {
 
       this.updateAtmosphere();
 
+      if (now < this.magnetUntil) {
+        this.autoCollectAnswers();
+      }
+
       const entities = Array.from(this.active.values());
       for (const e of entities) {
         // 1. Двигаем по горизонтали (если у объекта есть vx, как у кометы)
@@ -826,6 +830,32 @@ spawnComet() {
     this.active.set(id, { id, type: "bonus", cometType: cometType, node: el, x: xStart, y: yStart, vx, vy, scale: 1, solved: false });
   }
 
+  autoCollectAnswers() {
+    const now = performance.now();
+    // Делаем задержку между выстрелами магнита, чтобы лазеры вылетали красиво по очереди (раз в 200 мс)
+    if (!this.lastMagnetShot) this.lastMagnetShot = 0;
+    if (now - this.lastMagnetShot < 200) return;
+
+    // Собираем все летящие ракеты и безопасные планеты
+    const rockets = Array.from(this.active.values()).filter(e => e.type === 'rocket' && !e.solved);
+    const planets = Array.from(this.active.values()).filter(e => e.type === 'planet' && !e.solved && !e.isBomb);
+
+    if (rockets.length > 0 && planets.length > 0) {
+      for (let r of rockets) {
+        for (let p of planets) {
+          // Если ответ ракеты совпадает с ответом на планете
+          if (r.answer === p.answer) {
+            // Имитируем действия игрока!
+            this.selectedRocket = r.id;   // Выбираем ракету
+            this.tryAnswer(p.id);         // Стреляем в планету
+            
+            this.lastMagnetShot = now;    // Запоминаем время выстрела
+            return; // Выходим из функции, чтобы за один кадр сделать только 1 выстрел
+          }
+        }
+      }
+    }
+  }
   activateFreeze(id, type) {
     const e = this.active.get(id);
     if (!e) return;
@@ -925,6 +955,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
