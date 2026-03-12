@@ -243,4 +243,9 @@ body {
   transform-origin: center center !important; /* Центруем масштаб */
 }
 
+/* Уменьшаем размер кометы-магнита */
+.bonus-magnet .entity-svg {
+  transform: scale(0.75) !important;
+  transform-origin: center center !important;
+}
 
