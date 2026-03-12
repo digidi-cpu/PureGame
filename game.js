@@ -813,9 +813,10 @@ spawnComet() {
       if (this.isWarmup) return;
       
       // --- ИЗМЕНЕНИЕ 3: Логика магнита против логики заморозки ---
-      if (cometType === 'magnet') {
-        this.magnetUntil = performance.now() + 5000; // Врубаем на 5 секунд
-        this.fadeAndRemove(id); // Элегантно убираем саму комету
+if (cometType === 'magnet') {
+        this.magnetUntil = performance.now() + 1000;
+        this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, "🧲 MAGNET!"); // Добавили сочности
+        this.fadeAndRemove(id); 
       } else {
         this.activateFreeze(id, cometType); // Старая добрая заморозка
       }
@@ -955,6 +956,7 @@ applyCorrect(planetId) {
 
 
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+
 
 
 
