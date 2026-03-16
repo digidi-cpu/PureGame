@@ -615,8 +615,12 @@ startMainLoop() {
       const timeFactor = isFrozen ? 0.3 : 1.0; 
       const speedMult = Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
 
-      const dynamicRocketDelay = (ROCKET_SPAWN_MS / speedMult) / timeFactor;
-      const dynamicPlanetDelay = (PLANET_SPAWN_MS / speedMult) / timeFactor;
+      // Ускоряем появление элементов на 25% (множитель 1.25) пока идет отсчет 3-2-1
+      const warmupBoost = this.isWarmup ? 1.25 : 1.0;
+
+      // Делим базовую задержку еще и на warmupBoost
+      const dynamicRocketDelay = (ROCKET_SPAWN_MS / speedMult / warmupBoost) / timeFactor;
+      const dynamicPlanetDelay = (PLANET_SPAWN_MS / speedMult / warmupBoost) / timeFactor;
 
       const dtSec = Math.max(0, Math.min(48, now - this.lastRAF)) / 1000;
       this.lastRAF = now;
