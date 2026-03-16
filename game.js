@@ -617,7 +617,7 @@ startMainLoop() {
 
       // ВАЖНО: Единый множитель ускорения для экрана 3-2-1
       // 2.0 означает, что всё будет в 2 раза быстрее (и падать, и спавниться)
-      const warmupMultiplier = this.isWarmup ? 2.0 : 1.0;
+      const warmupMultiplier = this.isWarmup ? 1.4 : 1.0;
 
       // Применяем его к задержке (чтобы плотность осталась той же)
       const dynamicRocketDelay = (ROCKET_SPAWN_MS / speedMult / warmupMultiplier) / timeFactor;
