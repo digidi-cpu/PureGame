@@ -693,7 +693,7 @@ startMainLoop() {
     el.id = `rocket-${id}`;
     
     // Рассчитываем X координату
-    const xStart = this.laneToX(lane, 85);
+    const xStart = this.laneToX(lane, 94);
     const yStart = -90;
     const yEnd = this.gameSize.h + 140;
     const vy = ((yEnd - yStart) / (ENTITY_LIFETIME_MS / 1000)) * Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
@@ -754,7 +754,7 @@ spawnPlanet() {
     el.className = "planet"; 
     el.id = `planet-${id}`;
     
-    const xStart = this.laneToX(lane, 90);
+    const xStart = this.laneToX(lane, 99);
     const yStart = -90;
     const yEnd = this.gameSize.h + 140;
     const vy = ((yEnd - yStart) / (ENTITY_LIFETIME_MS / 1000)) * Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
