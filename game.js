@@ -615,12 +615,13 @@ startMainLoop() {
       const timeFactor = isFrozen ? 0.3 : 1.0; 
       const speedMult = Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
 
-      // Ускоряем появление элементов на 25% (множитель 1.25) пока идет отсчет 3-2-1
-      const warmupBoost = this.isWarmup ? 1.25 : 1.0;
+      // ВАЖНО: Единый множитель ускорения для экрана 3-2-1
+      // 2.0 означает, что всё будет в 2 раза быстрее (и падать, и спавниться)
+      const warmupMultiplier = this.isWarmup ? 2.0 : 1.0;
 
-      // Делим базовую задержку еще и на warmupBoost
-      const dynamicRocketDelay = (ROCKET_SPAWN_MS / speedMult / warmupBoost) / timeFactor;
-      const dynamicPlanetDelay = (PLANET_SPAWN_MS / speedMult / warmupBoost) / timeFactor;
+      // Применяем его к задержке (чтобы плотность осталась той же)
+      const dynamicRocketDelay = (ROCKET_SPAWN_MS / speedMult / warmupMultiplier) / timeFactor;
+      const dynamicPlanetDelay = (PLANET_SPAWN_MS / speedMult / warmupMultiplier) / timeFactor;
 
       const dtSec = Math.max(0, Math.min(48, now - this.lastRAF)) / 1000;
       this.lastRAF = now;
@@ -633,13 +634,13 @@ startMainLoop() {
 
       const entities = Array.from(this.active.values());
       for (const e of entities) {
-        // 1. Двигаем по горизонтали (если у объекта есть vx, как у кометы)
+        // 1. Двигаем по горизонтали, УМНОЖАЯ НА warmupMultiplier
         if (e.vx !== undefined) {
-          e.x += e.vx * dtSec * timeFactor;
+          e.x += e.vx * dtSec * timeFactor * warmupMultiplier;
         }
 
-        // 2. Двигаем по вертикали (как и раньше)
-        e.y += e.vy * dtSec * timeFactor;
+        // 2. Двигаем по вертикали, УМНОЖАЯ НА warmupMultiplier
+        e.y += e.vy * dtSec * timeFactor * warmupMultiplier;
 
         if (!e.node?.parentNode || e.solved) continue;
 
@@ -649,16 +650,15 @@ startMainLoop() {
           continue; 
         }
 
-// 4. ОБНОВЛЕНИЕ ТРАНСФОРМАЦИИ
+        // 4. ОБНОВЛЕНИЕ ТРАНСФОРМАЦИИ
         const posX = e.x !== undefined ? e.x : 0; 
         e.node.style.transform = `translate3d(${posX}px, ${e.y}px, 0) scale(${e.scale})`;
 
-// --- ШЛЕЙФ ДЛЯ КОМЕТЫ ---
+        // --- ШЛЕЙФ ДЛЯ КОМЕТЫ ---
         if (e.type === "bonus" && Math.random() > 0.3) {
-          // Выбираем цвета шлейфа в зависимости от типа кометы
-          let c1 = '#c2f8ff', c2 = '#00f3ff'; // По умолчанию лед
-          if (e.cometType === 'toxic') { c1 = '#dcfce7'; c2 = '#39ff14'; } // Кислотный
-          else if (e.cometType === 'solar') { c1 = '#fef9c3'; c2 = '#ffcc00'; } // Огненный
+          let c1 = '#c2f8ff', c2 = '#00f3ff'; 
+          if (e.cometType === 'toxic') { c1 = '#dcfce7'; c2 = '#39ff14'; } 
+          else if (e.cometType === 'solar') { c1 = '#fef9c3'; c2 = '#ffcc00'; } 
           
           this.fx.trail(posX + 40, e.y + 40, c1);
           this.fx.trail(posX + 40, e.y + 40, c2);
@@ -673,12 +673,9 @@ startMainLoop() {
         if (this.spawnPlanet()) this.lastPlanetSpawnAt = now; 
       }
 
-      // --- ДОБАВЛЯЕМ СЮДА: Спавн диагональной кометы ---
-      // Шанс примерно 0.15% каждый кадр (~раз в 15-20 секунд), если сейчас не заморозка и кометы еще нет на экране
       if (Math.random() < 0.0015 && this.countType("bonus") < 1 && !isFrozen) {
         this.spawnComet();
       }
-      // ------------------------------------------------
 
       this.rafId = requestAnimationFrame(loop);
     };
