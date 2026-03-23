@@ -11,13 +11,35 @@
 
   <div id="mobileApp" class="mobile-app">
     
-    <div id="startScreen" class="screen active">
+<div id="startScreen" class="screen active">
       <canvas id="startBgCanvas" class="bg-canvas"></canvas>
       
-      <div style="z-index: 10; display: flex; flex-direction: column; align-items: center; text-align: center;">
-        <div class="season-badge">🔥 SEASON 1 APPROACHES</div>
+      <div class="top-header">
+        <div class="user-mini-profile">
+          <div class="avatar-placeholder">👨‍🚀</div>
+          <div class="user-info">
+            <span class="user-name" id="profileName">Astronaut</span>
+            <span class="user-rank">Rank: Rookie</span>
+          </div>
+        </div>
+        <div class="balances">
+          <div class="balance-item">🎫 <span id="ticketBalance">150</span></div>
+          <div class="balance-item">⭐ <span id="starBalance">0</span></div>
+        </div>
+      </div>
+
+      <div class="center-content">
+        <div class="season-badge">SEASON 1: 7 WEEKS LEFT</div>
         <h1 class="title">DIGIT</h1>
-        <button id="startGameBtn" class="btn btn-primary" style="margin-top: 20px;">START TRAINING</button>
+        
+        <button id="startGameBtn" class="btn-play-huge">PLAY</button>
+      </div>
+
+      <div class="bottom-dock">
+        <button class="dock-btn active"><span class="dock-icon">🏠</span>Home</button>
+        <button class="dock-btn"><span class="dock-icon">🎯</span>Tasks</button>
+        <button class="dock-btn"><span class="dock-icon">🎁</span>Shop</button>
+        <button class="dock-btn"><span class="dock-icon">👤</span>Profile</button>
       </div>
     </div>
 
