@@ -262,3 +262,151 @@ body {
   transform-origin: center center !important;
 }
 
+
+/* --- ГЛАВНОЕ МЕНЮ: СТРУКТУРА --- */
+#startScreen {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Раскидывает шапку, центр и низ */
+  height: 100%;
+}
+
+/* --- ВЕРХНЯЯ ШАПКА --- */
+.top-header {
+  /* Отступ сверху с учетом выреза камеры + 10px для красоты */
+  padding: calc(env(safe-area-inset-top, 20px) + 10px) 20px 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(10, 10, 26, 0.6);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  border-bottom: 1px solid rgba(181, 38, 255, 0.2);
+}
+
+.user-mini-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #6b1cb0, #3a1066);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  border: 2px solid var(--planet-glow);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name { font-weight: 700; font-size: 1rem; color: #fff; }
+.user-rank { font-size: 0.75rem; color: var(--cosmic-accent); font-family: 'Orbitron', monospace; }
+
+.balances {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.balance-item {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- ЦЕНТРАЛЬНАЯ ЧАСТЬ --- */
+.center-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1; /* Занимает все свободное место */
+  z-index: 10;
+}
+
+.season-badge {
+  background: rgba(255, 107, 53, 0.2);
+  color: var(--cosmic-primary);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--cosmic-primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+/* Огромная кнопка PLAY */
+.btn-play-huge {
+  margin-top: 30px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b35, #d63806);
+  border: 4px solid #ffcc00;
+  color: #fff;
+  font-family: 'Orbitron', monospace;
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(255, 107, 53, 0.6), inset 0 0 20px rgba(255, 255, 255, 0.4);
+  /* Запускаем бесконечную анимацию пульсации */
+  animation: playPulse 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.1s;
+}
+
+.btn-play-huge:active {
+  transform: scale(0.9);
+}
+
+/* Анимация пульсации (эффект сердцебиения/радара) */
+@keyframes playPulse {
+  0% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 107, 53, 0.6); }
+  50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(255, 107, 53, 0.9), 0 0 20px rgba(255, 204, 0, 0.8); }
+  100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 107, 53, 0.6); }
+}
+
+/* --- НИЖНИЙ ДОК (НАВИГАЦИЯ) --- */
+.bottom-dock {
+  /* Отступ снизу для защиты от свайпов iOS/Android */
+  padding: 10px 20px calc(env(safe-area-inset-bottom, 20px) + 15px) 20px;
+  display: flex;
+  justify-content: space-around;
+  background: rgba(10, 10, 26, 0.8);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.dock-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.dock-icon { font-size: 1.5rem; filter: grayscale(100%); transition: filter 0.3s, transform 0.3s; }
+
+.dock-btn.active { color: var(--cosmic-accent); }
+.dock-btn.active .dock-icon { filter: grayscale(0%); transform: translateY(-3px); }
