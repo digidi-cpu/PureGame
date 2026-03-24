@@ -638,3 +638,57 @@ body {
 .history-loadmore:active {
   background: rgba(255,107,53,0.2);
 }
+
+
+
+/* =========================================
+   ЭКРАН ОКОНЧАНИЯ ИГРЫ (TIME'S UP)
+========================================= */
+.premium-modal {
+  background: linear-gradient(135deg, rgba(20, 10, 30, 0.95), rgba(10, 5, 15, 0.98)) !important;
+  border: 1px solid rgba(255, 107, 53, 0.4) !important;
+  box-shadow: 0 0 40px rgba(255, 107, 53, 0.2), inset 0 0 20px rgba(255, 107, 53, 0.1) !important;
+  border-radius: 24px !important;
+  padding: 30px 20px !important;
+  width: min(90vw, 340px);
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+.modal-title-glow {
+  font-family: 'Orbitron', monospace; font-size: 2rem; font-weight: 900;
+  color: #fff; text-shadow: 0 0 15px var(--cosmic-primary); margin: 0;
+}
+
+/* Блок с очками */
+.result-score-box {
+  background: rgba(0,0,0,0.5); padding: 15px; border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.rs-label { font-size: 0.8rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.rs-value { font-family: 'Orbitron', monospace; font-size: 2.5rem; font-weight: 900; color: #fff; }
+
+/* Блок с билетами */
+.result-tickets-box {
+  display: flex; flex-direction: column; gap: 10px;
+  background: rgba(255, 107, 53, 0.1); padding: 15px; border-radius: 16px;
+  border: 1px solid rgba(255, 107, 53, 0.2);
+}
+.rt-earned { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.9rem; }
+.rt-val { font-family: 'Orbitron', monospace; color: var(--cosmic-accent); font-size: 1.2rem; font-weight: 900; text-shadow: 0 0 10px rgba(255,204,0,0.5); }
+.rt-progress-wrap { display: flex; flex-direction: column; gap: 6px; }
+.rt-bar { width: 100%; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; }
+.rt-fill { height: 100%; background: linear-gradient(90deg, var(--cosmic-primary), var(--cosmic-accent)); box-shadow: 0 0 10px var(--cosmic-primary); border-radius: 4px; }
+.rt-hint { font-size: 0.7rem; color: rgba(255,255,255,0.6); text-align: right; font-family: 'Exo 2', sans-serif; }
+
+/* Кнопки */
+.modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.btn-play-again {
+  background: linear-gradient(135deg, var(--cosmic-primary), var(--rocket-surface));
+  width: 100%; padding: 15px; font-size: 1.1rem; border-radius: 16px;
+  box-shadow: 0 5px 15px rgba(255,107,53,0.3);
+}
+.btn-home {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2);
+  width: 100%; padding: 15px; font-size: 1rem; border-radius: 16px; color: rgba(255,255,255,0.7);
+}
+.btn-home:active { background: rgba(255,255,255,0.1); }
