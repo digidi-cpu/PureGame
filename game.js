@@ -1064,7 +1064,84 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+// ==========================================
+// ЛОГИКА ЭКРАНА ОНБОРДИНГА (ОБУЧЕНИЯ)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+  const obScreen = document.getElementById('onboardingScreen');
+  const mainScreen = document.getElementById('startScreen');
+  
+  const slides = document.querySelectorAll('.ob-slide');
+  const dots = document.querySelectorAll('.ob-dot');
+  const btnPrev = document.getElementById('obPrevBtn');
+  const btnNext = document.getElementById('obNextBtn');
+  const btnStartGame = document.getElementById('obStartGameBtn');
 
+  let currentSlide = 0;
+
+  // Функция обновления состояния слайдера
+  function updateSlider() {
+    // 1. Переключаем классы активного слайда
+    slides.forEach((slide, index) => {
+      if (index === currentSlide) {
+        slide.classList.add('active');
+      } else {
+        slide.classList.remove('active');
+      }
+    });
+
+    // 2. Переключаем активные точки
+    dots.forEach((dot, index) => {
+      if (index === currentSlide) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+
+    // 3. Прячем/показываем стрелки в зависимости от слайда
+    if (currentSlide === 0) {
+      btnPrev.classList.add('hidden');
+    } else {
+      btnPrev.classList.remove('hidden');
+      btnPrev.classList.add('visible');
+    }
+
+    if (currentSlide === slides.length - 1) {
+      btnNext.classList.add('hidden');
+    } else {
+      btnNext.classList.remove('hidden');
+      btnNext.classList.add('visible');
+    }
+  }
+
+  // Клик "Вперед"
+  btnNext.addEventListener('click', () => {
+    if (currentSlide < slides.length - 1) {
+      currentSlide++;
+      updateSlider();
+    }
+  });
+
+  // Клик "Назад"
+  btnPrev.addEventListener('click', () => {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateSlider();
+    }
+  });
+
+  // Клик "LET'S GO" (Завершение онбординга)
+  btnStartGame.addEventListener('click', () => {
+    obScreen.classList.remove('active'); // Скрываем онбординг
+    mainScreen.classList.add('active');  // Показываем главный экран
+  });
+
+  // Инициализируем стартовое состояние при запуске
+  if (obScreen && slides.length > 0) {
+    updateSlider();
+  }
+});
 
 
 
