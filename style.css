@@ -350,7 +350,8 @@ body {
 }
 
 .home-hero__rewards {
-  display:flex; justify-content:center; align-items:center; gap:14px;
+  display: inline-flex; /* <--- Вот это свойство */
+  justify-content: center; align-items: center; gap: 14px;
   background: rgba(255, 107, 53, 0.1); padding: 10px 20px;
   border-radius: 20px; border: 1px solid rgba(255, 107, 53, 0.3);
   margin-bottom: 25px;
