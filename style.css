@@ -496,20 +496,21 @@ body {
   transition: all 0.3s ease; 
 }
 
-/* --- АКТИВНАЯ ВКЛАДКА --- */
+/* --- АКТИВНАЯ ВКЛАДКА (Минимализм) --- */
 .nav-btn.active .nav-text { 
-  color: var(--cosmic-accent); /* Подсвечиваем текст */
+  color: #ffffff; /* Чистый белый текст вместо золотого */
 }
 
 .nav-btn.active .nav-icon-svg { 
-  /* Делаем иконку непрозрачной (opacity: 1) и добавляем неоновое свечение */
-  filter: brightness(0) invert(1) opacity(1) drop-shadow(0 0 8px var(--cosmic-accent)); 
-  transform: scale(1.15); /* Слегка увеличиваем */
+  /* Убрали drop-shadow, оставили только 100% видимость (opacity: 1) */
+  filter: brightness(0) invert(1) opacity(1); 
+  transform: scale(1.15); /* Легкое увеличение оставляем для приятного отклика */
 }
 
 /* Анимация нажатия */
 .nav-btn:active .nav-icon-svg {
   transform: scale(0.9);
+}
 }
 /* =========================================
    ОБЩИЕ ЭЛЕМЕНТЫ ВЛАДОК (ТАБЫ)
