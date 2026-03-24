@@ -68,8 +68,7 @@
             </div>
           </div>
         </section>
-
-        <div class="play-cta play-cta--premium">
+<div class="play-cta play-cta--premium">
           <button id="startGameBtn" class="btn play-cta__btn play-cta__btn--premium">
             PLAY
             <span class="cta-arrow" aria-hidden="true">
@@ -78,28 +77,37 @@
               </svg>
             </span>
           </button>
-          <div class="play-cta__hint">40 seconds • Tap to start</div>
+          
+          <div class="play-cta__hint" style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
+            <span style="color: #fff; font-weight: 700;">⚡ 3/3 FREE</span>
+            <span style="color: rgba(255,255,255,0.3);">|</span>
+            <span style="color: var(--cosmic-accent); font-weight: 600;">🎯 5,000 PTS = 1 🎟️</span>
+          </div>
         </div>
 
-        <div class="league-preview" aria-label="League system">
+        <div class="league-preview" aria-label="Level system">
           <div class="league-preview__head">
             <span class="lp-ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M12 2l2.2 6.7H21l-5.4 3.9 2.1 6.7L12 15.6 6.3 19.3l2.1-6.7L3 8.7h6.8L12 2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
               </svg>
             </span>
-            <span class="league-preview__title">LEAGUE SYSTEM</span>
+            <span class="league-preview__title">ENERGY RECHARGE</span>
           </div>
 
-          <div class="league-track">
-            <span class="node node--rookie"></span>
-            <span class="node node--pro is-active"></span>
-            <span class="node node--elite"></span>
-
-            <span class="league-name league-name--rookie">ROOKIE</span>
-            <span class="league-name league-name--pro">PRO</span>
-            <span class="league-name league-name--elite">ELITE</span>
-            <span class="league-rewards">Rewards</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-family: 'Orbitron', monospace; font-size: 1.2rem; color: #fff; font-weight: 900;">LEVEL 1</span>
+              <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Max 1 purchase / day</span>
+            </div>
+            
+            <button style="background: rgba(10,10,26,0.8); border: 1px solid var(--cosmic-primary); border-radius: 12px; padding: 8px 15px; color: #fff; font-weight: 700; font-family: 'Orbitron', monospace; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(255, 107, 53, 0.2); transition: transform 0.1s;">
+              +3 ⚡ FOR 1 ⭐
+            </button>
+          </div>
+          
+          <div style="text-align: center; margin-top: 12px; font-size: 0.7rem; color: rgba(255,204,0,0.8);">
+            Purchases available today: 1 / 1
           </div>
         </div>
 
