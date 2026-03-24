@@ -9,44 +9,45 @@
 </head>
 <body>
 
-  <div id="mobileApp" class="mobile-app">
-    <div id="onboardingScreen" class="screen active">
+ <div id="onboardingScreen" class="screen active">
+
+        <video autoplay loop muted playsinline class="ob-video-bg">
+          <source src="assets/gameplay-demo.mp4" type="video/mp4">
+        </video>
+
+        <div class="ob-video-overlay" aria-hidden="true"></div>
+
         <div class="onboarding-slider" id="obSlider">
-          
           <div class="ob-slide active">
             <div class="ob-icon">🚀</div>
             <h2 class="ob-title">WELCOME TO DIGIT</h2>
             <p class="ob-text">The ultimate cosmic math challenge. Solve equations fast and conquer the leaderboard!</p>
           </div>
-
           <div class="ob-slide">
             <div class="ob-icon">⚡</div>
             <h2 class="ob-title">QUICK MATH</h2>
-            <p class="ob-text">You have 40 seconds. Tap the correct answers. Avoid the traps or lose points!</p>
+            <p class="ob-text">You have 30 seconds. Tap the correct answers. Avoid the traps or lose points!</p>
           </div>
-
           <div class="ob-slide">
             <div class="ob-icon">🎟️</div>
             <h2 class="ob-title">EARN TICKETS</h2>
             <p class="ob-text">Every 5,000 points converts to 1 Ticket. Collect tickets to win real Telegram Gifts!</p>
-            
             <button id="obStartGameBtn" class="btn ob-start-btn">LET'S GO!</button>
           </div>
-
         </div>
 
         <div class="ob-controls">
-          <button id="obPrevBtn" class="ob-arrow">❮</button>
-          
+          <button id="obPrevBtn" class="ob-arrow hidden">❮</button>
           <div class="ob-dots">
             <div class="ob-dot active"></div>
             <div class="ob-dot"></div>
             <div class="ob-dot"></div>
           </div>
-          
           <button id="obNextBtn" class="ob-arrow">❯</button>
         </div>
       </div>
+
+  
 <div id="startScreen" class="screen">
       <canvas id="startBgCanvas" class="bg-canvas"></canvas>
 
