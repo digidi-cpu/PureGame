@@ -1031,7 +1031,37 @@ document.addEventListener('DOMContentLoaded', startSeasonTimer);
 
 
 
+// ==========================================
+// НАВИГАЦИЯ ПО НИЖНЕМУ МЕНЮ
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+  const navButtons = document.querySelectorAll('.nav-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
 
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // 1. Убираем класс active у всех кнопок
+      navButtons.forEach(b => b.classList.remove('active'));
+      // 2. Добавляем active нажатой кнопке
+      btn.classList.add('active');
+
+      // 3. Скрываем все вкладки
+      tabContents.forEach(tab => {
+        tab.style.display = 'none';
+        tab.classList.remove('active');
+      });
+
+      // 4. Показываем нужную вкладку
+      const targetTabId = btn.getAttribute('data-tab');
+      const targetTab = document.getElementById(targetTabId);
+      if (targetTab) {
+        targetTab.style.display = 'flex'; // У нас вкладки используют flex-direction: column
+        // Небольшой таймаут для плавности анимации (если она есть)
+        setTimeout(() => targetTab.classList.add('active'), 10);
+      }
+    });
+  });
+});
 
 
 
