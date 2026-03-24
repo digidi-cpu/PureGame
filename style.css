@@ -463,7 +463,6 @@ body {
 /* --- ФУТЕР --- */
 .footer-links { display: flex; justify-content: center; gap: 20px; padding: 10px 0; }
 .footer-btn { color: rgba(255,255,255,0.4); font-size: 0.8rem; text-decoration: none; border-bottom: 1px dashed rgba(255,255,255,0.2); }
-
 /* --- НИЖНЯЯ НАВИГАЦИЯ --- */
 .bottom-nav {
   position: absolute; bottom: 0; left: 0; right: 0;
@@ -474,17 +473,44 @@ body {
   border-top: 1px solid rgba(255, 107, 53, 0.3);
   z-index: 100;
 }
+
 .nav-btn {
   background: none; border: none; color: rgba(255, 255, 255, 0.4);
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  font-family: 'Exo 2', sans-serif; cursor: pointer; transition: color 0.2s;
+  font-family: 'Exo 2', sans-serif; cursor: pointer; 
+  transition: all 0.2s ease;
 }
-.nav-icon { font-size: 1.4rem; filter: grayscale(100%); transition: filter 0.2s; }
-.nav-text { font-size: 0.75rem; font-weight: 600;}
-.nav-btn.active { color: var(--cosmic-accent); }
-.nav-btn.active .nav-icon { filter: grayscale(0%); drop-shadow: 0 0 5px rgba(255,204,0,0.5); }
 
+.nav-text { 
+  font-size: 0.75rem; 
+  font-weight: 600; 
+  transition: color 0.2s ease;
+}
 
+/* --- СТИЛИ ДЛЯ КАРТИНОК SVG --- */
+.nav-icon-svg { 
+  width: 24px; /* Задаем размер картинке */
+  height: 24px; 
+  /* МАГИЯ: делаем черную иконку белой и полупрозрачной (40%) */
+  filter: brightness(0) invert(1) opacity(0.4); 
+  transition: all 0.3s ease; 
+}
+
+/* --- АКТИВНАЯ ВКЛАДКА --- */
+.nav-btn.active .nav-text { 
+  color: var(--cosmic-accent); /* Подсвечиваем текст */
+}
+
+.nav-btn.active .nav-icon-svg { 
+  /* Делаем иконку непрозрачной (opacity: 1) и добавляем неоновое свечение */
+  filter: brightness(0) invert(1) opacity(1) drop-shadow(0 0 8px var(--cosmic-accent)); 
+  transform: scale(1.15); /* Слегка увеличиваем */
+}
+
+/* Анимация нажатия */
+.nav-btn:active .nav-icon-svg {
+  transform: scale(0.9);
+}
 /* =========================================
    ОБЩИЕ ЭЛЕМЕНТЫ ВЛАДОК (ТАБЫ)
 ========================================= */
