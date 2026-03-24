@@ -112,7 +112,6 @@ body {
 }
 
 /* UI */
-/* UI */
 .minimal-stats-vertical { 
   position: absolute; 
   /* Берем размер выреза телефона. Если браузер его не знает, берем 20px. 
@@ -143,14 +142,11 @@ body {
 .rocket.selected .entity-svg { filter: drop-shadow(0 0 15px var(--cosmic-accent)); }
 .rocket-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-weight: 800; color: #ffffff; font-family: 'Orbitron', monospace; font-size: 1.26em; background: rgba(10, 10, 26, 0.75); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border: 1px solid var(--cosmic-accent); box-shadow: 0 0 10px rgba(255, 204, 0, 0.3); padding: 7px 14px; border-radius: 8px; pointer-events: none; white-space: nowrap; z-index: 10; }
 
-/* .planet size and .planet-svg-wrap are above; no solid background so SVG shows */
-
 /* Эффекты ответов */
 .correct { filter: drop-shadow(0 0 15px #ffaa00); }
 .wrong { filter: drop-shadow(0 0 15px #8b0000); }
 
 /* ЗАМОРОЗКА */
-/* Комета заморозки */
 .bonus-ice { 
   background: transparent !important; 
   border: none !important; 
@@ -179,7 +175,6 @@ body {
   color: #00f3ff !important; 
   text-shadow: 0 0 10px #00f3ff, 0 0 20px #ffffff; 
 }
-/* Эмодзи возле таймера убрали. Для базовой версии хватит просто изменения цвета таймера. */
 
 /* Screen Shake */
 @keyframes shake-s { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-4px, 4px); } 50% { transform: translate(4px, -4px); } 75% { transform: translate(-4px, -4px); } }
@@ -200,14 +195,11 @@ body {
 
 /* === 1. ЛЕДЯНАЯ ЗАМОРОЗКА (Cyberpunk) === */
 .frozen-ice {
-  /* Ракеты: Неоново-розовые (Magenta) */
   --rocket-shadow-deep: #2a002a;
   --rocket-shadow: #7a0050; 
   --rocket-surface: #d81b60; 
   --rocket-highlight: #ff4081; 
   --rocket-glow: #f8bbd0; 
-
-  /* Планеты: Кристально-синие */
   --planet-crater: #001122;
   --planet-base: #003355;
   --planet-surface: #007799; 
@@ -217,14 +209,11 @@ body {
 
 /* === 2. ТОКСИЧНАЯ ЗАМОРОЗКА (Acid/Matrix) === */
 .frozen-toxic {
-  /* Ракеты: Тревожно-оранжевые/Желтые (для контраста с зеленью) */
   --rocket-shadow-deep: #331a00;
   --rocket-shadow: #804000; 
   --rocket-surface: #f57c00; 
   --rocket-highlight: #ffb300; 
   --rocket-glow: #ffecb3; 
-
-  /* Планеты: Кислотно-зеленые (Toxic) */
   --planet-crater: #002200;
   --planet-base: #004d00;
   --planet-surface: #00aa00; 
@@ -233,16 +222,14 @@ body {
 }
 
 /* === 3. СОЛНЕЧНАЯ ВСПЫШКА === */
-/* Здесь оставляем фильтр экрана, он отлично работает с твоей базовой огненной палитрой */
 .frozen-solar {
   filter: sepia(0.6) saturate(2.5) hue-rotate(-15deg) brightness(0.9) contrast(1.1);
 }
 
-
 .bomb-asteroid {
   animation: asteroid-spin 12s linear infinite;
   filter: drop-shadow(0 0 12px rgba(204, 0, 0, 0.4));
-  transform-origin: center center; /* Жестко фиксируем центр вращения */
+  transform-origin: center center; 
 }
 
 @keyframes asteroid-spin {
@@ -250,13 +237,11 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Добавили !important для масштаба, чтобы ничто его не перебило */
 .bomb-asteroid .entity-svg {
   transform: scale(0.75) !important; 
-  transform-origin: center center !important; /* Центруем масштаб */
+  transform-origin: center center !important; 
 }
 
-/* Уменьшаем размер кометы-магнита */
 .bonus-magnet .entity-svg {
   transform: scale(0.75) !important;
   transform-origin: center center !important;
@@ -266,7 +251,6 @@ body {
    ГЛАВНЫЙ ЭКРАН (V4 TOURNAMENT PREMIUM)
 ========================================= */
 
-/* Контейнер экрана (чтобы фон и канвас не уезжали) */
 #startScreen {
   display: flex;
   flex-direction: column;
@@ -276,7 +260,6 @@ body {
   overflow: hidden;
 }
 
-/* Скроллируемая центральная часть */
 #home.tab-content {
   display: flex;
   flex-direction: column;
@@ -286,7 +269,6 @@ body {
   width: 100%;
   overflow-y: auto;
   z-index: 10;
-  /* Отступы: сверху под шапку с балансом, снизу под меню навигации */
   padding: calc(env(safe-area-inset-top, 20px) + 80px) 20px calc(env(safe-area-inset-bottom, 20px) + 100px) 20px;
 }
 
@@ -298,7 +280,7 @@ body {
   display: flex;
   justify-content: flex-end; 
   z-index: 100;
-  pointer-events: none; /* Шапка не блокирует клики */
+  pointer-events: none;
 }
 
 .balances { display: flex; gap: 15px; pointer-events: auto; }
