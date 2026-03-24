@@ -303,13 +303,36 @@
       </div>
     </div>
 
-    <div id="resultModal" class="modal">
-      <div class="modal-content">
-        <h2>TIME'S UP!</h2>
-        <div class="result-stats">
-          <div class="result-stat"><span class="stat-label">Score:</span><span class="stat-value" id="finalScore">0</span></div>
+<div id="resultModal" class="modal">
+      <div class="modal-content premium-modal">
+        <h2 class="modal-title-glow">TIME'S UP!</h2>
+        
+        <div class="result-score-box">
+          <div class="rs-label">YOUR SCORE</div>
+          <div class="rs-value" id="finalScore">12,450</div>
         </div>
-        <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
+
+        <div class="result-tickets-box">
+          <div class="rt-earned">
+            <span>Tickets earned:</span>
+            <span class="rt-val">+2 🎟️</span>
+          </div>
+          <div class="rt-progress-wrap">
+            <div class="rt-bar">
+              <div class="rt-fill" style="width: 49%;"></div>
+            </div>
+            <div class="rt-hint">2,450 / 5,000 to next ticket</div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="playAgainBtn" class="btn btn-play-again">
+            PLAY AGAIN <span style="font-size:0.7em; opacity:0.8;">(2/3 ⚡)</span>
+          </button>
+          <button id="homeBtn" class="btn btn-home" onclick="document.getElementById('resultModal').style.display='none'; document.querySelector('.nav-btn[data-tab=\'home\']').click();">
+            HOME
+          </button>
+        </div>
       </div>
     </div>
 
