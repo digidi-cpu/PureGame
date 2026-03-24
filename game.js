@@ -959,7 +959,74 @@ applyCorrect(planetId) {
 document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
 
 
+// ==========================================
+// ЛЮКСОВЫЙ ТАЙМЕР ДЛЯ ГЛАВНОГО ЭКРАНА
+// ==========================================
+function startSeasonTimer() {
+  // Укажите точную дату окончания 1 сезона! 
+  // Формат: Год, Месяц (от 0 до 11, где 0 - Январь), День, Час, Минута
+  // Например: 1 Июня 2026 года, 18:00
+  const seasonEndDate = new Date(Date.UTC(2026, 5, 1, 18, 0, 0));
 
+  function updateTimer() {
+    const now = new Date();
+    const diff = seasonEndDate - now;
+
+    if (diff <= 0) {
+      // Сезон завершен (можно поставить нули)
+      return;
+    }
+
+    // Считаем дни, часы и минуты
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    // Функция, которая делает из числа "9" строку "09" (чтобы всегда было 2 символа)
+    const format = (num) => num.toString().padStart(2, '0');
+
+    const dStr = format(days);
+    const hStr = format(hours);
+    const mStr = format(mins);
+
+    // Раскидываем КАЖДУЮ цифру в свой собственный слот
+    
+    // Дни (D1 и D2)
+    const elD1 = document.getElementById('heroTimerD1');
+    const elD2 = document.getElementById('heroTimerD2');
+    if (elD1 && elD2) {
+        // Если дней больше 99 (например 120), берем последние две цифры, либо добавьте еще один слот в HTML
+        elD1.textContent = dStr.length > 2 ? dStr[dStr.length - 2] : dStr[0]; 
+        elD2.textContent = dStr[dStr.length - 1];
+    }
+
+    // Часы (H1 и H2)
+    const elH1 = document.getElementById('heroTimerH1');
+    const elH2 = document.getElementById('heroTimerH2');
+    if (elH1 && elH2) {
+        elH1.textContent = hStr[0];
+        elH2.textContent = hStr[1];
+    }
+
+    // Минуты (M1 и M2)
+    const elM1 = document.getElementById('heroTimerM1');
+    const elM2 = document.getElementById('heroTimerM2');
+    if (elM1 && elM2) {
+        elM1.textContent = mStr[0];
+        elM2.textContent = mStr[1];
+    }
+  }
+
+  // Обновляем таймер сразу при запуске
+  updateTimer();
+  
+  // Так как у нас нет секунд на экране, нам не нужно обновлять его каждую секунду.
+  // Обновляем раз в 10 секунд (10000 мс) - это сэкономит батарею телефона игрока!
+  setInterval(updateTimer, 10000); 
+}
+
+// Запускаем, когда игра загрузилась
+document.addEventListener('DOMContentLoaded', startSeasonTimer);
 
 
 
