@@ -362,24 +362,51 @@ body {
 .hero-timer__clock--source { display:none !important; }
 
 .lux-timer { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; }
+
+/* ИСПРАВЛЕННЫЙ КОНТЕЙНЕР (Цифры в ряд, текст внизу) */
 .lux-unit {
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  padding:12px 15px; border-radius:16px;
+  display: flex; 
+  flex-wrap: wrap; /* Разрешаем перенос текста вниз */
+  align-items: center; 
+  justify-content: center;
+  gap: 2px; /* Расстояние между цифрами 9 и 0 */
+  padding: 10px 15px; 
+  border-radius: 16px;
   background: rgba(10,10,26,0.8);
   border: 1px solid rgba(255,107,53,0.5);
   box-shadow: 0 0 20px rgba(255,107,53,0.2), inset 0 0 15px rgba(255,107,53,0.1);
+  min-width: 75px;
 }
+
 .lux-unit::after {
-  content: attr(aria-label); font-family: 'Exo 2', sans-serif;
-  font-size: 0.65rem; color: rgba(255,255,255,0.6); margin-top: 6px;
-  text-transform: uppercase; letter-spacing: 1px;
+  content: attr(aria-label); 
+  flex-basis: 100%; /* Принудительно отправляем слово DAYS/HOURS на новую строку */
+  text-align: center;
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.65rem; 
+  color: rgba(255,255,255,0.6); 
+  margin-top: 6px;
+  text-transform: uppercase; 
+  letter-spacing: 1px;
 }
+
 .lux-sep {
   color: var(--cosmic-primary); font-family: "Orbitron", monospace;
   font-weight:900; font-size:24px; padding-bottom: 20px;
   text-shadow: 0 0 10px rgba(255,107,53,0.5);
 }
-.lux-digit { font-family: "Orbitron", monospace; font-weight: 900; font-size: 2rem; color: #fff; line-height: 1;}
+
+.lux-digit { 
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.8em; /* Фиксированная ширина, чтобы цифры не дергались при смене таймера */
+  font-family: "Orbitron", monospace; 
+  font-weight: 900; 
+  font-size: 2rem; 
+  color: #fff; 
+  line-height: 1;
+}
 
 /* --- КНОПКА PLAY --- */
 .play-cta--premium { display:flex; flex-direction:column; align-items:center; gap: 10px; margin-bottom: 30px; width: 100%; }
