@@ -153,8 +153,7 @@ class GameSandbox {
     this.startBg.init();
     this.startBg.start();
   }
-
-  bindUI() {
+bindUI() {
     document.getElementById("startGameBtn").addEventListener("click", () => {
       // <--- ВИБРАЦИЯ ЗДЕСЬ (Уверенный отклик на главную кнопку)
       TelegramAPI.vibrate('medium'); 
@@ -168,13 +167,6 @@ class GameSandbox {
       this.startGame();
     });
 
-    window.addEventListener("resize", () => this.updateGameSize());
-  }
-    document.getElementById("startGameBtn").addEventListener("click", () => this.startGame());
-    document.getElementById("playAgainBtn").addEventListener("click", () => {
-      document.getElementById("resultModal").style.display = "none";
-      this.startGame();
-    });
     window.addEventListener("resize", () => this.updateGameSize());
   }
 
