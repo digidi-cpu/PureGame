@@ -622,6 +622,9 @@ applyCorrect(planetId) {
         pts *= 2; // Множитель х2 работает!
     }
     this.score += pts;
+
+    // <--- ВИБРАЦИЯ ЗДЕСЬ (Легкий приятный щелчок при успехе)
+    TelegramAPI.vibrate('light'); 
     
     this.updateAtmosphere(); r.node.classList.add("correct"); p.node.classList.add("correct");
     this.showScorePopup(p.x + 40, p.y + 40, `+${pts}`);
@@ -630,14 +633,25 @@ applyCorrect(planetId) {
 
   applyWrong(planetId) {
     const r = this.active.get(this.selectedRocket); const p = this.active.get(planetId);
-    this.streak = 0; this.multiplier = 1; this.shakeScreen('hard'); this.updateAtmosphere();
+    this.streak = 0; this.multiplier = 1; 
+
+    this.shakeScreen('hard'); 
+    // <--- ВИБРАЦИЯ ЗДЕСЬ (Двойной вибро-сигнал ошибки вместе с тряской экрана)
+    TelegramAPI.vibrate('error'); 
+
+    this.updateAtmosphere();
     r.node.classList.add("wrong"); p.node.classList.add("wrong"); this.updateUI();
     setTimeout(() => { r.node.classList.remove("wrong", "selected"); p.node.classList.remove("wrong"); this.selectedRocket = null; }, 200);
   }
 
   applyBomb(planetId) {
     this.streak = 0; this.multiplier = 1; this.score = Math.max(0, this.score - 5);
-    this.shakeScreen('hard'); this.updateAtmosphere(); this.updateUI();
+    
+    this.shakeScreen('hard'); 
+    // <--- ВИБРАЦИЯ ЗДЕСЬ (Тяжелый глухой удар при взрыве бомбы)
+    TelegramAPI.vibrate('heavy'); 
+
+    this.updateAtmosphere(); this.updateUI();
     this.fadeAndRemove(planetId); if (this.selectedRocket !== null) { const r = this.active.get(this.selectedRocket); r.node.classList.remove("selected"); } this.selectedRocket = null;
   }
 
