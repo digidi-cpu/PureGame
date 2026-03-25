@@ -155,6 +155,21 @@ class GameSandbox {
   }
 
   bindUI() {
+    document.getElementById("startGameBtn").addEventListener("click", () => {
+      // <--- ВИБРАЦИЯ ЗДЕСЬ (Уверенный отклик на главную кнопку)
+      TelegramAPI.vibrate('medium'); 
+      this.startGame();
+    });
+
+    document.getElementById("playAgainBtn").addEventListener("click", () => {
+      // <--- ВИБРАЦИЯ ЗДЕСЬ (Такой же отклик на рестарт)
+      TelegramAPI.vibrate('medium'); 
+      document.getElementById("resultModal").style.display = "none";
+      this.startGame();
+    });
+
+    window.addEventListener("resize", () => this.updateGameSize());
+  }
     document.getElementById("startGameBtn").addEventListener("click", () => this.startGame());
     document.getElementById("playAgainBtn").addEventListener("click", () => {
       document.getElementById("resultModal").style.display = "none";
@@ -210,6 +225,13 @@ startGame() {
         const steps = ["3", "2", "1", "START!"];
         let step = 0;
         const tick = () => {
+
+          if (step < 3) {
+            TelegramAPI.vibrate('light');
+          } else {
+            TelegramAPI.vibrate('heavy');
+          }
+          
           step++;
           if (step < steps.length) {
             countdownEl.classList.remove("warmup-tick");
@@ -755,6 +777,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   navButtons.forEach(btn => {
     btn.addEventListener('click', () => {
+      // <--- ДОБАВЛЯЕМ ВИБРАЦИЮ ЗДЕСЬ --->
+      TelegramAPI.vibrate('light');
+
       // 1. Убираем класс active у всех кнопок
       navButtons.forEach(b => b.classList.remove('active'));
       // 2. Добавляем active нажатой кнопке
@@ -777,7 +802,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-
 
 // ==========================================
 // ЛОГИКА ЭКРАНА ОНБОРДИНГА (ОБУЧЕНИЯ)
