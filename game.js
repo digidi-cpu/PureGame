@@ -825,14 +825,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-
 // ==========================================
-// ЛОГИКА ЭКРАНА ОНБОРДИНГА (ОБУЧЕНИЯ)
+// ЛОГИКА ОНБОРДИНГА (СЛАЙДЕР И ОБУЧЕНИЕ)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   const obScreen = document.getElementById('onboardingScreen');
   const mainScreen = document.getElementById('startScreen');
   
+  // Проверяем, проходил ли игрок обучение
+  const hasSeenOnboarding = localStorage.getItem('digit_tutorial_done');
+
+  if (hasSeenOnboarding === 'true') {
+    if (obScreen) obScreen.classList.remove('active');
+    if (mainScreen) mainScreen.classList.add('active');
+    return; // Останавливаем код, если обучение уже пройдено
+  }
+
+  // Если не пройдено — запускаем логику слайдера
   const slides = document.querySelectorAll('.ob-slide');
   const dots = document.querySelectorAll('.ob-dot');
   const btnPrev = document.getElementById('obPrevBtn');
@@ -841,70 +850,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentSlide = 0;
 
-  // Функция обновления состояния слайдера
   function updateSlider() {
-    // 1. Переключаем классы активного слайда
     slides.forEach((slide, index) => {
-      if (index === currentSlide) {
-        slide.classList.add('active');
-      } else {
-        slide.classList.remove('active');
-      }
+      if (index === currentSlide) slide.classList.add('active');
+      else slide.classList.remove('active');
     });
 
-    // 2. Переключаем активные точки
     dots.forEach((dot, index) => {
-      if (index === currentSlide) {
-        dot.classList.add('active');
-      } else {
-        dot.classList.remove('active');
-      }
+      if (index === currentSlide) dot.classList.add('active');
+      else dot.classList.remove('active');
     });
 
-    // 3. Прячем/показываем стрелки в зависимости от слайда
-    if (currentSlide === 0) {
-      btnPrev.classList.add('hidden');
-    } else {
-      btnPrev.classList.remove('hidden');
-      btnPrev.classList.add('visible');
+    if (btnPrev) {
+      if (currentSlide === 0) btnPrev.classList.add('hidden');
+      else { btnPrev.classList.remove('hidden'); btnPrev.classList.add('visible'); }
     }
 
-    if (currentSlide === slides.length - 1) {
-      btnNext.classList.add('hidden');
-    } else {
-      btnNext.classList.remove('hidden');
-      btnNext.classList.add('visible');
+    if (btnNext) {
+      if (currentSlide === slides.length - 1) btnNext.classList.add('hidden');
+      else { btnNext.classList.remove('hidden'); btnNext.classList.add('visible'); }
     }
   }
 
-  // Клик "Вперед"
-  btnNext.addEventListener('click', () => {
-    if (currentSlide < slides.length - 1) {
-      currentSlide++;
-      updateSlider();
-    }
-  });
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      if (window.TelegramAPI) window.TelegramAPI.vibrate('light'); // Вибро-щелчок
+      if (currentSlide < slides.length - 1) { currentSlide++; updateSlider(); }
+    });
+  }
 
-  // Клик "Назад"
-  btnPrev.addEventListener('click', () => {
-    if (currentSlide > 0) {
-      currentSlide--;
-      updateSlider();
-    }
-  });
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      if (window.TelegramAPI) window.TelegramAPI.vibrate('light'); // Вибро-щелчок
+      if (currentSlide > 0) { currentSlide--; updateSlider(); }
+    });
+  }
 
-  // Клик "LET'S GO" (Завершение онбординга)
-  btnStartGame.addEventListener('click', () => {
-    obScreen.classList.remove('active'); // Скрываем онбординг
-    mainScreen.classList.add('active');  // Показываем главный экран
-  });
+  // Клик по финальной кнопке "LET'S GO!"
+  if (btnStartGame) {
+    btnStartGame.addEventListener('click', () => {
+      if (window.TelegramAPI) window.TelegramAPI.vibrate('medium'); // Уверенный вибро-отклик
+      
+      // Запоминаем, что игрок прошел обучение
+      localStorage.setItem('digit_tutorial_done', 'true');
+      
+      obScreen.classList.remove('active');
+      mainScreen.classList.add('active');
+    });
+  }
 
-  // Инициализируем стартовое состояние при запуске
+  // Инициализация первого слайда
   if (obScreen && slides.length > 0) {
     updateSlider();
   }
 });
-
 
 
 
