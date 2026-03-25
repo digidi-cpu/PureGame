@@ -188,6 +188,7 @@ class GameSandbox {
   }
 
 startGame() {
+    // 1. Переключаем экраны
     document.getElementById("startScreen").classList.remove("active");
     document.getElementById("gameScreen").classList.add("active");
 
@@ -196,50 +197,70 @@ startGame() {
 
     requestAnimationFrame(() => {
       requestAnimationFrame((now) => {
-        this.score = 0; this.timeLeft = 30; this.streak = 0; this.multiplier = 1;
-        this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
+        // 2. Сбрасываем все игровые параметры
+        this.score = 0; 
+        this.timeLeft = 40; // Установи здесь базовое время игры (ты упоминал 40 секунд)
+        this.streak = 0; 
+        this.multiplier = 1;
+        this.selectedRocket = null; 
+        this.freezeUntil = 0; 
+        this.isPlaying = true;
         this.activeFreezeType = null;
         
+        // 3. Очищаем поле и обновляем интерфейс
         this.clearGameArea();
         this.updateUI();
         this.updateGameSize();
 
+        // 4. Запускаем фон игры
         this.bg.init();
         this.bg.start();
         this.lastRAF = now;
 
+        // 5. --- ЛОГИКА ОТСЧЕТА (WARMUP) ---
         this.isWarmup = true;
         const overlay = document.getElementById("warmupOverlay");
         const countdownEl = document.getElementById("warmupCountdown");
+        
         overlay.classList.remove("hidden");
         overlay.classList.remove("hiding");
+        
+        // Показываем "3" и делаем первый легкий щелчок вибрации
         countdownEl.textContent = "3";
         countdownEl.classList.add("warmup-tick");
+        TelegramAPI.vibrate('light');
 
+        // Подготавливаем первый спавн
         this.lastRocketSpawnAt = now;
         this.lastPlanetSpawnAt = now + 200;
         this.spawnRocket();
 
+        // Запускаем игровой цикл (он будет крутиться, но таймер стоит на месте из-за isWarmup)
         this.startMainLoop();
 
         const steps = ["3", "2", "1", "START!"];
-        let step = 0;
+        let step = 0; // Начинаем с 0 (это цифра "3")
+        
         const tick = () => {
+          step++; // Переходим к следующему шагу ("2", "1", "START!")
 
+          // Вибрируем ровно в момент смены текста на экране
           if (step < 3) {
-            TelegramAPI.vibrate('light');
-          } else {
-            TelegramAPI.vibrate('heavy');
+            TelegramAPI.vibrate('light'); // Легкий щелчок для "2" и "1"
+          } else if (step === 3) {
+            TelegramAPI.vibrate('heavy'); // Мощный удар на "START!"
           }
           
-          step++;
           if (step < steps.length) {
+            // Перезапускаем CSS-анимацию пульсации текста
             countdownEl.classList.remove("warmup-tick");
-            void countdownEl.offsetWidth;
+            void countdownEl.offsetWidth; // Хак браузера для сброса анимации
             countdownEl.textContent = steps[step];
             countdownEl.classList.add("warmup-tick");
+            
             setTimeout(tick, 1000);
           } else {
+            // Прячем оверлей отсчета и запускаем таймер игры
             overlay.classList.add("hiding");
             setTimeout(() => {
               overlay.classList.add("hidden");
@@ -249,6 +270,8 @@ startGame() {
             }, 500);
           }
         };
+        
+        // Запускаем цепочку смены цифр
         setTimeout(tick, 1000);
       });
     });
