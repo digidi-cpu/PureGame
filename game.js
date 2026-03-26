@@ -319,11 +319,17 @@ updateAtmosphere() {
     fs.style.background = bg;
   }
 
-  shakeScreen(type = 'light') {
-    const app = document.getElementById('mobileApp');
+shakeScreen(type = 'light') {
+    // Ищем gameScreen вместо несуществующего mobileApp
+    const app = document.getElementById('gameScreen'); 
+    if (!app) return; // Защита от ошибок на всякий случай
+
     const cls = type === 'hard' ? 'shake-h' : 'shake-s';
-    app.classList.remove('shake-s', 'shake-h'); void app.offsetWidth;
-    app.classList.add(cls); setTimeout(() => app.classList.remove(cls), 350);
+    app.classList.remove('shake-s', 'shake-h'); 
+    void app.offsetWidth; // Магия браузера для перезапуска анимации
+    app.classList.add(cls); 
+    
+    setTimeout(() => app.classList.remove(cls), 350);
   }
 
   showScorePopup(x, y, text) {
@@ -618,9 +624,23 @@ if (cometType === 'magnet') {
     this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, popupText);
   }
 
-  selectRocket(id) {
-    this.active.forEach(e => { if (e.type === "rocket") { e.scale = 1; e.node.classList.remove("selected"); } });
-    const r = this.active.get(id); if (r) { r.scale = 1.08; r.node.classList.add("selected"); this.selectedRocket = id; }
+selectRocket(id) {
+    // <--- ДОБАВИЛИ ВИБРАЦИЮ ПРИ КЛИКЕ НА ПРИМЕР --->
+    window.TelegramAPI?.vibrate('light');
+
+    this.active.forEach(e => { 
+      if (e.type === "rocket") { 
+        e.scale = 1; 
+        e.node.classList.remove("selected"); 
+      } 
+    });
+    
+    const r = this.active.get(id); 
+    if (r) { 
+      r.scale = 1.08; 
+      r.node.classList.add("selected"); 
+      this.selectedRocket = id; 
+    }
   }
 
 tryAnswer(planetId) {
