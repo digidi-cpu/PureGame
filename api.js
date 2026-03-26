@@ -1,0 +1,75 @@
+// api.js — Клиент для связи с бэкендом Digit
+
+class GameAPI {
+  constructor() { 
+    // Твой актуальный адрес сервера на Railway
+    this.baseURL = "https://math-game-production-f196.up.railway.app"; 
+  }
+
+  // --- УНИВЕРСАЛЬНЫЙ МЕТОД ЗАПРОСА (С защитой Telegram) ---
+  async request(endpoint, options = {}) {
+    // Достаем подпись телеграма, чтобы сервер знал, что мы не читеры
+    const initData = window.Telegram?.WebApp?.initData || "";
+    
+    const headers = {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": initData,
+      ...(options.headers || {})
+    };
+
+    const config = { ...options, headers };
+    const response = await fetch(`${this.baseURL}${endpoint}`, config);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const error = new Error(errorData.error || `HTTP ${response.status}`);
+      error.status = response.status;
+      error.reason = errorData.reason;
+      throw error;
+    }
+
+    return response.json();
+  }
+
+  // ==========================================
+  // 🎮 ИГРОВОЙ ЦИКЛ (Старт и Финиш)
+  // ==========================================
+
+  // Вызывается перед стартом: списывает 1 ⚡ и дает ID сессии
+  async sessionStart() {
+    return this.request("/api/session/start", { method: "POST" });
+  }
+
+  // Вызывается когда время вышло: отправляет очки и получает билеты 🎟️
+  async sessionFinish(sessionId, finalScore) {
+    return this.request("/api/session/finish", {
+      method: "POST",
+      body: JSON.stringify({ 
+        session_id: sessionId, 
+        score: finalScore 
+      })
+    });
+  }
+
+  // ==========================================
+  // 🏆 ЛИДЕРБОРД И ПРОФИЛЬ
+  // ==========================================
+
+  // Получить Топ-100 игроков
+  async getLeaderboard(offset = 0, limit = 100) {
+    return this.request(`/api/leaderboard?offset=${offset}&limit=${limit}`);
+  }
+
+  // Получить свою статистику (Билеты, Энергия, Ранг)
+  async getMyStats() {
+    return this.request(`/api/user/me/stats`);
+  }
+
+  // Получить историю своих игр
+  async getMyHistory() {
+    return this.request(`/api/user/me/events`);
+  }
+}
+
+// Делаем API глобальным, чтобы game.js мог к нему обращаться
+window.API = new GameAPI();
