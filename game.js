@@ -179,94 +179,106 @@ bindUI() {
     }
   }
 
-startGame() {
-    // 1. Переключаем экраны
-    document.getElementById("startScreen").classList.remove("active");
-    document.getElementById("gameScreen").classList.add("active");
+async startGame() {
+    // 1. Блокируем кнопку старта, чтобы игрок не накликал 10 раз подряд
+    const startBtn = document.getElementById("startGameBtn");
+    if (startBtn) startBtn.style.opacity = "0.5";
 
-    // Выключаем анимацию звезд главного меню ради производительности
-    if (this.startBg) this.startBg.pause();
+    try {
+      // 2. Стучимся на сервер: Списываем энергию и получаем ID сессии
+      const sessionData = await window.API.sessionStart();
+      
+      // Запоминаем ID сессии, чтобы потом отправить по нему очки!
+      this.currentSessionId = sessionData.session_id; 
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame((now) => {
-        // 2. Сбрасываем все игровые параметры
-        this.score = 0; 
-        this.timeLeft = 40; // Установи здесь базовое время игры (ты упоминал 40 секунд)
-        this.streak = 0; 
-        this.multiplier = 1;
-        this.selectedRocket = null; 
-        this.freezeUntil = 0; 
-        this.isPlaying = true;
-        this.activeFreezeType = null;
-        
-        // 3. Очищаем поле и обновляем интерфейс
-        this.clearGameArea();
-        this.updateUI();
-        this.updateGameSize();
+      // 3. Переключаем экраны только если сервер дал добро
+      document.getElementById("startScreen").classList.remove("active");
+      document.getElementById("gameScreen").classList.add("active");
 
-        // 4. Запускаем фон игры
-        this.bg.init();
-        this.bg.start();
-        this.lastRAF = now;
+      if (this.startBg) this.startBg.pause();
 
-        // 5. --- ЛОГИКА ОТСЧЕТА (WARMUP) ---
-        this.isWarmup = true;
-        const overlay = document.getElementById("warmupOverlay");
-        const countdownEl = document.getElementById("warmupCountdown");
-        
-        overlay.classList.remove("hidden");
-        overlay.classList.remove("hiding");
-        
-        // Показываем "3" и делаем первый легкий щелчок вибрации
-        countdownEl.textContent = "3";
-        countdownEl.classList.add("warmup-tick");
-        TelegramAPI.vibrate('light');
-
-        // Подготавливаем первый спавн
-        this.lastRocketSpawnAt = now;
-        this.lastPlanetSpawnAt = now + 200;
-        this.spawnRocket();
-
-        // Запускаем игровой цикл (он будет крутиться, но таймер стоит на месте из-за isWarmup)
-        this.startMainLoop();
-
-        const steps = ["3", "2", "1", "START!"];
-        let step = 0; // Начинаем с 0 (это цифра "3")
-        
-        const tick = () => {
-          step++; // Переходим к следующему шагу ("2", "1", "START!")
-
-          // Вибрируем ровно в момент смены текста на экране
-          if (step < 3) {
-            TelegramAPI.vibrate('light'); // Легкий щелчок для "2" и "1"
-          } else if (step === 3) {
-            TelegramAPI.vibrate('heavy'); // Мощный удар на "START!"
-          }
+      requestAnimationFrame(() => {
+        requestAnimationFrame((now) => {
+          this.score = 0; 
+          this.timeLeft = 40; 
+          this.streak = 0; 
+          this.multiplier = 1;
+          this.selectedRocket = null; 
+          this.freezeUntil = 0; 
+          this.isPlaying = true;
+          this.activeFreezeType = null;
           
-          if (step < steps.length) {
-            // Перезапускаем CSS-анимацию пульсации текста
-            countdownEl.classList.remove("warmup-tick");
-            void countdownEl.offsetWidth; // Хак браузера для сброса анимации
-            countdownEl.textContent = steps[step];
-            countdownEl.classList.add("warmup-tick");
+          this.clearGameArea();
+          this.updateUI();
+          this.updateGameSize();
+
+          this.bg.init();
+          this.bg.start();
+          this.lastRAF = now;
+
+          this.isWarmup = true;
+          const overlay = document.getElementById("warmupOverlay");
+          const countdownEl = document.getElementById("warmupCountdown");
+          
+          overlay.classList.remove("hidden");
+          overlay.classList.remove("hiding");
+          
+          countdownEl.textContent = "3";
+          countdownEl.classList.add("warmup-tick");
+          window.TelegramAPI?.vibrate('light');
+
+          this.lastRocketSpawnAt = now;
+          this.lastPlanetSpawnAt = now + 200;
+          this.spawnRocket();
+
+          this.startMainLoop();
+
+          const steps = ["3", "2", "1", "START!"];
+          let step = 0; 
+          
+          const tick = () => {
+            step++;
+            if (step < 3) {
+              window.TelegramAPI?.vibrate('light'); 
+            } else if (step === 3) {
+              window.TelegramAPI?.vibrate('heavy'); 
+            }
             
-            setTimeout(tick, 1000);
-          } else {
-            // Прячем оверлей отсчета и запускаем таймер игры
-            overlay.classList.add("hiding");
-            setTimeout(() => {
-              overlay.classList.add("hidden");
-              overlay.classList.remove("hiding");
-              this.isWarmup = false;
-              this.startTimer();
-            }, 500);
-          }
-        };
-        
-        // Запускаем цепочку смены цифр
-        setTimeout(tick, 1000);
+            if (step < steps.length) {
+              countdownEl.classList.remove("warmup-tick");
+              void countdownEl.offsetWidth; 
+              countdownEl.textContent = steps[step];
+              countdownEl.classList.add("warmup-tick");
+              setTimeout(tick, 1000);
+            } else {
+              overlay.classList.add("hiding");
+              setTimeout(() => {
+                overlay.classList.add("hidden");
+                overlay.classList.remove("hiding");
+                this.isWarmup = false;
+                this.startTimer();
+              }, 500);
+            }
+          };
+          
+          setTimeout(tick, 1000);
+        });
       });
-    });
+
+    } catch (error) {
+      // 4. ЕСЛИ ОШИБКА (Нет энергии или упал сервер)
+      console.error("Start Game Error:", error);
+      window.TelegramAPI?.vibrate('error');
+      
+      if (error.reason === 'Out of energy') {
+        alert("⚡ Not enough energy! Come back tomorrow or buy more."); 
+      } else {
+        alert("Server error. Please try again later.");
+      }
+    } finally {
+      // Возвращаем кнопку в нормальное состояние
+      if (startBtn) startBtn.style.opacity = "1";
+    }
   }
 
   clearGameArea() {
@@ -719,11 +731,57 @@ applyCorrect(planetId) {
 
   removeEntity(id) { const e = this.active.get(id); if (!e) return; e.node?.remove(); this.active.delete(id); if (e.type === "rocket") this.correctAnswers.delete(id); }
 
-  endGame() {
-    this.isPlaying = false; clearInterval(this.timerId); cancelAnimationFrame(this.rafId);
-    this.bg.pause(); document.getElementById('gameScreen').style.background = '#0a0a1a';
-    document.getElementById("finalScore").textContent = this.score;
+async endGame() {
+    this.isPlaying = false; 
+    clearInterval(this.timerId); 
+    cancelAnimationFrame(this.rafId);
+    this.bg.pause(); 
+    document.getElementById('gameScreen').style.background = '#0a0a1a';
+    
+    // 1. Показываем состояние ЗАГРУЗКИ в модалке
+    document.getElementById("finalScore").textContent = "Calculating...";
+    document.querySelector(".rt-val").textContent = "Wait... 🎟️";
+    document.querySelector(".rt-hint").textContent = "Syncing with server...";
+    document.querySelector(".rt-fill").style.width = "0%";
+    
     document.getElementById("resultModal").style.display = "flex";
+
+    try {
+      // 2. ОТПРАВЛЯЕМ РЕЗУЛЬТАТ НА СЕРВЕР (используем ID, который получили на старте)
+      const result = await window.API.sessionFinish(this.currentSessionId, this.score);
+
+      // 3. СЕРВЕР ОТВЕТИЛ! Обновляем интерфейс
+      if (result.success) {
+        document.getElementById("finalScore").textContent = this.score;
+
+        // Если античит забраковал игру
+        if (result.is_valid === false) {
+          document.querySelector(".rt-val").textContent = "+0 🎟️";
+          document.querySelector(".rt-hint").textContent = "⚠️ Result rejected (Anti-cheat)";
+          document.querySelector(".rt-hint").style.color = "#ff3333";
+        } else {
+          // Игра честная, рисуем билеты и прогресс-бар
+          const tickets = result.tickets_earned || 0;
+          const balance = result.score_balance || 0;
+          
+          document.querySelector(".rt-val").textContent = `+${tickets} 🎟️`;
+          document.querySelector(".rt-hint").style.color = "rgba(255,255,255,0.6)"; // Возвращаем цвет
+          document.querySelector(".rt-hint").textContent = `${balance} / 5,000 to next ticket`;
+          
+          // Высчитываем проценты для полоски (от 0 до 100%)
+          const percent = Math.min(100, Math.round((balance / 5000) * 100));
+          document.querySelector(".rt-fill").style.width = `${percent}%`;
+        }
+      }
+
+    } catch (error) {
+      console.error("End Game Error:", error);
+      // Если сервер не ответил (пропал интернет), показываем локальные очки, но предупреждаем
+      document.getElementById("finalScore").textContent = this.score;
+      document.querySelector(".rt-val").textContent = "Offline";
+      document.querySelector(".rt-hint").textContent = "Could not save result to server.";
+      document.querySelector(".rt-hint").style.color = "#ff3333";
+    }
   }
 }
 
