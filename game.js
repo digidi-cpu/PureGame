@@ -265,7 +265,7 @@ async startGame() {
         });
       });
 
-    } catch (error) {
+} catch (error) {
       // 4. ЕСЛИ ОШИБКА (Нет энергии или упал сервер)
       console.error("Start Game Error:", error);
       window.TelegramAPI?.vibrate('error');
@@ -275,8 +275,15 @@ async startGame() {
       } else {
         alert("Server error. Please try again later.");
       }
+      
+      // ИСПРАВЛЕНИЕ: Возвращаем на главный экран, если запуск сорвался
+      document.getElementById("gameScreen").classList.remove("active");
+      document.getElementById("startScreen").classList.add("active");
+      if (this.startBg) this.startBg.start(); // Включаем обратно звезды в меню
+      
     } finally {
       // Возвращаем кнопку в нормальное состояние
+      const startBtn = document.getElementById("startGameBtn");
       if (startBtn) startBtn.style.opacity = "1";
     }
   }
@@ -774,12 +781,13 @@ async endGame() {
         }
       }
 
-    } catch (error) {
+} catch (error) {
       console.error("End Game Error:", error);
-      // Если сервер не ответил (пропал интернет), показываем локальные очки, но предупреждаем
       document.getElementById("finalScore").textContent = this.score;
       document.querySelector(".rt-val").textContent = "Offline";
-      document.querySelector(".rt-hint").textContent = "Could not save result to server.";
+      
+      // МЫ ДОБАВИЛИ ВЫВОД ТОЧНОЙ ОШИБКИ ТУТ 👇
+      document.querySelector(".rt-hint").textContent = "Error: " + (error.reason || error.message);
       document.querySelector(".rt-hint").style.color = "#ff3333";
     }
   }
