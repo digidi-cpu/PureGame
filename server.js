@@ -279,10 +279,12 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     }
 
     const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || null;
+    
+    // 🔥 ИСПРАВЛЕНИЕ ТУТ: передаем JS Date напрямую, без вычислений в SQL!
     await client.query(
       `INSERT INTO game_sessions (session_id, user_id, started_at, finished_at, duration_ms, final_score, tickets_earned, is_valid, fraud_flags, ip_address)
-       VALUES ($1, $2, to_timestamp($3 / 1000.0), now(), $4, $5, $6, $7, $8::jsonb, $9)`,
-      [session_id, userId, sessionData.start_ms, duration_ms, finalScore, ticketsEarnedNow, isValid, JSON.stringify(fraudFlags), clientIp]
+       VALUES ($1, $2, $3, now(), $4, $5, $6, $7, $8::jsonb, $9)`,
+      [session_id, userId, new Date(sessionData.start_ms), duration_ms, finalScore, ticketsEarnedNow, isValid, JSON.stringify(fraudFlags), clientIp]
     );
 
     await client.query('COMMIT');
@@ -291,7 +293,9 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     res.json({ success: true, score: finalScore, tickets_earned: ticketsEarnedNow, total_tickets: newTickets, score_balance: newBalance, is_valid: isValid });
   } catch (e) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: 'internal_error' });
+    console.error('session/finish error:', e);
+    // 🔥 ИСПРАВЛЕНИЕ 2: Теперь сервер честно скажет фронтенду, на чем он сломался!
+    res.status(500).json({ error: 'internal_error', reason: e.message || String(e) });
   } finally {
     client.release();
   }
