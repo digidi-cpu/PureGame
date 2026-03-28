@@ -117,7 +117,7 @@
           </button>
           
           <div class="play-cta__hint" style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
-            <span style="color: #fff; font-weight: 700;">⚡ 3/3 FREE</span>
+            <span style="color: #fff; font-weight: 700;">⚡ <span id="energyCount">3/3</span> FREE</span>
             <span style="color: rgba(255,255,255,0.3);">|</span>
             <span style="color: var(--cosmic-accent); font-weight: 600;">🎯 5,000 PTS = 1 🎟️</span>
           </div>
@@ -259,7 +259,7 @@
 
         <div class="profile-balances-large">
           <div class="p-bal-card">
-            <div class="p-bal-val">150</div>
+            <div class="p-bal-val" id="profileTickets">0</div>
             <div class="p-bal-lbl">TICKETS 🎟️</div>
           </div>
           <div class="p-bal-card">
@@ -380,7 +380,7 @@
 
         <div class="modal-actions">
           <button id="playAgainBtn" class="btn btn-play-again">
-            PLAY AGAIN <span style="font-size:0.7em; opacity:0.8;">(2/3 ⚡)</span>
+            PLAY AGAIN <span style="font-size:0.7em; opacity:0.8;">(<span id="modalEnergy">3/3</span> ⚡)</span>
           </button>
           <button id="homeBtn" class="btn btn-home" onclick="document.getElementById('resultModal').style.display='none'; document.querySelector('.nav-btn[data-tab=\'home\']').click();">
             HOME
