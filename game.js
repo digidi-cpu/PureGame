@@ -266,20 +266,19 @@ async startGame() {
       });
 
 } catch (error) {
-      // 4. ЕСЛИ ОШИБКА (Нет энергии или упал сервер)
       console.error("Start Game Error:", error);
       window.TelegramAPI?.vibrate('error');
       
-      if (error.reason === 'Out of energy') {
+      // ИСПРАВЛЕНО: Теперь ловим правильный ответ сервера
+      if (error.message === 'not_enough_energy' || error.reason === 'not_enough_energy') {
         alert("⚡ Not enough energy! Come back tomorrow or buy more."); 
       } else {
-        alert("Server error. Please try again later.");
+        alert("Server error: " + (error.reason || error.message));
       }
       
-      // ИСПРАВЛЕНИЕ: Возвращаем на главный экран, если запуск сорвался
       document.getElementById("gameScreen").classList.remove("active");
       document.getElementById("startScreen").classList.add("active");
-      if (this.startBg) this.startBg.start(); // Включаем обратно звезды в меню
+      if (this.startBg) this.startBg.start(); 
       
     } finally {
       // Возвращаем кнопку в нормальное состояние
