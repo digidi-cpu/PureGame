@@ -170,6 +170,7 @@ bindUI() {
     window.addEventListener("resize", () => this.updateGameSize());
   }
 
+  
   updateGameSize() {
     const area = document.getElementById("fullscreenGameArea");
     if (area) {
@@ -308,6 +309,43 @@ async startGame() {
     document.getElementById("timer").textContent = this.timeLeft;
     document.getElementById("score").textContent = this.score;
     document.getElementById("multiplier").textContent = this.multiplier;
+  }
+
+  // Свежие данные с сервера прямо на экран
+  async syncProfile() {
+    try {
+      // Идем на сервер за статой (работает через наш api.js)
+      const stats = await window.API.getMyStats();
+      
+      if (stats && stats.exists) {
+        // 1. Обновляем ЭНЕРГИЮ в верхнем меню (если найдем такой элемент)
+        const energyCount = document.getElementById("energyCount");
+        if (energyCount) energyCount.textContent = `${stats.energy}/3`;
+
+        // 2. Обновляем БИЛЕТЫ в верхнем меню
+        const ticketCount = document.getElementById("ticketCount");
+        if (ticketCount) ticketCount.textContent = stats.tickets;
+
+        // 3. Обновляем данные во вкладке ПРОФИЛЬ (если она у тебя есть)
+        const profileTickets = document.getElementById("profileTickets");
+        if (profileTickets) profileTickets.textContent = stats.tickets;
+
+        const profileRank = document.getElementById("profileRank");
+        if (profileRank) profileRank.textContent = `#${stats.rank}`;
+
+        // 4. Прогресс-бар до следующего билета в Профиле
+        const profileFill = document.getElementById("profileFill");
+        const profileHint = document.getElementById("profileHint");
+        
+        if (profileFill && profileHint) {
+          const percent = Math.min(100, Math.round((stats.score_balance / 5000) * 100));
+          profileFill.style.width = `${percent}%`;
+          profileHint.textContent = `${stats.score_balance} / 5,000 pts`;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to sync profile:", e);
+    }
   }
 
 updateAtmosphere() {
@@ -793,7 +831,11 @@ async endGame() {
 }
 
 
-document.addEventListener("DOMContentLoaded", () => { window.gameSandbox = new GameSandbox(); });
+document.addEventListener("DOMContentLoaded", () => { 
+  window.gameSandbox = new GameSandbox(); 
+  // Как только игра создалась, подтягиваем цифры с бэкенда!
+  window.gameSandbox.syncProfile();
+});
 
 
 // ==========================================
