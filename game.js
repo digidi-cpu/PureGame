@@ -311,7 +311,7 @@ async startGame() {
     document.getElementById("multiplier").textContent = this.multiplier;
   }
 
-  // Свежие данные с сервера прямо на экран
+// Свежие данные с сервера прямо на экран
   async syncProfile() {
     try {
       // Идем на сервер за статой (работает через наш api.js)
@@ -342,6 +342,10 @@ async startGame() {
           profileFill.style.width = `${percent}%`;
           profileHint.textContent = `${stats.score_balance} / 5,000 pts`;
         }
+
+        // 👇 ВОТ ОНИ, НАШИ НОВЫЕ СТРОЧКИ 👇
+        const modalEnergy = document.getElementById("modalEnergy");
+        if (modalEnergy) modalEnergy.textContent = `${stats.energy}/3`;
       }
     } catch (e) {
       console.error("Failed to sync profile:", e);
@@ -826,6 +830,9 @@ async endGame() {
       // МЫ ДОБАВИЛИ ВЫВОД ТОЧНОЙ ОШИБКИ ТУТ 👇
       document.querySelector(".rt-hint").textContent = "Error: " + (error.reason || error.message);
       document.querySelector(".rt-hint").style.color = "#ff3333";
+    } finally {
+      // 👇 ВОТ СЮДА ДОБАВЛЯЕМ СИНХРОНИЗАЦИЮ 👇
+      this.syncProfile();
     }
   }
 }
