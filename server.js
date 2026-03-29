@@ -348,6 +348,9 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
       [u.tickets, u.total_score]
     );
 
+    // 👇 НОВАЯ СТРОЧКА: Считаем уровень (каждые 500 очков = +1 уровень) 👇
+    const currentLevel = Math.floor(Number(u.total_score) / 500) + 1;
+
     res.json({
       exists: true,
       rank: Number(rankRows[0]?.pos || 0),
@@ -355,7 +358,8 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
       score_balance: u.score_balance,
       total_score: Number(u.total_score),
       games_played: u.games_played,
-      energy: u.energy
+      energy: u.energy,
+      level: currentLevel // 👇 ОТДАЕМ УРОВЕНЬ НА ФРОНТЕНД 👇
     });
   } catch (e) {
     res.status(500).json({ error: 'internal_error' });
