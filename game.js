@@ -343,9 +343,29 @@ async startGame() {
           profileHint.textContent = `${stats.score_balance} / 5,000 pts`;
         }
 
-        // 👇 ВОТ ОНИ, НАШИ НОВЫЕ СТРОЧКИ 👇
+        // КНОПКА "PLAY AGAIN" В МОДАЛКЕ
         const modalEnergy = document.getElementById("modalEnergy");
         if (modalEnergy) modalEnergy.textContent = `${stats.energy}/3`;
+
+        // 👇 ДОБАВЛЯЕМ НОВЫЕ ДАННЫЕ ПРОФИЛЯ 👇
+        
+        // 5. Уровень
+        const profileLevel = document.getElementById("profileLevel");
+        if (profileLevel) profileLevel.textContent = `LEVEL ${stats.level || 1}`;
+
+        // 6. Сыграно игр
+        const profileGamesPlayed = document.getElementById("profileGamesPlayed");
+        if (profileGamesPlayed) profileGamesPlayed.textContent = (stats.games_played || 0).toLocaleString();
+
+        // 7. Всего очков (Total Points)
+        const profileTotalPoints = document.getElementById("profileTotalPoints");
+        if (profileTotalPoints) profileTotalPoints.textContent = (stats.total_score || 0).toLocaleString();
+
+        // 8. Имя игрока (берем из Telegram API, если есть)
+        const profileName = document.getElementById("profileName");
+        if (profileName && window.TelegramAPI && window.TelegramAPI.initDataUnsafe?.user) {
+            profileName.textContent = window.TelegramAPI.initDataUnsafe.user.first_name;
+        }
       }
     } catch (e) {
       console.error("Failed to sync profile:", e);
