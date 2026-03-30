@@ -314,57 +314,54 @@ async startGame() {
 // Свежие данные с сервера прямо на экран
   async syncProfile() {
     try {
-      // Идем на сервер за статой (работает через наш api.js)
       const stats = await window.API.getMyStats();
       
       if (stats && stats.exists) {
-        // 1. Обновляем ЭНЕРГИЮ в верхнем меню (если найдем такой элемент)
+        // 1. Верхнее меню
         const energyCount = document.getElementById("energyCount");
         if (energyCount) energyCount.textContent = `${stats.energy}/3`;
 
-        // 2. Обновляем БИЛЕТЫ в верхнем меню
         const ticketCount = document.getElementById("ticketCount");
         if (ticketCount) ticketCount.textContent = stats.tickets;
 
-        // 3. Обновляем данные во вкладке ПРОФИЛЬ (если она у тебя есть)
-        const profileTickets = document.getElementById("profileTickets");
-        if (profileTickets) profileTickets.textContent = stats.tickets;
-
-        const profileRank = document.getElementById("profileRank");
-        if (profileRank) profileRank.textContent = `#${stats.rank}`;
-
-        // 4. Прогресс-бар до следующего билета в Профиле
-        const profileFill = document.getElementById("profileFill");
-        const profileHint = document.getElementById("profileHint");
-        
-        if (profileFill && profileHint) {
-          const percent = Math.min(100, Math.round((stats.score_balance / 5000) * 100));
-          profileFill.style.width = `${percent}%`;
-          profileHint.textContent = `${stats.score_balance} / 5,000 pts`;
-        }
-
-        // КНОПКА "PLAY AGAIN" В МОДАЛКЕ
+        // 2. Кнопка "Play Again" в модалке
         const modalEnergy = document.getElementById("modalEnergy");
         if (modalEnergy) modalEnergy.textContent = `${stats.energy}/3`;
 
-        // 👇 ДОБАВЛЯЕМ НОВЫЕ ДАННЫЕ ПРОФИЛЯ 👇
-        
-        // 5. Уровень
+        // 3. Данные в новом Профиле
+        const profileTickets = document.getElementById("profileTickets");
+        if (profileTickets) profileTickets.textContent = stats.tickets;
+
+        const profileTotalPointsLarge = document.getElementById("profileTotalPointsLarge");
+        if (profileTotalPointsLarge) profileTotalPointsLarge.textContent = (stats.total_score || 0).toLocaleString();
+
         const profileLevel = document.getElementById("profileLevel");
         if (profileLevel) profileLevel.textContent = `LEVEL ${stats.level || 1}`;
 
-        // 6. Сыграно игр
         const profileGamesPlayed = document.getElementById("profileGamesPlayed");
         if (profileGamesPlayed) profileGamesPlayed.textContent = (stats.games_played || 0).toLocaleString();
 
-        // 7. Всего очков (Total Points)
-        const profileTotalPoints = document.getElementById("profileTotalPoints");
-        if (profileTotalPoints) profileTotalPoints.textContent = (stats.total_score || 0).toLocaleString();
-
-        // 8. Имя игрока (берем из Telegram API, если есть)
         const profileName = document.getElementById("profileName");
         if (profileName && window.TelegramAPI && window.TelegramAPI.initDataUnsafe?.user) {
             profileName.textContent = window.TelegramAPI.initDataUnsafe.user.first_name;
+        }
+
+        // 4. МАТЕМАТИКА НОВОГО ПРОГРЕСС-БАРА УРОВНЯ
+        const levelProgressFill = document.getElementById("levelProgressFill");
+        const levelProgressText = document.getElementById("levelProgressText");
+        
+        if (levelProgressFill && levelProgressText) {
+          const currentLvl = stats.level || 1;
+          const score = stats.total_score || 0;
+          
+          const nextLevelThreshold = currentLvl * 500; // Цель (например, 1500)
+          const currentLevelStart = (currentLvl - 1) * 500; // Начало уровня (например, 1000)
+          
+          const pointsInCurrentLevel = score - currentLevelStart; // Например, 204
+          const percent = Math.min(100, Math.max(0, (pointsInCurrentLevel / 500) * 100)); // 40.8%
+          
+          levelProgressFill.style.width = `${percent}%`;
+          levelProgressText.textContent = `${score.toLocaleString()} / ${nextLevelThreshold.toLocaleString()} to LVL ${currentLvl + 1}`;
         }
       }
     } catch (e) {
