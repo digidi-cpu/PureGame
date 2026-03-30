@@ -121,6 +121,7 @@ class GameSandbox {
     this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = false;
     this.isWarmup = false;
     this.magnetUntil = 0;
+    this.historyOffset = 0;
     
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
     this.lastRAF = 0; this.lastRocketSpawnAt = 0; this.lastPlanetSpawnAt = 0;
@@ -143,17 +144,25 @@ class GameSandbox {
   }
 bindUI() {
     document.getElementById("startGameBtn").addEventListener("click", () => {
-      // <--- ВИБРАЦИЯ ЗДЕСЬ (Уверенный отклик на главную кнопку)
       TelegramAPI.vibrate('medium'); 
       this.startGame();
     });
 
     document.getElementById("playAgainBtn").addEventListener("click", () => {
-      // <--- ВИБРАЦИЯ ЗДЕСЬ (Такой же отклик на рестарт)
       TelegramAPI.vibrate('medium'); 
       document.getElementById("resultModal").style.display = "none";
       this.startGame();
     });
+
+    // 👇 ДОБАВЛЯЕМ КНОПКУ LOAD MORE СЮДА 👇
+    const loadMoreBtn = document.getElementById("historyLoadMore");
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener("click", () => {
+        window.TelegramAPI?.vibrate('light');
+        this.loadMatchHistory(true);
+      });
+    }
+    // 👆 =============================== 👆
 
     window.addEventListener("resize", () => this.updateGameSize());
   }
@@ -403,6 +412,62 @@ async startGame() {
       }
     } catch (e) {
       console.error("Failed to sync profile:", e);
+    }
+  }
+
+
+  async loadMatchHistory(isLoadMore = false) {
+    const historyList = document.getElementById("historyList");
+    const loadMoreBtn = document.getElementById("historyLoadMore");
+    if (!historyList) return;
+
+    if (!isLoadMore) {
+      this.historyOffset = 0;
+      historyList.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Loading data...</div>`;
+      if (loadMoreBtn) loadMoreBtn.style.display = "none";
+    }
+
+    // Идем на сервер за историей (убедись, что в api.js добавлена функция getMyHistory)
+    const data = await window.API.getMyHistory(this.historyOffset);
+
+    if (!isLoadMore) historyList.innerHTML = ""; 
+
+    if (!data || !data.matches || data.matches.length === 0) {
+      if (!isLoadMore) {
+        historyList.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.8rem; padding: 20px;">History is empty</div>`;
+      }
+      if (loadMoreBtn) loadMoreBtn.style.display = "none";
+      return;
+    }
+
+    data.matches.forEach(match => {
+      const dateObj = new Date(match.started_at);
+      const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      const matchScore = (match.final_score || 0).toLocaleString();
+      const ticketsEarned = match.tickets_earned || 0;
+      const rewardStyle = ticketsEarned > 0 ? '' : 'color: rgba(255,255,255,0.4);';
+
+      const itemHtml = `
+        <div class="history-item">
+          <div class="h-left">
+            <div class="h-score">${matchScore} PTS</div>
+            <div class="h-date">${dateStr}, ${timeStr}</div>
+          </div>
+          <div class="h-right">
+            <span class="h-reward" style="${rewardStyle}">+${ticketsEarned} 🎟️</span>
+          </div>
+        </div>
+      `;
+      historyList.insertAdjacentHTML('beforeend', itemHtml);
+    });
+
+    this.historyOffset += data.matches.length;
+
+    if (data.matches.length < 10 && loadMoreBtn) {
+      loadMoreBtn.style.display = "none";
+    } else if (loadMoreBtn) {
+      loadMoreBtn.style.display = "block";
     }
   }
 
