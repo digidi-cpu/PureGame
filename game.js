@@ -5,9 +5,6 @@ const ROCKET_SPAWN_MS    = 900;
 const PLANET_SPAWN_MS    = 800;
 const INPUT_LOCK_MS      = 140;
 
-
-
-
 // Утилиты
 function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function equalsNum(a, b) { return Math.abs(a - b) < 1e-9; }
@@ -81,19 +78,12 @@ class JuiceFX {
     }
   }
   trail(x, y, color = '#7df0ff') {
-    // Добавляем небольшой случайный разброс, чтобы хвост был объемным
     const offsetX = x + (Math.random() * 30 - 15);
     const offsetY = y + (Math.random() * 30 - 15);
-    
     this.particles.push({ 
-      x: offsetX, 
-      y: offsetY, 
-      vx: (Math.random() - 0.5) * 0.5, // Почти не имеют своей скорости, висят на месте
-      vy: (Math.random() - 0.5) * 0.5, 
-      life: 1.0, 
-      decay: Math.random() * 0.04 + 0.02, // Скорость таяния
-      color: color, 
-      size: Math.random() * 3 + 1.5 // Рандомный размер льдинок
+      x: offsetX, y: offsetY, 
+      vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5, 
+      life: 1.0, decay: Math.random() * 0.04 + 0.02, color: color, size: Math.random() * 3 + 1.5
     });
   }
   draw() {
@@ -121,7 +111,9 @@ class GameSandbox {
     this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = false;
     this.isWarmup = false;
     this.magnetUntil = 0;
-    this.historyOffset = 0;
+    
+    // 👇 НОВАЯ ПЕРЕМЕННАЯ ДЛЯ ПАГИНАЦИИ ИСТОРИИ 👇
+    this.historyOffset = 0; 
     
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
     this.lastRAF = 0; this.lastRocketSpawnAt = 0; this.lastPlanetSpawnAt = 0;
@@ -130,19 +122,16 @@ class GameSandbox {
     this.columns = 6; this.columnWidth = 0; this.gameSize = { w: 0, h: 0 };
     this.inputLockUntil = 0;
 
-    // Инициализируем два фона
     this.bg = new MinimalSpaceBG('playBgCanvas');
-    this.startBg = new MinimalSpaceBG('startBgCanvas'); // Фон для главного меню
-    
+    this.startBg = new MinimalSpaceBG('startBgCanvas'); 
     this.fx = new JuiceFX();
     
     this.bindUI();
-    
-    // Запускаем звезды в главном меню сразу при загрузке
     this.startBg.init();
     this.startBg.start();
   }
-bindUI() {
+
+  bindUI() {
     document.getElementById("startGameBtn").addEventListener("click", () => {
       TelegramAPI.vibrate('medium'); 
       this.startGame();
@@ -154,7 +143,7 @@ bindUI() {
       this.startGame();
     });
 
-    // 👇 ДОБАВЛЯЕМ КНОПКУ LOAD MORE СЮДА 👇
+    // 👇 НОВАЯ КНОПКА ДЛЯ ИСТОРИИ МАТЧЕЙ 👇
     const loadMoreBtn = document.getElementById("historyLoadMore");
     if (loadMoreBtn) {
       loadMoreBtn.addEventListener("click", () => {
@@ -162,12 +151,10 @@ bindUI() {
         this.loadMatchHistory(true);
       });
     }
-    // 👆 =============================== 👆
 
     window.addEventListener("resize", () => this.updateGameSize());
   }
 
-  
   updateGameSize() {
     const area = document.getElementById("fullscreenGameArea");
     if (area) {
@@ -177,22 +164,15 @@ bindUI() {
     }
   }
 
-async startGame() {
-    // 1. Блокируем кнопку старта, чтобы игрок не накликал 10 раз подряд
+  async startGame() {
     const startBtn = document.getElementById("startGameBtn");
     if (startBtn) startBtn.style.opacity = "0.5";
 
     try {
-      // 2. Стучимся на сервер: Списываем энергию и получаем ID сессии
       const sessionData = await window.API.sessionStart();
-      
-      // Запоминаем ID сессии, чтобы потом отправить по нему очки!
       this.currentSessionId = sessionData.session_id; 
-
-      
       this.equationsPool = sessionData.equations || [];
 
-      // 3. Переключаем экраны только если сервер дал добро
       document.getElementById("startScreen").classList.remove("active");
       document.getElementById("gameScreen").classList.add("active");
 
@@ -200,13 +180,8 @@ async startGame() {
 
       requestAnimationFrame(() => {
         requestAnimationFrame((now) => {
-          this.score = 0; 
-          this.timeLeft = 40; 
-          this.streak = 0; 
-          this.multiplier = 1;
-          this.selectedRocket = null; 
-          this.freezeUntil = 0; 
-          this.isPlaying = true;
+          this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
+          this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
           this.activeFreezeType = null;
           
           this.clearGameArea();
@@ -221,9 +196,7 @@ async startGame() {
           const overlay = document.getElementById("warmupOverlay");
           const countdownEl = document.getElementById("warmupCountdown");
           
-          overlay.classList.remove("hidden");
-          overlay.classList.remove("hiding");
-          
+          overlay.classList.remove("hidden", "hiding");
           countdownEl.textContent = "3";
           countdownEl.classList.add("warmup-tick");
           window.TelegramAPI?.vibrate('light');
@@ -231,7 +204,6 @@ async startGame() {
           this.lastRocketSpawnAt = now;
           this.lastPlanetSpawnAt = now + 200;
           this.spawnRocket();
-
           this.startMainLoop();
 
           const steps = ["3", "2", "1", "START!"];
@@ -239,11 +211,8 @@ async startGame() {
           
           const tick = () => {
             step++;
-            if (step < 3) {
-              window.TelegramAPI?.vibrate('light'); 
-            } else if (step === 3) {
-              window.TelegramAPI?.vibrate('heavy'); 
-            }
+            if (step < 3) window.TelegramAPI?.vibrate('light'); 
+            else if (step === 3) window.TelegramAPI?.vibrate('heavy'); 
             
             if (step < steps.length) {
               countdownEl.classList.remove("warmup-tick");
@@ -261,28 +230,21 @@ async startGame() {
               }, 500);
             }
           };
-          
           setTimeout(tick, 1000);
         });
       });
-
-} catch (error) {
+    } catch (error) {
       console.error("Start Game Error:", error);
       window.TelegramAPI?.vibrate('error');
-      
-      // ИСПРАВЛЕНО: Теперь ловим правильный ответ сервера
       if (error.message === 'not_enough_energy' || error.reason === 'not_enough_energy') {
         alert("⚡ Not enough energy! Come back tomorrow or buy more."); 
       } else {
         alert("Server error: " + (error.reason || error.message));
       }
-      
       document.getElementById("gameScreen").classList.remove("active");
       document.getElementById("startScreen").classList.add("active");
       if (this.startBg) this.startBg.start(); 
-      
     } finally {
-      // Возвращаем кнопку в нормальное состояние
       const startBtn = document.getElementById("startGameBtn");
       if (startBtn) startBtn.style.opacity = "1";
     }
@@ -299,7 +261,7 @@ async startGame() {
 
   startTimer() {
     this.timerId = setInterval(() => {
-      if (performance.now() < this.freezeUntil) return; // Заморозка времени
+      if (performance.now() < this.freezeUntil) return; 
       this.timeLeft -= 1; this.updateUI();
       if (this.timeLeft <= 0) this.endGame();
     }, 1000);
@@ -311,24 +273,20 @@ async startGame() {
     document.getElementById("multiplier").textContent = this.multiplier;
   }
 
-// Свежие данные с сервера прямо на экран
+  // Свежие данные с сервера прямо на экран
   async syncProfile() {
     try {
       const stats = await window.API.getMyStats();
-      
       if (stats && stats.exists) {
-        // 1. Верхнее меню
         const energyCount = document.getElementById("energyCount");
         if (energyCount) energyCount.textContent = `${stats.energy}/3`;
 
         const ticketCount = document.getElementById("ticketCount");
         if (ticketCount) ticketCount.textContent = stats.tickets;
 
-        // 2. Кнопка "Play Again" в модалке
         const modalEnergy = document.getElementById("modalEnergy");
         if (modalEnergy) modalEnergy.textContent = `${stats.energy}/3`;
 
-        // 3. Данные в новом Профиле
         const profileTickets = document.getElementById("profileTickets");
         if (profileTickets) profileTickets.textContent = stats.tickets;
 
@@ -351,71 +309,30 @@ async startGame() {
             profileName.textContent = window.TelegramAPI.initDataUnsafe.user.first_name;
         }
 
-        // 4. МАТЕМАТИКА НОВОГО ПРОГРЕСС-БАРА УРОВНЯ
         const levelProgressFill = document.getElementById("levelProgressFill");
         const levelProgressText = document.getElementById("levelProgressText");
         
         if (levelProgressFill && levelProgressText) {
           const currentLvl = stats.level || 1;
           const score = stats.total_score || 0;
-          
-          const nextLevelThreshold = currentLvl * 500; // Цель (например, 1500)
-          const currentLevelStart = (currentLvl - 1) * 500; // Начало уровня (например, 1000)
-          
-          const pointsInCurrentLevel = score - currentLevelStart; // Например, 204
-          const percent = Math.min(100, Math.max(0, (pointsInCurrentLevel / 500) * 100)); // 40.8%
+          const nextLevelThreshold = currentLvl * 500;
+          const currentLevelStart = (currentLvl - 1) * 500;
+          const pointsInCurrentLevel = score - currentLevelStart;
+          const percent = Math.min(100, Math.max(0, (pointsInCurrentLevel / 500) * 100));
           
           levelProgressFill.style.width = `${percent}%`;
           levelProgressText.textContent = `${score.toLocaleString()} / ${nextLevelThreshold.toLocaleString()} to LVL ${currentLvl + 1}`;
         }
 
-        // 👇 5. ОТРИСОВКА ИСТОРИИ МАТЧЕЙ 👇
-        const historyList = document.getElementById("historyList");
-        if (historyList && stats.recent_matches) {
-          historyList.innerHTML = ""; // Очищаем надпись "History is empty" или старые данные
-
-          if (stats.recent_matches.length === 0) {
-            // Если игр еще нет
-            historyList.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.8rem; padding: 20px;">History is empty</div>`;
-          } else {
-            // Если игры есть, перебираем их и создаем HTML
-            stats.recent_matches.forEach(match => {
-              // Форматируем дату (получится что-то вроде "Mar 30, 14:30")
-              const dateObj = new Date(match.started_at);
-              const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-              const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
-
-              const matchScore = (match.final_score || 0).toLocaleString();
-              const ticketsEarned = match.tickets_earned || 0;
-              
-              // Если билетов не дали, делаем текст тусклым
-              const rewardStyle = ticketsEarned > 0 ? '' : 'color: rgba(255,255,255,0.4);';
-
-              const itemHtml = `
-                <div class="history-item">
-                  <div class="h-left">
-                    <div class="h-score">${matchScore} PTS</div>
-                    <div class="h-date">${dateStr}, ${timeStr}</div>
-                  </div>
-                  <div class="h-right">
-                    <span class="h-reward" style="${rewardStyle}">+${ticketsEarned} 🎟️</span>
-                  </div>
-                </div>
-              `;
-              
-              // Вставляем карточку матча в список
-              historyList.insertAdjacentHTML('beforeend', itemHtml);
-            });
-          }
-        }
-        // 👆 ================================= 👆
+        // 👇 ЗАПУСКАЕМ ЗАГРУЗКУ ИСТОРИИ (ПЕРВУЮ ПОРЦИЮ) 👇
+        this.loadMatchHistory(false);
       }
     } catch (e) {
       console.error("Failed to sync profile:", e);
     }
   }
 
-
+  // НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ ИСТОРИИ МАТЧЕЙ (с пагинацией)
   async loadMatchHistory(isLoadMore = false) {
     const historyList = document.getElementById("historyList");
     const loadMoreBtn = document.getElementById("historyLoadMore");
@@ -427,7 +344,6 @@ async startGame() {
       if (loadMoreBtn) loadMoreBtn.style.display = "none";
     }
 
-    // Идем на сервер за историей (убедись, что в api.js добавлена функция getMyHistory)
     const data = await window.API.getMyHistory(this.historyOffset);
 
     if (!isLoadMore) historyList.innerHTML = ""; 
@@ -471,21 +387,19 @@ async startGame() {
     }
   }
 
-updateAtmosphere() {
+  updateAtmosphere() {
     const fs = document.getElementById('gameScreen');
     const timerEl = document.getElementById('timer');
     let bg = '#0a0a1a'; 
     let isFrozen = performance.now() < this.freezeUntil;
 
-    // Сначала всегда сбрасываем старые фильтры
     fs.classList.remove('frozen-ice', 'frozen-toxic', 'frozen-solar');
 
     if (isFrozen && this.activeFreezeType) {
-       fs.classList.add(`frozen-${this.activeFreezeType}`); // Включаем нужный фильтр
+       fs.classList.add(`frozen-${this.activeFreezeType}`); 
        fs.style.border = 'none'; fs.style.boxShadow = 'none';
        timerEl.classList.add('timer-ice');
 
-       // Разные радиальные фоны для разных комет
        if (this.activeFreezeType === 'ice') bg = 'radial-gradient(circle at center, #001f3f 0%, #000a1a 100%)';
        else if (this.activeFreezeType === 'toxic') bg = 'radial-gradient(circle at center, #002b12 0%, #000a04 100%)';
        else if (this.activeFreezeType === 'solar') bg = 'radial-gradient(circle at center, #3d1c00 0%, #1a0800 100%)';
@@ -498,16 +412,13 @@ updateAtmosphere() {
     fs.style.background = bg;
   }
 
-shakeScreen(type = 'light') {
-    // Ищем gameScreen вместо несуществующего mobileApp
+  shakeScreen(type = 'light') {
     const app = document.getElementById('gameScreen'); 
-    if (!app) return; // Защита от ошибок на всякий случай
-
+    if (!app) return; 
     const cls = type === 'hard' ? 'shake-h' : 'shake-s';
     app.classList.remove('shake-s', 'shake-h'); 
-    void app.offsetWidth; // Магия браузера для перезапуска анимации
+    void app.offsetWidth; 
     app.classList.add(cls); 
-    
     setTimeout(() => app.classList.remove(cls), 350);
   }
 
@@ -528,7 +439,7 @@ shakeScreen(type = 'light') {
 
   countType(type) { let n = 0; this.active.forEach(e => (n += e.type === type ? 1 : 0)); return n; }
 
-startMainLoop() {
+  startMainLoop() {
     const loop = (now) => {
       if (!this.isPlaying) return;
       this.fx.update(); this.fx.draw();
@@ -537,12 +448,8 @@ startMainLoop() {
       if (!isFrozen) this.activeFreezeType = null;
       const timeFactor = isFrozen ? 0.3 : 1.0; 
       const speedMult = Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
-
-      // ВАЖНО: Единый множитель ускорения для экрана 3-2-1
-      // 2.0 означает, что всё будет в 2 раза быстрее (и падать, и спавниться)
       const warmupMultiplier = this.isWarmup ? 1.4 : 1.0;
 
-      // Применяем его к задержке (чтобы плотность осталась той же)
       const dynamicRocketDelay = (ROCKET_SPAWN_MS / speedMult / warmupMultiplier) / timeFactor;
       const dynamicPlanetDelay = (PLANET_SPAWN_MS / speedMult / warmupMultiplier) / timeFactor;
 
@@ -551,51 +458,38 @@ startMainLoop() {
 
       this.updateAtmosphere();
 
-      if (now < this.magnetUntil) {
-        this.autoCollectAnswers();
-      }
+      if (now < this.magnetUntil) this.autoCollectAnswers();
 
       const entities = Array.from(this.active.values());
       for (const e of entities) {
-        // 1. Двигаем по горизонтали, УМНОЖАЯ НА warmupMultiplier
-        if (e.vx !== undefined) {
-          e.x += e.vx * dtSec * timeFactor * warmupMultiplier;
-        }
-
-        // 2. Двигаем по вертикали, УМНОЖАЯ НА warmupMultiplier
+        if (e.vx !== undefined) e.x += e.vx * dtSec * timeFactor * warmupMultiplier;
         e.y += e.vy * dtSec * timeFactor * warmupMultiplier;
 
         if (!e.node?.parentNode || e.solved) continue;
 
-        // 3. Проверка выхода за границы экрана
         if (e.y >= this.gameSize.h + 140 || e.x > this.gameSize.w + 200 || e.x < -200) { 
           this.removeEntity(e.id); 
           continue; 
         }
 
-        // 4. ОБНОВЛЕНИЕ ТРАНСФОРМАЦИИ
         const posX = e.x !== undefined ? e.x : 0; 
         e.node.style.transform = `translate3d(${posX}px, ${e.y}px, 0) scale(${e.scale})`;
 
-        // --- ШЛЕЙФ ДЛЯ КОМЕТЫ ---
         if (e.type === "bonus" && Math.random() > 0.3) {
           let c1 = '#c2f8ff', c2 = '#00f3ff'; 
           if (e.cometType === 'toxic') { c1 = '#dcfce7'; c2 = '#39ff14'; } 
           else if (e.cometType === 'solar') { c1 = '#fef9c3'; c2 = '#ffcc00'; } 
-          
           this.fx.trail(posX + 40, e.y + 40, c1);
           this.fx.trail(posX + 40, e.y + 40, c2);
         }
       }
 
-      // Спавн ракет и планет
       if (this.countType("rocket") < this.maxRockets && now - this.lastRocketSpawnAt >= dynamicRocketDelay) { 
         if (this.spawnRocket()) this.lastRocketSpawnAt = now; 
       }
       if (this.countType("planet") + this.countType("bonus") < this.maxPlanets && now - this.lastPlanetSpawnAt >= dynamicPlanetDelay) { 
         if (this.spawnPlanet()) this.lastPlanetSpawnAt = now; 
       }
-
       if (Math.random() < 0.0015 && this.countType("bonus") < 1 && !isFrozen) {
         this.spawnComet();
       }
@@ -605,21 +499,16 @@ startMainLoop() {
     this.rafId = requestAnimationFrame(loop);
   }
 
- spawnRocket() {
+  spawnRocket() {
     const id = this.idSeq++; 
     
-    // БЕРЕМ ПРИМЕР ИЗ СЕРВЕРНОГО ПУЛА, А ЕСЛИ ЗАКОНЧИЛСЯ — ДЕЛАЕМ ЗАПАСНОЙ
     let example, answer;
     if (this.equationsPool && this.equationsPool.length > 0) {
       const eq = this.equationsPool.pop();
-      example = eq.q;
-      answer = eq.a;
+      example = eq.q; answer = eq.a;
     } else {
-      // Страховка на случай, если 150 примеров не хватило
-      const a = randInt(1, 9);
-      const b = randInt(1, 9);
-      example = `${a}+${b}`;
-      answer = a + b;
+      const a = randInt(1, 9); const b = randInt(1, 9);
+      example = `${a}+${b}`; answer = a + b;
     }
 
     const lane = this.pickFreeLane(); 
@@ -627,20 +516,15 @@ startMainLoop() {
 
     const randomSvg = ROCKET_SVGS[Math.floor(Math.random() * ROCKET_SVGS.length)];
     const el = document.createElement("div"); 
-    el.className = "rocket"; 
-    el.id = `rocket-${id}`;
+    el.className = "rocket"; el.id = `rocket-${id}`;
     
-    // Рассчитываем X координату
     const xStart = this.laneToX(lane, 94);
     const yStart = -90;
     const yEnd = this.gameSize.h + 140;
     const vy = ((yEnd - yStart) / (ENTITY_LIFETIME_MS / 1000)) * Math.min(1.3, 1 + (this.multiplier - 1) * 0.035);
 
-    // Устанавливаем left в 0, чтобы всем управлял transform
     el.style.left = `0px`; 
     el.innerHTML = `${randomSvg}<div class="rocket-text">${example}</div>`;
-    
-    // ФИКС МОРГАНИЯ: теперь используем xStart вместо 0
     el.style.transform = `translate3d(${xStart}px, ${yStart}px, 0) scale(1)`;
     
     el.addEventListener("pointerdown", () => {
@@ -652,14 +536,12 @@ startMainLoop() {
     });
     
     document.getElementById("fullscreenGameArea").appendChild(el);
-    
-    // ВАЖНО: Добавляем x: xStart для корректной работы цикла движения
     this.active.set(id, { id, type:"rocket", node: el, answer, lane, x: xStart, y: yStart, vy, scale: 1, solved:false });
     this.correctAnswers.set(id, answer);
     return true;
   }
 
-spawnPlanet() {
+  spawnPlanet() {
     const id = this.idSeq++; 
     const lane = this.pickFreeLane(); 
     if (lane === null) return false;
@@ -682,15 +564,14 @@ spawnPlanet() {
     }
 
     if (isBomb) {
-  contentHtml = `<div class="planet-svg-wrap bomb-asteroid">${BOMB_ASTEROID_SVG}</div>`;
-} else {
-  const randomPlanetSvg = PLANET_SVGS_WRAPPED[Math.floor(Math.random() * PLANET_SVGS_WRAPPED.length)];
-  contentHtml = `<div class="planet-svg-wrap">${randomPlanetSvg}</div><div class="planet-text">${Number.isInteger(answer) ? answer : answer.toFixed(1)}</div>`;
-}
+      contentHtml = `<div class="planet-svg-wrap bomb-asteroid">${BOMB_ASTEROID_SVG}</div>`;
+    } else {
+      const randomPlanetSvg = PLANET_SVGS_WRAPPED[Math.floor(Math.random() * PLANET_SVGS_WRAPPED.length)];
+      contentHtml = `<div class="planet-svg-wrap">${randomPlanetSvg}</div><div class="planet-text">${Number.isInteger(answer) ? answer : answer.toFixed(1)}</div>`;
+    }
 
     const el = document.createElement("div"); 
-    el.className = "planet"; 
-    el.id = `planet-${id}`;
+    el.className = "planet"; el.id = `planet-${id}`;
     
     const xStart = this.laneToX(lane, 99);
     const yStart = -90;
@@ -714,7 +595,7 @@ spawnPlanet() {
     return true;
   }
 
-spawnComet() {
+  spawnComet() {
     const id = this.idSeq++;
     const area = document.getElementById("fullscreenGameArea");
     
@@ -732,7 +613,6 @@ spawnComet() {
     const angleRad = Math.atan2(yEnd - yStart, xEnd - xStart);
     const angleDeg = (angleRad * (180 / Math.PI)) - 135;
 
-    // --- ИЗМЕНЕНИЕ 1: Выбираем тип кометы (добавлен магнит) ---
     const rand = Math.random();
     let cometType = 'ice', svg = FREEZE_SVG;
     if (rand < 0.25) { cometType = 'toxic'; svg = COMET_TOXIC_SVG; }
@@ -740,7 +620,6 @@ spawnComet() {
     else if (rand < 0.75) { cometType = 'magnet'; svg = MAGNET_SVG; }
 
     const el = document.createElement("div");
-    // --- ИЗМЕНЕНИЕ 2: Динамический класс (теперь не жестко bonus-ice) ---
     el.className = `planet bonus-${cometType}`;
     el.id = `comet-${id}`;
     el.style.left = `0px`; 
@@ -749,14 +628,12 @@ spawnComet() {
     el.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       if (this.isWarmup) return;
-      
-      // --- ИЗМЕНЕНИЕ 3: Логика магнита против логики заморозки ---
-if (cometType === 'magnet') {
+      if (cometType === 'magnet') {
         this.magnetUntil = performance.now() + 1000;
-        this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, "🧲 MAGNET!"); // Добавили сочности
+        this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, "🧲 MAGNET!"); 
         this.fadeAndRemove(id); 
       } else {
-        this.activateFreeze(id, cometType); // Старая добрая заморозка
+        this.activateFreeze(id, cometType); 
       }
     });
 
@@ -771,72 +648,53 @@ if (cometType === 'magnet') {
 
   autoCollectAnswers() {
     const now = performance.now();
-    // Делаем задержку между выстрелами магнита, чтобы лазеры вылетали красиво по очереди (раз в 200 мс)
     if (!this.lastMagnetShot) this.lastMagnetShot = 0;
     if (now - this.lastMagnetShot < 200) return;
 
-    // Собираем все летящие ракеты и безопасные планеты
     const rockets = Array.from(this.active.values()).filter(e => e.type === 'rocket' && !e.solved);
     const planets = Array.from(this.active.values()).filter(e => e.type === 'planet' && !e.solved && !e.isBomb);
 
     if (rockets.length > 0 && planets.length > 0) {
       for (let r of rockets) {
         for (let p of planets) {
-          // Если ответ ракеты совпадает с ответом на планете
           if (r.answer === p.answer) {
-            // Имитируем действия игрока!
-            this.selectedRocket = r.id;   // Выбираем ракету
-            this.tryAnswer(p.id);         // Стреляем в планету
-            
-            this.lastMagnetShot = now;    // Запоминаем время выстрела
-            return; // Выходим из функции, чтобы за один кадр сделать только 1 выстрел
+            this.selectedRocket = r.id;   
+            this.tryAnswer(p.id);         
+            this.lastMagnetShot = now;    
+            return; 
           }
         }
       }
     }
   }
+
   activateFreeze(id, type) {
     const e = this.active.get(id);
     if (!e) return;
 
     let duration = 5000, popupText = "❄️ FROZEN!", explodeColor = '#00f3ff';
-
-    // Настраиваем логику для каждой кометы
-    if (type === 'toxic') {
-        duration = 3500; popupText = "🧪 TOXIC x2!"; explodeColor = '#39ff14';
-    } else if (type === 'solar') {
-        duration = 8000; popupText = "☀️ SOLAR SLOW!"; explodeColor = '#ffcc00';
-    }
+    if (type === 'toxic') { duration = 3500; popupText = "🧪 TOXIC x2!"; explodeColor = '#39ff14'; } 
+    else if (type === 'solar') { duration = 8000; popupText = "☀️ SOLAR SLOW!"; explodeColor = '#ffcc00'; }
 
     this.fx.explode(e.x + 40, e.y + 40, explodeColor, 30);
     this.fadeAndRemove(id);
     
     this.freezeUntil = performance.now() + duration;
-    this.activeFreezeType = type; // Запоминаем, какой фильтр включить
+    this.activeFreezeType = type; 
     this.updateAtmosphere();
     this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, popupText);
   }
 
-selectRocket(id) {
-    // <--- ДОБАВИЛИ ВИБРАЦИЮ ПРИ КЛИКЕ НА ПРИМЕР --->
+  selectRocket(id) {
     window.TelegramAPI?.vibrate('light');
-
     this.active.forEach(e => { 
-      if (e.type === "rocket") { 
-        e.scale = 1; 
-        e.node.classList.remove("selected"); 
-      } 
+      if (e.type === "rocket") { e.scale = 1; e.node.classList.remove("selected"); } 
     });
-    
     const r = this.active.get(id); 
-    if (r) { 
-      r.scale = 1.08; 
-      r.node.classList.add("selected"); 
-      this.selectedRocket = id; 
-    }
+    if (r) { r.scale = 1.08; r.node.classList.add("selected"); this.selectedRocket = id; }
   }
 
-tryAnswer(planetId) {
+  tryAnswer(planetId) {
     if (this.selectedRocket === null) return;
     const p = this.active.get(planetId); const r = this.active.get(this.selectedRocket);
     if (!p || !r) return;
@@ -844,7 +702,6 @@ tryAnswer(planetId) {
     if (p.isBomb) { this.applyBomb(planetId); return; }
 
     if (equalsNum(p.answer, r.answer)) {
-      // ИСПРАВЛЕНИЕ: Используем r.x и p.x вместо offsetLeft!
       const rX = r.x + r.node.offsetWidth / 2; 
       const rY = r.y + r.node.offsetHeight / 2;
       const pX = p.x + p.node.offsetWidth / 2; 
@@ -860,20 +717,14 @@ tryAnswer(planetId) {
     }
   }
 
-applyCorrect(planetId) {
+  applyCorrect(planetId) {
     const r = this.active.get(this.selectedRocket); const p = this.active.get(planetId);
     this.streak++; this.multiplier = Math.min(10, Math.floor(this.streak / 2) + 1);
     
-    // БАЗОВЫЕ ОЧКИ
     let pts = 1 * this.multiplier; 
+    if (performance.now() < this.freezeUntil && this.activeFreezeType === 'toxic') pts *= 2; 
     
-    // ПРОВЕРЯЕМ ТОКСИЧНУЮ КОМЕТУ
-    if (performance.now() < this.freezeUntil && this.activeFreezeType === 'toxic') {
-        pts *= 2; // Множитель х2 работает!
-    }
     this.score += pts;
-
-    // <--- ВИБРАЦИЯ ЗДЕСЬ (Легкий приятный щелчок при успехе)
     TelegramAPI.vibrate('light'); 
     
     this.updateAtmosphere(); r.node.classList.add("correct"); p.node.classList.add("correct");
@@ -886,7 +737,6 @@ applyCorrect(planetId) {
     this.streak = 0; this.multiplier = 1; 
 
     this.shakeScreen('hard'); 
-    // <--- ВИБРАЦИЯ ЗДЕСЬ (Двойной вибро-сигнал ошибки вместе с тряской экрана)
     TelegramAPI.vibrate('error'); 
 
     this.updateAtmosphere();
@@ -896,9 +746,7 @@ applyCorrect(planetId) {
 
   applyBomb(planetId) {
     this.streak = 0; this.multiplier = 1; this.score = Math.max(0, this.score - 5);
-    
     this.shakeScreen('hard'); 
-    // <--- ВИБРАЦИЯ ЗДЕСЬ (Тяжелый глухой удар при взрыве бомбы)
     TelegramAPI.vibrate('heavy'); 
 
     this.updateAtmosphere(); this.updateUI();
@@ -912,14 +760,13 @@ applyCorrect(planetId) {
 
   removeEntity(id) { const e = this.active.get(id); if (!e) return; e.node?.remove(); this.active.delete(id); if (e.type === "rocket") this.correctAnswers.delete(id); }
 
-async endGame() {
+  async endGame() {
     this.isPlaying = false; 
     clearInterval(this.timerId); 
     cancelAnimationFrame(this.rafId);
     this.bg.pause(); 
     document.getElementById('gameScreen').style.background = '#0a0a1a';
     
-    // 1. Показываем состояние ЗАГРУЗКИ в модалке
     document.getElementById("finalScore").textContent = "Calculating...";
     document.querySelector(".rt-val").textContent = "Wait... 🎟️";
     document.querySelector(".rt-hint").textContent = "Syncing with server...";
@@ -928,127 +775,73 @@ async endGame() {
     document.getElementById("resultModal").style.display = "flex";
 
     try {
-      // 2. ОТПРАВЛЯЕМ РЕЗУЛЬТАТ НА СЕРВЕР (используем ID, который получили на старте)
       const result = await window.API.sessionFinish(this.currentSessionId, this.score);
 
-      // 3. СЕРВЕР ОТВЕТИЛ! Обновляем интерфейс
       if (result.success) {
         document.getElementById("finalScore").textContent = this.score;
-
-        // Если античит забраковал игру
         if (result.is_valid === false) {
           document.querySelector(".rt-val").textContent = "+0 🎟️";
           document.querySelector(".rt-hint").textContent = "⚠️ Result rejected (Anti-cheat)";
           document.querySelector(".rt-hint").style.color = "#ff3333";
         } else {
-          // Игра честная, рисуем билеты и прогресс-бар
           const tickets = result.tickets_earned || 0;
           const balance = result.score_balance || 0;
           
           document.querySelector(".rt-val").textContent = `+${tickets} 🎟️`;
-          document.querySelector(".rt-hint").style.color = "rgba(255,255,255,0.6)"; // Возвращаем цвет
+          document.querySelector(".rt-hint").style.color = "rgba(255,255,255,0.6)"; 
           document.querySelector(".rt-hint").textContent = `${balance} / 5,000 to next ticket`;
           
-          // Высчитываем проценты для полоски (от 0 до 100%)
           const percent = Math.min(100, Math.round((balance / 5000) * 100));
           document.querySelector(".rt-fill").style.width = `${percent}%`;
         }
       }
-
-} catch (error) {
+    } catch (error) {
       console.error("End Game Error:", error);
       document.getElementById("finalScore").textContent = this.score;
       document.querySelector(".rt-val").textContent = "Offline";
-      
-      // МЫ ДОБАВИЛИ ВЫВОД ТОЧНОЙ ОШИБКИ ТУТ 👇
       document.querySelector(".rt-hint").textContent = "Error: " + (error.reason || error.message);
       document.querySelector(".rt-hint").style.color = "#ff3333";
     } finally {
-      // 👇 ВОТ СЮДА ДОБАВЛЯЕМ СИНХРОНИЗАЦИЮ 👇
       this.syncProfile();
     }
   }
 }
 
-
 document.addEventListener("DOMContentLoaded", () => { 
   window.gameSandbox = new GameSandbox(); 
-  // Как только игра создалась, подтягиваем цифры с бэкенда!
   window.gameSandbox.syncProfile();
 });
-
 
 // ==========================================
 // ЛЮКСОВЫЙ ТАЙМЕР ДЛЯ ГЛАВНОГО ЭКРАНА
 // ==========================================
 function startSeasonTimer() {
-  // Укажите точную дату окончания 1 сезона! 
-  // Формат: Год, Месяц (от 0 до 11, где 0 - Январь), День, Час, Минута
-  // Например: 1 Июня 2026 года, 18:00
   const seasonEndDate = new Date(Date.UTC(2026, 5, 1, 18, 0, 0));
-
   function updateTimer() {
     const now = new Date();
     const diff = seasonEndDate - now;
+    if (diff <= 0) return;
 
-    if (diff <= 0) {
-      // Сезон завершен (можно поставить нули)
-      return;
-    }
-
-    // Считаем дни, часы и минуты
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    // Функция, которая делает из числа "9" строку "09" (чтобы всегда было 2 символа)
     const format = (num) => num.toString().padStart(2, '0');
 
-    const dStr = format(days);
-    const hStr = format(hours);
-    const mStr = format(mins);
-
-    // Раскидываем КАЖДУЮ цифру в свой собственный слот
+    const dStr = format(days); const hStr = format(hours); const mStr = format(mins);
     
-    // Дни (D1 и D2)
-    const elD1 = document.getElementById('heroTimerD1');
-    const elD2 = document.getElementById('heroTimerD2');
-    if (elD1 && elD2) {
-        // Если дней больше 99 (например 120), берем последние две цифры, либо добавьте еще один слот в HTML
-        elD1.textContent = dStr.length > 2 ? dStr[dStr.length - 2] : dStr[0]; 
-        elD2.textContent = dStr[dStr.length - 1];
-    }
+    const elD1 = document.getElementById('heroTimerD1'); const elD2 = document.getElementById('heroTimerD2');
+    if (elD1 && elD2) { elD1.textContent = dStr.length > 2 ? dStr[dStr.length - 2] : dStr[0]; elD2.textContent = dStr[dStr.length - 1]; }
 
-    // Часы (H1 и H2)
-    const elH1 = document.getElementById('heroTimerH1');
-    const elH2 = document.getElementById('heroTimerH2');
-    if (elH1 && elH2) {
-        elH1.textContent = hStr[0];
-        elH2.textContent = hStr[1];
-    }
+    const elH1 = document.getElementById('heroTimerH1'); const elH2 = document.getElementById('heroTimerH2');
+    if (elH1 && elH2) { elH1.textContent = hStr[0]; elH2.textContent = hStr[1]; }
 
-    // Минуты (M1 и M2)
-    const elM1 = document.getElementById('heroTimerM1');
-    const elM2 = document.getElementById('heroTimerM2');
-    if (elM1 && elM2) {
-        elM1.textContent = mStr[0];
-        elM2.textContent = mStr[1];
-    }
+    const elM1 = document.getElementById('heroTimerM1'); const elM2 = document.getElementById('heroTimerM2');
+    if (elM1 && elM2) { elM1.textContent = mStr[0]; elM2.textContent = mStr[1]; }
   }
-
-  // Обновляем таймер сразу при запуске
   updateTimer();
-  
-  // Так как у нас нет секунд на экране, нам не нужно обновлять его каждую секунду.
-  // Обновляем раз в 10 секунд (10000 мс) - это сэкономит батарею телефона игрока!
   setInterval(updateTimer, 10000); 
 }
-
-// Запускаем, когда игра загрузилась
 document.addEventListener('DOMContentLoaded', startSeasonTimer);
-
-
-
 
 // ==========================================
 // НАВИГАЦИЯ ПО НИЖНЕМУ МЕНЮ
@@ -1059,115 +852,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
   navButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      // <--- ДОБАВЛЯЕМ ВИБРАЦИЮ ЗДЕСЬ --->
-      TelegramAPI.vibrate('light');
-
-      // 1. Убираем класс active у всех кнопок
+      window.TelegramAPI?.vibrate('light');
       navButtons.forEach(b => b.classList.remove('active'));
-      // 2. Добавляем active нажатой кнопке
       btn.classList.add('active');
+      tabContents.forEach(tab => { tab.style.display = 'none'; tab.classList.remove('active'); });
 
-      // 3. Скрываем все вкладки
-      tabContents.forEach(tab => {
-        tab.style.display = 'none';
-        tab.classList.remove('active');
-      });
-
-      // 4. Показываем нужную вкладку
       const targetTabId = btn.getAttribute('data-tab');
       const targetTab = document.getElementById(targetTabId);
       if (targetTab) {
-        targetTab.style.display = 'flex'; // У нас вкладки используют flex-direction: column
-        // Небольшой таймаут для плавности анимации (если она есть)
+        targetTab.style.display = 'flex'; 
         setTimeout(() => targetTab.classList.add('active'), 10);
       }
     });
   });
 });
+
 // ==========================================
-// ЛОГИКА ОНБОРДИНГА (СЛАЙДЕР И ОБУЧЕНИЕ)
+// ЛОГИКА ОНБОРДИНГА
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   const obScreen = document.getElementById('onboardingScreen');
   const mainScreen = document.getElementById('startScreen');
-  
-  // Проверяем, проходил ли игрок обучение
   const hasSeenOnboarding = localStorage.getItem('digit_tutorial_done');
 
   if (hasSeenOnboarding === 'true') {
     if (obScreen) obScreen.classList.remove('active');
     if (mainScreen) mainScreen.classList.add('active');
-    return; // Останавливаем код, если обучение уже пройдено
+    return; 
   }
 
-  // Если не пройдено — запускаем логику слайдера
   const slides = document.querySelectorAll('.ob-slide');
   const dots = document.querySelectorAll('.ob-dot');
   const btnPrev = document.getElementById('obPrevBtn');
   const btnNext = document.getElementById('obNextBtn');
   const btnStartGame = document.getElementById('obStartGameBtn');
-
   let currentSlide = 0;
 
   function updateSlider() {
-    slides.forEach((slide, index) => {
-      if (index === currentSlide) slide.classList.add('active');
-      else slide.classList.remove('active');
-    });
-
-    dots.forEach((dot, index) => {
-      if (index === currentSlide) dot.classList.add('active');
-      else dot.classList.remove('active');
-    });
-
-    if (btnPrev) {
-      if (currentSlide === 0) btnPrev.classList.add('hidden');
-      else { btnPrev.classList.remove('hidden'); btnPrev.classList.add('visible'); }
-    }
-
-    if (btnNext) {
-      if (currentSlide === slides.length - 1) btnNext.classList.add('hidden');
-      else { btnNext.classList.remove('hidden'); btnNext.classList.add('visible'); }
-    }
+    slides.forEach((slide, index) => { if (index === currentSlide) slide.classList.add('active'); else slide.classList.remove('active'); });
+    dots.forEach((dot, index) => { if (index === currentSlide) dot.classList.add('active'); else dot.classList.remove('active'); });
+    if (btnPrev) { if (currentSlide === 0) btnPrev.classList.add('hidden'); else { btnPrev.classList.remove('hidden'); btnPrev.classList.add('visible'); } }
+    if (btnNext) { if (currentSlide === slides.length - 1) btnNext.classList.add('hidden'); else { btnNext.classList.remove('hidden'); btnNext.classList.add('visible'); } }
   }
 
-  if (btnNext) {
-    btnNext.addEventListener('click', () => {
-      if (window.TelegramAPI) window.TelegramAPI.vibrate('light'); // Вибро-щелчок
-      if (currentSlide < slides.length - 1) { currentSlide++; updateSlider(); }
-    });
-  }
-
-  if (btnPrev) {
-    btnPrev.addEventListener('click', () => {
-      if (window.TelegramAPI) window.TelegramAPI.vibrate('light'); // Вибро-щелчок
-      if (currentSlide > 0) { currentSlide--; updateSlider(); }
-    });
-  }
-
-  // Клик по финальной кнопке "LET'S GO!"
+  if (btnNext) { btnNext.addEventListener('click', () => { window.TelegramAPI?.vibrate('light'); if (currentSlide < slides.length - 1) { currentSlide++; updateSlider(); } }); }
+  if (btnPrev) { btnPrev.addEventListener('click', () => { window.TelegramAPI?.vibrate('light'); if (currentSlide > 0) { currentSlide--; updateSlider(); } }); }
   if (btnStartGame) {
     btnStartGame.addEventListener('click', () => {
-      if (window.TelegramAPI) window.TelegramAPI.vibrate('medium'); // Уверенный вибро-отклик
-      
-      // Запоминаем, что игрок прошел обучение
+      window.TelegramAPI?.vibrate('medium'); 
       localStorage.setItem('digit_tutorial_done', 'true');
-      
       obScreen.classList.remove('active');
       mainScreen.classList.add('active');
     });
   }
 
-  // Инициализация первого слайда
-  if (obScreen && slides.length > 0) {
-    updateSlider();
-  }
+  if (obScreen && slides.length > 0) updateSlider();
 });
-
-
-
-
-
-
-
-
