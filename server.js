@@ -30,6 +30,22 @@ if (!DATABASE_URL) { console.error('❌ DATABASE_URL is not set'); process.exit(
 if (!BOT_TOKEN)    { console.error('❌ BOT_TOKEN is not set');    process.exit(1); }
 if (!REDIS_URL)    { console.error('❌ REDIS_URL is not set');    process.exit(1); }
 
+
+// --- ГЕНЕРАТОР ПРИМЕРОВ ДЛЯ АНТИЧИТА ---
+function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function round1(x) { return Math.round(x * 10) / 10; }
+
+function generateExample() {
+  const op = Math.floor(Math.random() * 5);
+  if (op === 0) { const a = randInt(1, 15), b = randInt(1, 15); return { q:`${a}+${b}`, a:a+b }; }
+  if (op === 1) { const a = randInt(1, 20), b = randInt(1, a); return { q:`${a}-${b}`, a:a-b }; }
+  if (op === 2) { const a = randInt(1, 9),  b = randInt(1, 9); return { q:`${a}×${b}`, a:a*b }; }
+  if (op === 3) { const a = round1(0.1 + Math.random()*1.9), b = round1(0.1 + Math.random()*1.9); return { q:`${a}+${b}`, a:round1(a+b) }; }
+  const a = round1(0.5 + Math.random()*2.5); let b = round1(Math.random()*a);
+  if (b < 0.1) b = 0.1; if (b > a) b = a;
+  return { q:`${a}-${b}`, a:round1(a-b) };
+}
+
 /* =========================
    CORS & JSON
 ========================= */
@@ -217,7 +233,19 @@ app.post('/api/session/start', requireTelegramSigned, async (req, res) => {
     const payload = { user_id: userId, username, start_ms: Date.now() };
     await redis.set(`sess:${session_id}`, JSON.stringify(payload), { EX: SESSION_TTL });
 
-    res.json({ session_id, energy_left: newEnergy });
+    // 👇 НОВЫЙ БЛОК: Генерируем 150 примеров перед отправкой ответа 👇
+    const equations = [];
+    for(let i = 0; i < 150; i++) {
+      equations.push(generateExample());
+    }
+
+    // Отправляем примеры на фронтенд вместе с session_id
+    res.json({ 
+      session_id, 
+      energy_left: newEnergy,
+      equations: equations // <--- ПАЧКА ПРИМЕРОВ ДЛЯ ФРОНТЕНДА
+    });
+
   } catch (e) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: 'internal_error' });
