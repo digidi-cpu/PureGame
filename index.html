@@ -243,17 +243,23 @@
         </div>
       </div>
 
-      <div id="profile" class="tab-content" style="display: none;">
-        <div class="header header--tournament">
-          <h1>PROFILE</h1>
-          <div class="subtitle subtitle--tournament">COMMAND CENTER</div>
-        </div>
-
-        <div class="profile-hero">
+<div id="profile" class="tab-content" style="display: none;">
+        
+        <div class="profile-hero" style="margin-top: 20px;">
           <div class="p-avatar-box">👨‍🚀</div>
           <div class="p-info">
             <div class="p-name" id="profileName">Astronaut_99</div>
-            <div class="p-level" id="profileLevel">LEVEL 12</div>
+            <div class="p-level" id="profileLevel">LEVEL 1</div>
+          </div>
+        </div>
+
+        <div class="level-progress-wrap" style="margin: 0 15px 20px; padding: 15px; background: rgba(10,10,26,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; color: #fff; font-weight: 600; font-family: 'Orbitron', monospace;">
+            <span>PROGRESS</span>
+            <span id="levelProgressText">0 / 500</span>
+          </div>
+          <div class="rt-bar" style="height: 10px; background: rgba(0,0,0,0.5); border-radius: 5px; overflow: hidden;">
+            <div id="levelProgressFill" class="rt-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff6b35, #f7c59f); border-radius: 5px; transition: width 0.5s ease;"></div>
           </div>
         </div>
 
@@ -263,27 +269,19 @@
             <div class="p-bal-lbl">TICKETS 🎟️</div>
           </div>
           <div class="p-bal-card">
-            <div class="p-bal-val">5</div>
-            <div class="p-bal-lbl">STARS ⭐</div>
+            <div class="p-bal-val" id="profileTotalPointsLarge">0</div>
+            <div class="p-bal-lbl">TOTAL PTS ⭐</div>
           </div>
         </div>
 
         <div class="profile-kpis">
           <div class="kpi-card">
             <div class="kpi-label">High Score</div>
-            <div class="kpi-value" id="profileHighScore">14,250</div>
+            <div class="kpi-value" id="profileHighScore">0</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Games Played</div>
-            <div class="kpi-value" id="profileGamesPlayed">128</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Total Points</div>
-            <div class="kpi-value" id="profileTotalPoints">845K</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Joined</div>
-            <div class="kpi-value" style="font-size: 1.1rem;">Oct 2025</div>
+            <div class="kpi-value" id="profileGamesPlayed">0</div>
           </div>
         </div>
 
@@ -293,26 +291,11 @@
             <div class="history-note">UTC TIME</div>
           </div>
           <div id="historyList" class="history-list">
-            <div class="history-item">
-              <div class="h-left">
-                <div class="h-score">12,450 PTS</div>
-                <div class="h-date">Today, 14:30</div>
-              </div>
-              <div class="h-right">
-                <span class="h-reward">+2 🎟️</span>
-              </div>
-            </div>
-            <div class="history-item">
-              <div class="h-left">
-                <div class="h-score">3,200 PTS</div>
-                <div class="h-date">Today, 12:15</div>
-              </div>
-              <div class="h-right">
-                <span class="h-reward">0 🎟️</span>
-              </div>
+            <div style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.8rem; padding: 20px;">
+              History is empty
             </div>
           </div>
-          <button id="historyLoadMore" class="history-loadmore">LOAD MORE</button>
+          <button id="historyLoadMore" class="history-loadmore" style="display: none;">LOAD MORE</button>
         </div>
       </div>
 
