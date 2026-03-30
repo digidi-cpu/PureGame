@@ -10,19 +10,7 @@ const INPUT_LOCK_MS      = 140;
 
 // Утилиты
 function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
-function round1(x) { return Math.round(x * 10) / 10; }
 function equalsNum(a, b) { return Math.abs(a - b) < 1e-9; }
-
-function generateExample() {
-  const op = Math.floor(Math.random() * 5);
-  if (op === 0) { const a = randInt(1, 15), b = randInt(1, 15); return { example:`${a}+${b}`, answer:a+b }; }
-  if (op === 1) { const a = randInt(1, 20), b = randInt(1, a); return { example:`${a}-${b}`, answer:a-b }; }
-  if (op === 2) { const a = randInt(1, 9),  b = randInt(1, 9); return { example:`${a}×${b}`, answer:a*b }; }
-  if (op === 3) { const a = round1(0.1 + Math.random()*1.9), b = round1(0.1 + Math.random()*1.9); return { example:`${a}+${b}`, answer:round1(a+b) }; }
-  const a = round1(0.5 + Math.random()*2.5); let b = round1(Math.random()*a);
-  if (b < 0.1) b = 0.1; if (b > a) b = a;
-  return { example:`${a}-${b}`, answer:round1(a-b) };
-}
 
 // Фоновые звезды
 class MinimalSpaceBG {
@@ -191,6 +179,9 @@ async startGame() {
       
       // Запоминаем ID сессии, чтобы потом отправить по нему очки!
       this.currentSessionId = sessionData.session_id; 
+
+      
+      this.equationsPool = sessionData.equations || [];
 
       // 3. Переключаем экраны только если сервер дал добро
       document.getElementById("startScreen").classList.remove("active");
@@ -512,7 +503,21 @@ startMainLoop() {
 
  spawnRocket() {
     const id = this.idSeq++; 
-    const { example, answer } = generateExample();
+    
+    // БЕРЕМ ПРИМЕР ИЗ СЕРВЕРНОГО ПУЛА, А ЕСЛИ ЗАКОНЧИЛСЯ — ДЕЛАЕМ ЗАПАСНОЙ
+    let example, answer;
+    if (this.equationsPool && this.equationsPool.length > 0) {
+      const eq = this.equationsPool.pop();
+      example = eq.q;
+      answer = eq.a;
+    } else {
+      // Страховка на случай, если 150 примеров не хватило
+      const a = randInt(1, 9);
+      const b = randInt(1, 9);
+      example = `${a}+${b}`;
+      answer = a + b;
+    }
+
     const lane = this.pickFreeLane(); 
     if (lane === null) return false;
 
