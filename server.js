@@ -334,23 +334,32 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
   try {
     const userId = `tg_${req.tg.user.id}`;
     
+    // 1. Берем основную стату юзера
     const { rows } = await pool.query(
       `SELECT tickets, score_balance, total_score, games_played, energy FROM users WHERE user_id = $1`, [userId]
     );
 
     if (!rows.length) return res.json({ exists: false });
-
     const u = rows[0];
     
-    // Вычисляем ранг (позицию) игрока
+    // 2. Вычисляем ранг (позицию) игрока
     const { rows: rankRows } = await pool.query(
       `SELECT 1 + count(*) as pos FROM users WHERE tickets > $1 OR (tickets = $1 AND total_score > $2)`,
       [u.tickets, u.total_score]
     );
 
-    // 👇 НОВАЯ СТРОЧКА: Считаем уровень (каждые 500 очков = +1 уровень) 👇
+    // 👇 3. НОВЫЙ КОД: Ищем максимальный рекорд (High Score) в истории матчей 👇
+    const { rows: hsRows } = await pool.query(
+      `SELECT MAX(score) as max_score FROM game_sessions WHERE user_id = $1 AND is_valid = true`,
+      [userId]
+    );
+    // Если игр еще нет, ставим 0
+    const highScore = hsRows[0]?.max_score || 0;
+
+    // 4. Считаем уровень
     const currentLevel = Math.floor(Number(u.total_score) / 500) + 1;
 
+    // 5. Отправляем всё на фронтенд
     res.json({
       exists: true,
       rank: Number(rankRows[0]?.pos || 0),
@@ -359,9 +368,11 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
       total_score: Number(u.total_score),
       games_played: u.games_played,
       energy: u.energy,
-      level: currentLevel // 👇 ОТДАЕМ УРОВЕНЬ НА ФРОНТЕНД 👇
+      level: currentLevel,
+      high_score: Number(highScore) // 👇 ОТДАЕМ РЕКОРД НА ФРОНТЕНД 👇
     });
   } catch (e) {
+    console.error("Stats API Error:", e);
     res.status(500).json({ error: 'internal_error' });
   }
 });
