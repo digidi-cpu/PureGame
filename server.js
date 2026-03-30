@@ -24,7 +24,6 @@ const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '';
 // Баланс игры
 const SESSION_TTL   = 300;     // 5 минут на отправку результата игры
 const TICKET_COST   = 5000;    // 5000 очков = 1 🎟️
-const MAX_SCORE_CAP = 100000;  // Античит: максимум очков за одну игру (40 сек)
 
 if (!DATABASE_URL) { console.error('❌ DATABASE_URL is not set'); process.exit(1); }
 if (!BOT_TOKEN)    { console.error('❌ BOT_TOKEN is not set');    process.exit(1); }
@@ -233,17 +232,15 @@ app.post('/api/session/start', requireTelegramSigned, async (req, res) => {
     const payload = { user_id: userId, username, start_ms: Date.now() };
     await redis.set(`sess:${session_id}`, JSON.stringify(payload), { EX: SESSION_TTL });
 
-    // 👇 НОВЫЙ БЛОК: Генерируем 150 примеров перед отправкой ответа 👇
     const equations = [];
     for(let i = 0; i < 150; i++) {
       equations.push(generateExample());
     }
 
-    // Отправляем примеры на фронтенд вместе с session_id
     res.json({ 
       session_id, 
       energy_left: newEnergy,
-      equations: equations // <--- ПАЧКА ПРИМЕРОВ ДЛЯ ФРОНТЕНДА
+      equations: equations 
     });
 
   } catch (e) {
@@ -270,20 +267,17 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     const userId = sessionData.user_id;
     const duration_ms = Date.now() - sessionData.start_ms;
 
-let isValid = true;
+    let isValid = true;
     const fraudFlags = [];
     
-    // 1. Проверка на моментальную отправку (Speedhack)
+    // Античит
     if (duration_ms < 2000) { 
       isValid = false; 
       fraudFlags.push('too_short'); 
     }
 
-    // 2. ДИНАМИЧЕСКИЙ ЛИМИТ (100 очков за каждую секунду реального времени)
     const durationSeconds = duration_ms / 1000;
     const dynamicScoreCap = durationSeconds * 100;
-    
-    // 3. АБСОЛЮТНЫЙ ХАРД-КАП (40 секунд * 100 очков + небольшой запас)
     const HARD_CAP = 4500;
 
     if (finalScore > dynamicScoreCap || finalScore > HARD_CAP) { 
@@ -324,7 +318,6 @@ let isValid = true;
 
     const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || null;
     
-    // 🔥 ИСПРАВЛЕНИЕ ТУТ: передаем JS Date напрямую, без вычислений в SQL!
     await client.query(
       `INSERT INTO game_sessions (session_id, user_id, started_at, finished_at, duration_ms, final_score, tickets_earned, is_valid, fraud_flags, ip_address)
        VALUES ($1, $2, $3, now(), $4, $5, $6, $7, $8::jsonb, $9)`,
@@ -338,7 +331,6 @@ let isValid = true;
   } catch (e) {
     await client.query('ROLLBACK');
     console.error('session/finish error:', e);
-    // 🔥 ИСПРАВЛЕНИЕ 2: Теперь сервер честно скажет фронтенду, на чем он сломался!
     res.status(500).json({ error: 'internal_error', reason: e.message || String(e) });
   } finally {
     client.release();
@@ -374,11 +366,11 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
+// Получить статистику профиля
 app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
   try {
     const userId = `tg_${req.tg.user.id}`;
     
-    // 1. Берем основную стату юзера
     const { rows } = await pool.query(
       `SELECT tickets, score_balance, total_score, games_played, energy FROM users WHERE user_id = $1`, [userId]
     );
@@ -386,35 +378,20 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
     if (!rows.length) return res.json({ exists: false });
     const u = rows[0];
     
-    // 2. Вычисляем ранг (позицию) игрока
     const { rows: rankRows } = await pool.query(
       `SELECT 1 + count(*) as pos FROM users WHERE tickets > $1 OR (tickets = $1 AND total_score > $2)`,
       [u.tickets, u.total_score]
     );
 
-    // 👇 3. НОВЫЙ КОД: Ищем максимальный рекорд (High Score) в истории матчей 👇
-   const { rows: hsRows } = await pool.query(
+    const { rows: hsRows } = await pool.query(
       `SELECT MAX(final_score) as max_score FROM game_sessions WHERE user_id = $1 AND is_valid = true`,
       [userId]
     );
-    // Если игр еще нет, ставим 0
     const highScore = hsRows[0]?.max_score || 0;
 
-    // 4. Считаем уровень
     const currentLevel = Math.floor(Number(u.total_score) / 500) + 1;
-     
-// 5. ДОБАВЛЯЕМ ПОИСК ИСТОРИИ МАТЧЕЙ (Последние 5 честных игр) 👇
-    const { rows: historyRows } = await pool.query(
-      `SELECT final_score, tickets_earned, started_at 
-       FROM game_sessions 
-       WHERE user_id = $1 AND is_valid = true 
-       ORDER BY started_at DESC 
-       LIMIT 5`,
-      [userId]
-    );
-     
-
-    // 6. Отправляем всё на фронтенд
+      
+    // ИСПРАВЛЕНО: Теперь без лишних запятых
     res.json({
       exists: true,
       rank: Number(rankRows[0]?.pos || 0),
@@ -425,7 +402,6 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
       energy: u.energy,
       level: currentLevel,
       high_score: Number(highScore)
-      recent_matches: historyRows
     });
   } catch (e) {
     console.error("Stats API Error:", e);
@@ -433,6 +409,30 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
   }
 });
 
+// 👇 НОВЫЙ МАРШРУТ: Пагинация истории матчей 👇
+app.get('/api/user/me/history', requireTelegramSigned, async (req, res) => {
+  try {
+    const userId = `tg_${req.tg.user.id}`;
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = 10;
+
+    const { rows } = await pool.query(
+      `SELECT final_score, tickets_earned, started_at 
+       FROM game_sessions 
+       WHERE user_id = $1 AND is_valid = true 
+       ORDER BY started_at DESC 
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset]
+    );
+
+    res.json({ success: true, matches: rows });
+  } catch (e) {
+    console.error("History API Error:", e);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// Старый маршрут логов (оставляем на всякий случай)
 app.get('/api/user/me/events', requireTelegramSigned, async (req, res) => {
   try {
     const userId = `tg_${req.tg.user.id}`;
