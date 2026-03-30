@@ -402,8 +402,19 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
 
     // 4. Считаем уровень
     const currentLevel = Math.floor(Number(u.total_score) / 500) + 1;
+     
+// 5. ДОБАВЛЯЕМ ПОИСК ИСТОРИИ МАТЧЕЙ (Последние 5 честных игр) 👇
+    const { rows: historyRows } = await pool.query(
+      `SELECT final_score, tickets_earned, started_at 
+       FROM game_sessions 
+       WHERE user_id = $1 AND is_valid = true 
+       ORDER BY started_at DESC 
+       LIMIT 5`,
+      [userId]
+    );
+     
 
-    // 5. Отправляем всё на фронтенд
+    // 6. Отправляем всё на фронтенд
     res.json({
       exists: true,
       rank: Number(rankRows[0]?.pos || 0),
@@ -413,7 +424,8 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
       games_played: u.games_played,
       energy: u.energy,
       level: currentLevel,
-      high_score: Number(highScore) // 👇 ОТДАЕМ РЕКОРД НА ФРОНТЕНД 👇
+      high_score: Number(highScore)
+      recent_matches: historyRows
     });
   } catch (e) {
     console.error("Stats API Error:", e);
