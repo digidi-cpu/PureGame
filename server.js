@@ -393,8 +393,8 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
     );
 
     // 👇 3. НОВЫЙ КОД: Ищем максимальный рекорд (High Score) в истории матчей 👇
-    const { rows: hsRows } = await pool.query(
-      `SELECT MAX(score) as max_score FROM game_sessions WHERE user_id = $1 AND is_valid = true`,
+   const { rows: hsRows } = await pool.query(
+      `SELECT MAX(final_score) as max_score FROM game_sessions WHERE user_id = $1 AND is_valid = true`,
       [userId]
     );
     // Если игр еще нет, ставим 0
