@@ -341,6 +341,13 @@ async startGame() {
         const profileGamesPlayed = document.getElementById("profileGamesPlayed");
         if (profileGamesPlayed) profileGamesPlayed.textContent = (stats.games_played || 0).toLocaleString();
 
+        // 👇 ДОБАВЛЯЕМ ОБНОВЛЕНИЕ HIGH SCORE СЮДА 👇
+        const profileHighScore = document.getElementById("profileHighScore");
+        if (profileHighScore) {
+          profileHighScore.textContent = (stats.high_score || 0).toLocaleString();
+        }
+        // 👆 =================================== 👆
+
         const profileName = document.getElementById("profileName");
         if (profileName && window.TelegramAPI && window.TelegramAPI.initDataUnsafe?.user) {
             profileName.textContent = window.TelegramAPI.initDataUnsafe.user.first_name;
