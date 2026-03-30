@@ -332,12 +332,10 @@ async startGame() {
         const profileGamesPlayed = document.getElementById("profileGamesPlayed");
         if (profileGamesPlayed) profileGamesPlayed.textContent = (stats.games_played || 0).toLocaleString();
 
-        // 👇 ДОБАВЛЯЕМ ОБНОВЛЕНИЕ HIGH SCORE СЮДА 👇
         const profileHighScore = document.getElementById("profileHighScore");
         if (profileHighScore) {
           profileHighScore.textContent = (stats.high_score || 0).toLocaleString();
         }
-        // 👆 =================================== 👆
 
         const profileName = document.getElementById("profileName");
         if (profileName && window.TelegramAPI && window.TelegramAPI.initDataUnsafe?.user) {
@@ -361,6 +359,47 @@ async startGame() {
           levelProgressFill.style.width = `${percent}%`;
           levelProgressText.textContent = `${score.toLocaleString()} / ${nextLevelThreshold.toLocaleString()} to LVL ${currentLvl + 1}`;
         }
+
+        // 👇 5. ОТРИСОВКА ИСТОРИИ МАТЧЕЙ 👇
+        const historyList = document.getElementById("historyList");
+        if (historyList && stats.recent_matches) {
+          historyList.innerHTML = ""; // Очищаем надпись "History is empty" или старые данные
+
+          if (stats.recent_matches.length === 0) {
+            // Если игр еще нет
+            historyList.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.8rem; padding: 20px;">History is empty</div>`;
+          } else {
+            // Если игры есть, перебираем их и создаем HTML
+            stats.recent_matches.forEach(match => {
+              // Форматируем дату (получится что-то вроде "Mar 30, 14:30")
+              const dateObj = new Date(match.started_at);
+              const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+              const matchScore = (match.final_score || 0).toLocaleString();
+              const ticketsEarned = match.tickets_earned || 0;
+              
+              // Если билетов не дали, делаем текст тусклым
+              const rewardStyle = ticketsEarned > 0 ? '' : 'color: rgba(255,255,255,0.4);';
+
+              const itemHtml = `
+                <div class="history-item">
+                  <div class="h-left">
+                    <div class="h-score">${matchScore} PTS</div>
+                    <div class="h-date">${dateStr}, ${timeStr}</div>
+                  </div>
+                  <div class="h-right">
+                    <span class="h-reward" style="${rewardStyle}">+${ticketsEarned} 🎟️</span>
+                  </div>
+                </div>
+              `;
+              
+              // Вставляем карточку матча в список
+              historyList.insertAdjacentHTML('beforeend', itemHtml);
+            });
+          }
+        }
+        // 👆 ================================= 👆
       }
     } catch (e) {
       console.error("Failed to sync profile:", e);
