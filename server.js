@@ -270,10 +270,26 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     const userId = sessionData.user_id;
     const duration_ms = Date.now() - sessionData.start_ms;
 
-    let isValid = true;
+let isValid = true;
     const fraudFlags = [];
-    if (duration_ms < 1000) { isValid = false; fraudFlags.push('too_short'); }
-    if (finalScore > MAX_SCORE_CAP) { isValid = false; fraudFlags.push('score_too_high'); }
+    
+    // 1. Проверка на моментальную отправку (Speedhack)
+    if (duration_ms < 2000) { 
+      isValid = false; 
+      fraudFlags.push('too_short'); 
+    }
+
+    // 2. ДИНАМИЧЕСКИЙ ЛИМИТ (100 очков за каждую секунду реального времени)
+    const durationSeconds = duration_ms / 1000;
+    const dynamicScoreCap = durationSeconds * 100;
+    
+    // 3. АБСОЛЮТНЫЙ ХАРД-КАП (40 секунд * 100 очков + небольшой запас)
+    const HARD_CAP = 4500;
+
+    if (finalScore > dynamicScoreCap || finalScore > HARD_CAP) { 
+      isValid = false; 
+      fraudFlags.push('score_too_high'); 
+    }
 
     await client.query('BEGIN');
 
