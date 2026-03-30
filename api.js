@@ -66,8 +66,8 @@ class GameAPI {
   }
 
   // Получить историю своих игр
-  async getMyHistory() {
-    return this.request(`/api/user/me/events`);
+  async getMyHistory(offset = 0) {
+    return this.request(`/api/user/me/history?offset=${offset}`);
   }
 }
 
