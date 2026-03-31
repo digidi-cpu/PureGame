@@ -6,6 +6,13 @@ const cors = require('cors');
 const crypto = require('crypto');
 const { Pool } = require('pg');
 const { createClient } = require('redis');
+// Баланс игры (Server-Driven UI)
+const SESSION_TTL = 300;     // 5 минут на отправку результата игры
+const GAME_CONFIG = {
+  duration_sec: 30,          // Длительность одного матча
+  ticket_cost: 5000,         // Очков до 1 билета
+  level_step: 500            // Очков для повышения уровня
+};
 
 const app = express();
 app.set('etag', false);
@@ -240,7 +247,8 @@ app.post('/api/session/start', requireTelegramSigned, async (req, res) => {
     res.json({ 
       session_id, 
       energy_left: newEnergy,
-      equations: equations 
+      equations: equations
+      duration_sec: GAME_CONFIG.duration_sec
     });
 
   } catch (e) {
@@ -278,7 +286,7 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
 
     const durationSeconds = duration_ms / 1000;
     const dynamicScoreCap = durationSeconds * 100;
-    const HARD_CAP = 4500;
+    const HARD_CAP = (GAME_CONFIG.duration_sec * 100) + 500; 
 
     if (finalScore > dynamicScoreCap || finalScore > HARD_CAP) { 
       isValid = false; 
@@ -302,8 +310,8 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
 
     if (isValid) {
       const totalPointsNow = newBalance + finalScore;
-      ticketsEarnedNow = Math.floor(totalPointsNow / TICKET_COST);
-      newBalance = totalPointsNow % TICKET_COST;
+      ticketsEarnedNow = Math.floor(totalPointsNow / GAME_CONFIG.ticket_cost);
+      newBalance = totalPointsNow % GAME_CONFIG.ticket_cost;;
       newTickets += ticketsEarnedNow;
 
       await client.query(
@@ -401,7 +409,11 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
       games_played: u.games_played,
       energy: u.energy,
       level: currentLevel,
-      high_score: Number(highScore)
+      high_score: Number(highScore),
+      config: {
+        ticket_cost: GAME_CONFIG.ticket_cost,
+        level_step: GAME_CONFIG.level_step
+      }
     });
   } catch (e) {
     console.error("Stats API Error:", e);
