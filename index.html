@@ -10,374 +10,327 @@
 </head>
 <body>
 
- <div id="onboardingScreen" class="screen active">
+  <div id="onboardingScreen" class="screen active">
+    <video autoplay loop muted playsinline class="ob-video-bg">
+      <source src="assets/gameplay-demo.mp4" type="video/mp4">
+    </video>
 
-        <video autoplay loop muted playsinline class="ob-video-bg">
-          <source src="assets/gameplay-demo.mp4" type="video/mp4">
-        </video>
+    <div class="ob-video-overlay" aria-hidden="true"></div>
 
-        <div class="ob-video-overlay" aria-hidden="true"></div>
-
-        <div class="onboarding-slider" id="obSlider">
-          <div class="ob-slide active">
-            <div class="ob-icon">🚀</div>
-            <h2 class="ob-title">WELCOME TO DIGIT</h2>
-            <p class="ob-text">The ultimate cosmic math challenge. Solve equations fast and conquer the leaderboard!</p>
-          </div>
-          <div class="ob-slide">
-            <div class="ob-icon">⚡</div>
-            <h2 class="ob-title">QUICK MATH</h2>
-            <p class="ob-text">You have 30 seconds. Tap the correct answers. Avoid the traps or lose points!</p>
-          </div>
-          <div class="ob-slide">
-            <div class="ob-icon">🎟️</div>
-            <h2 class="ob-title">EARN TICKETS</h2>
-            <p class="ob-text">Every 5,000 points converts to 1 Ticket. Collect tickets to win real Telegram Gifts!</p>
-            <button id="obStartGameBtn" class="btn ob-start-btn">LET'S GO!</button>
-          </div>
-        </div>
-
-        <div class="ob-controls">
-          <button id="obPrevBtn" class="ob-arrow hidden">❮</button>
-          <div class="ob-dots">
-            <div class="ob-dot active"></div>
-            <div class="ob-dot"></div>
-            <div class="ob-dot"></div>
-          </div>
-          <button id="obNextBtn" class="ob-arrow">❯</button>
-        </div>
+    <div class="onboarding-slider" id="obSlider">
+      <div class="ob-slide active">
+        <div class="ob-icon">🚀</div>
+        <h2 class="ob-title">WELCOME TO DIGIT</h2>
+        <p class="ob-text">The ultimate cosmic math challenge. Solve equations fast and conquer the leaderboard!</p>
       </div>
-
-  
-<div id="startScreen" class="screen">
-      <canvas id="startBgCanvas" class="bg-canvas"></canvas>
-
-
-      <div id="home" class="tab-content active">
-        
-        <div class="header header--tournament">
-          <h1>DIGIT</h1>
-          <div class="subtitle subtitle--tournament">MATH</div>
-        </div>
-
-<section class="home-hero">
-          
-          <div class="home-hero__rewards" aria-label="Rewards hint">
-            <div class="rh-item">
-              <span class="rh-ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                  <path d="M4 12h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                  <path d="M12 22V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                  <path d="M4 7h16v5H4V7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                  <path d="M12 7c-1.8 0-3-1.1-3-2.4C9 3.6 9.8 3 10.7 3c1.1 0 1.9.8 2.3 2 .4-1.2 1.2-2 2.3-2 .9 0 1.7.6 1.7 1.6C17 5.9 15.8 7 14 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-              <span class="rh-txt">Telegram Gifts</span>
-            </div>
-          </div>
-
-          <div class="hero-timer hero-timer--lux">
-            <p class="hero-timer__label">Season ends in</p>
-
-            <span id="heroTimer" class="hero-timer__clock hero-timer__clock--source">90:12:45</span>
-
-            <div class="lux-timer" aria-label="Tournament countdown">
-              
-              <div class="lux-unit" aria-label="Days">
-                <span class="lux-digit lux-digit--slot" id="heroTimerD1">9</span>
-                <span class="lux-digit lux-digit--slot" id="heroTimerD2">0</span>
-              </div>
-
-              <div class="lux-sep">:</div>
-
-              <div class="lux-unit" aria-label="Hours">
-                <span class="lux-digit lux-digit--slot" id="heroTimerH1">1</span>
-                <span class="lux-digit lux-digit--slot" id="heroTimerH2">2</span>
-              </div>
-
-              <div class="lux-sep">:</div>
-
-              <div class="lux-unit" aria-label="Mins">
-                <span class="lux-digit lux-digit--slot" id="heroTimerM1">4</span>
-                <span class="lux-digit lux-digit--slot" id="heroTimerM2">5</span>
-              </div>
-
-            </div>
-          </div>
-        </section>
-<div class="play-cta play-cta--premium">
-          <button id="startGameBtn" class="btn play-cta__btn play-cta__btn--premium">
-            PLAY
-            <span class="cta-arrow" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </button>
-          
-          <div class="play-cta__hint" style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
-            <span style="color: #fff; font-weight: 700;">⚡ <span id="energyCount">3/3</span> FREE</span>
-            <span style="color: rgba(255,255,255,0.3);">|</span>
-            <span style="color: var(--cosmic-accent); font-weight: 600;">🎯 5,000 PTS = 1 🎟️</span>
-          </div>
-        </div>
-
-        <div class="league-preview" aria-label="Level system">
-          <div class="league-preview__head">
-            <span class="lp-ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-              </svg>
-            </span>
-            <span class="league-preview__title">ENERGY RECHARGE</span>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-            <div style="display: flex; flex-direction: column;">
-              <span style="font-family: 'Orbitron', monospace; font-size: 1.2rem; color: #fff; font-weight: 900;">LEVEL 1</span>
-              <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Max 1 purchase / day</span>
-            </div>
-            
-            <button style="background: rgba(10,10,26,0.8); border: 1px solid var(--cosmic-primary); border-radius: 12px; padding: 8px 15px; color: #fff; font-weight: 700; font-family: 'Orbitron', monospace; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(255, 107, 53, 0.2); transition: transform 0.1s;">
-              +3 ⚡ FOR 1 ⭐
-            </button>
-          </div>
-          
-          <div style="text-align: center; margin-top: 12px; font-size: 0.7rem; color: rgba(255,204,0,0.8);">
-            Purchases available today: 1 / 1
-          </div>
-        </div>
-
-<div class="footer-links">
-            <a href="https://t.me/digit_community" target="_blank" class="footer-btn">Community</a>
-            <a href="https://telegra.ph/DIGIT-Math-Game--Rules--Terms-01-11" target="_blank" class="footer-btn">Rules & Terms</a>
-        </div>
-        
-      </div> <div id="missions" class="tab-content" style="display: none;">
-        <div class="header header--tournament">
-          <h1>MISSIONS</h1>
-          <div class="subtitle subtitle--tournament">EARN TICKETS</div>
-        </div>
-
-        <div class="custom-tabs">
-          <button class="c-tab active">DAILY</button>
-          <button class="c-tab">ONE-TIME</button>
-        </div>
-
-        <div class="missions-list">
-          <div class="mission-card">
-            <div class="mc-icon">📺</div>
-            <div class="mc-info">
-              <div class="mc-title">Subscribe to Channel</div>
-              <div class="mc-reward">+1 🎟️</div>
-            </div>
-            <button class="mc-btn mc-btn--go">GO</button>
-          </div>
-
-          <div class="mission-card">
-            <div class="mc-icon">🎮</div>
-            <div class="mc-info">
-              <div class="mc-title">Play 5 Games</div>
-              <div class="mc-reward">+2 🎟️</div>
-            </div>
-            <button class="mc-btn mc-btn--claim">CLAIM</button>
-          </div>
-
-          <div class="mission-card done">
-            <div class="mc-icon">🤝</div>
-            <div class="mc-info">
-              <div class="mc-title">Invite a Friend</div>
-              <div class="mc-reward">Done</div>
-            </div>
-            <button class="mc-btn mc-btn--done" disabled>✔</button>
-          </div>
-        </div>
+      <div class="ob-slide">
+        <div class="ob-icon">⚡</div>
+        <h2 class="ob-title">QUICK MATH</h2>
+        <p class="ob-text">You have 30 seconds. Tap the correct answers. Avoid the traps or lose points!</p>
       </div>
-
-      <div id="leaderboard" class="tab-content" style="display: none;">
-        <div class="header header--tournament">
-          <h1>TOP 100</h1>
-          <div class="subtitle subtitle--tournament">GLOBAL RANKING</div>
-        </div>
-
-        <div class="leaderboard-list">
-          <div class="lb-item rank-1">
-            <div class="lb-rank">1</div>
-            <div class="lb-avatar">👑</div>
-            <div class="lb-name">SpaceKing</div>
-            <div class="lb-score">1,240 🎟️</div>
-          </div>
-          <div class="lb-item rank-2">
-            <div class="lb-rank">2</div>
-            <div class="lb-avatar">👨‍🚀</div>
-            <div class="lb-name">CryptoNinja</div>
-            <div class="lb-score">980 🎟️</div>
-          </div>
-          <div class="lb-item rank-3">
-            <div class="lb-rank">3</div>
-            <div class="lb-avatar">👽</div>
-            <div class="lb-name">AlienMath</div>
-            <div class="lb-score">850 🎟️</div>
-          </div>
-          <div class="lb-item">
-            <div class="lb-rank">4</div>
-            <div class="lb-avatar">🤖</div>
-            <div class="lb-name">BotCrusher</div>
-            <div class="lb-score">720 🎟️</div>
-          </div>
-          <div class="lb-item">
-            <div class="lb-rank">5</div>
-            <div class="lb-avatar">👾</div>
-            <div class="lb-name">PixelBoy</div>
-            <div class="lb-score">690 🎟️</div>
-          </div>
-        </div>
-
-        <div class="my-position-sticky">
-          <div class="my-pos-left">
-            <span class="my-pos-label">Your rank:</span>
-            <span class="my-pos-val">#4092</span>
-          </div>
-          <div class="my-pos-right">12 🎟️</div>
-        </div>
+      <div class="ob-slide">
+        <div class="ob-icon">🎟️</div>
+        <h2 class="ob-title">EARN TICKETS</h2>
+        <p class="ob-text">Every 5,000 points converts to 1 Ticket. Collect tickets to win real Telegram Gifts!</p>
+        <button id="obStartGameBtn" class="btn ob-start-btn">LET'S GO!</button>
       </div>
-
-<div id="profile" class="tab-content" style="display: none;">
-        
-        <div class="profile-hero" style="margin-top: 20px;">
-          <div class="p-avatar-box">👨‍🚀</div>
-          <div class="p-info">
-            <div class="p-name" id="profileName">Astronaut_99</div>
-            <div class="p-level" id="profileLevel">LEVEL 1</div>
-          </div>
-        </div>
-
-        <div class="level-progress-wrap" style="margin: 0 15px 20px; padding: 15px; background: rgba(10,10,26,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; color: #fff; font-weight: 600; font-family: 'Orbitron', monospace;">
-            <span>PROGRESS</span>
-            <span id="levelProgressText">0 / 500</span>
-          </div>
-          <div class="rt-bar" style="height: 10px; background: rgba(0,0,0,0.5); border-radius: 5px; overflow: hidden;">
-            <div id="levelProgressFill" class="rt-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff6b35, #f7c59f); border-radius: 5px; transition: width 0.5s ease;"></div>
-          </div>
-        </div>
-
-        <div class="profile-balances-large">
-          <div class="p-bal-card">
-            <div class="p-bal-val" id="profileTickets">0</div>
-            <div class="p-bal-lbl">TICKETS 🎟️</div>
-          </div>
-          <div class="p-bal-card">
-            <div class="p-bal-val" id="profileTotalPointsLarge">0</div>
-            <div class="p-bal-lbl">TOTAL PTS ⭐</div>
-          </div>
-        </div>
-
-        <div class="profile-kpis">
-          <div class="kpi-card">
-            <div class="kpi-label">High Score</div>
-            <div class="kpi-value" id="profileHighScore">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Games Played</div>
-            <div class="kpi-value" id="profileGamesPlayed">0</div>
-          </div>
-        </div>
-
-        <div class="history-block">
-          <div class="history-header">
-            <div class="history-title">MATCH HISTORY</div>
-            <div class="history-note">UTC TIME</div>
-          </div>
-          <div id="historyList" class="history-list">
-            <div style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.8rem; padding: 20px;">
-              History is empty
-            </div>
-          </div>
-          <button id="historyLoadMore" class="history-loadmore" style="display: none;">LOAD MORE</button>
-        </div>
-      </div>
-
-<div class="bottom-nav">
-        <button class="nav-btn active" data-tab="home">
-          <img src="assets/play.svg" class="nav-icon-svg" alt="Play">
-          <span class="nav-text">Play</span>
-        </button>
-        
-        <button class="nav-btn" data-tab="missions">
-          <img src="assets/missions.svg" class="nav-icon-svg" alt="Missions">
-          <span class="nav-text">Missions</span>
-        </button>
-        
-        <button class="nav-btn" data-tab="leaderboard">
-          <img src="assets/leaderboard.svg" class="nav-icon-svg" alt="Top 100">
-          <span class="nav-text">Top 100</span>
-        </button>
-        
-        <button class="nav-btn" data-tab="profile">
-          <img src="assets/profile.svg" class="nav-icon-svg" alt="Profile">
-          <span class="nav-text">Profile</span>
-        </button>
-      </div>
-
     </div>
 
-    <div id="gameScreen" class="screen fullscreen-game">
-      <div id="fullscreenGameArea" class="game-area fullscreen-area">
-        <canvas id="playBgCanvas" class="bg-canvas"></canvas>
-        <canvas id="playCanvas"></canvas>
+    <div class="ob-controls">
+      <button id="obPrevBtn" class="ob-arrow hidden">❮</button>
+      <div class="ob-dots">
+        <div class="ob-dot active"></div>
+        <div class="ob-dot"></div>
+        <div class="ob-dot"></div>
       </div>
-      <div id="warmupOverlay" class="warmup-overlay hidden" aria-hidden="true">
-        <div class="warmup-countdown" id="warmupCountdown">3</div>
+      <button id="obNextBtn" class="ob-arrow">❯</button>
+    </div>
+  </div>
+
+  <div id="startScreen" class="screen">
+    <canvas id="startBgCanvas" class="bg-canvas"></canvas>
+
+    <div id="home" class="tab-content active">
+      <div class="header header--tournament">
+        <h1>DIGIT</h1>
+        <div class="subtitle subtitle--tournament">MATH</div>
+      </div>
+
+      <section class="home-hero">
+        <div class="home-hero__rewards" aria-label="Rewards hint">
+          <div class="rh-item">
+            <span class="rh-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M4 12h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M12 22V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M4 7h16v5H4V7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M12 7c-1.8 0-3-1.1-3-2.4C9 3.6 9.8 3 10.7 3c1.1 0 1.9.8 2.3 2 .4-1.2 1.2-2 2.3-2 .9 0 1.7.6 1.7 1.6C17 5.9 15.8 7 14 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span class="rh-txt">Telegram Gifts</span>
+          </div>
+        </div>
+
+        <div class="hero-timer hero-timer--lux">
+          <p class="hero-timer__label">Season ends in</p>
+          <span id="heroTimer" class="hero-timer__clock hero-timer__clock--source">90:12:45</span>
+          <div class="lux-timer" aria-label="Tournament countdown">
+            <div class="lux-unit" aria-label="Days">
+              <span class="lux-digit lux-digit--slot" id="heroTimerD1">9</span>
+              <span class="lux-digit lux-digit--slot" id="heroTimerD2">0</span>
+            </div>
+            <div class="lux-sep">:</div>
+            <div class="lux-unit" aria-label="Hours">
+              <span class="lux-digit lux-digit--slot" id="heroTimerH1">1</span>
+              <span class="lux-digit lux-digit--slot" id="heroTimerH2">2</span>
+            </div>
+            <div class="lux-sep">:</div>
+            <div class="lux-unit" aria-label="Mins">
+              <span class="lux-digit lux-digit--slot" id="heroTimerM1">4</span>
+              <span class="lux-digit lux-digit--slot" id="heroTimerM2">5</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="play-cta play-cta--premium">
+        <button id="startGameBtn" class="btn play-cta__btn play-cta__btn--premium">
+          PLAY
+          <span class="cta-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+        
+        <div class="play-cta__hint" style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
+          <span style="color: #fff; font-weight: 700;">⚡ <span id="energyCount">3/3</span> FREE</span>
+          <span style="color: rgba(255,255,255,0.3);">|</span>
+          <span style="color: var(--cosmic-accent); font-weight: 600;">🎯 5,000 PTS = 1 🎟️</span>
+        </div>
+      </div>
+
+      <div class="league-preview" aria-label="Level system">
+        <div class="league-preview__head">
+          <span class="lp-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </span>
+          <span class="league-preview__title">ENERGY RECHARGE</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-family: 'Orbitron', monospace; font-size: 1.2rem; color: #fff; font-weight: 900;">LEVEL 1</span>
+            <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Max 1 purchase / day</span>
+          </div>
+          <button style="background: rgba(10,10,26,0.8); border: 1px solid var(--cosmic-primary); border-radius: 12px; padding: 8px 15px; color: #fff; font-weight: 700; font-family: 'Orbitron', monospace; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(255, 107, 53, 0.2); transition: transform 0.1s;">
+            +3 ⚡ FOR 1 ⭐
+          </button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 12px; font-size: 0.7rem; color: rgba(255,204,0,0.8);">
+          Purchases available today: 1 / 1
+        </div>
+      </div>
+
+      <div class="footer-links">
+        <a href="https://t.me/digit_community" target="_blank" class="footer-btn">Community</a>
+        <a href="https://telegra.ph/DIGIT-Math-Game--Rules--Terms-01-11" target="_blank" class="footer-btn">Rules & Terms</a>
+      </div>
+    </div> 
+    
+    <div id="missions" class="tab-content" style="display: none;">
+      <div class="header header--tournament">
+        <h1>MISSIONS</h1>
+        <div class="subtitle subtitle--tournament">EARN TICKETS</div>
+      </div>
+
+      <div class="custom-tabs">
+        <button class="c-tab active">DAILY</button>
+        <button class="c-tab">ONE-TIME</button>
+      </div>
+
+      <div class="missions-list">
+        <div class="mission-card">
+          <div class="mc-icon">📺</div>
+          <div class="mc-info">
+            <div class="mc-title">Subscribe to Channel</div>
+            <div class="mc-reward">+1 🎟️</div>
+          </div>
+          <button class="mc-btn mc-btn--go">GO</button>
+        </div>
+
+        <div class="mission-card">
+          <div class="mc-icon">🎮</div>
+          <div class="mc-info">
+            <div class="mc-title">Play 5 Games</div>
+            <div class="mc-reward">+2 🎟️</div>
+          </div>
+          <button class="mc-btn mc-btn--claim">CLAIM</button>
+        </div>
+
+        <div class="mission-card done">
+          <div class="mc-icon">🤝</div>
+          <div class="mc-info">
+            <div class="mc-title">Invite a Friend</div>
+            <div class="mc-reward">Done</div>
+          </div>
+          <button class="mc-btn mc-btn--done" disabled>✔</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="leaderboard" class="tab-content" style="display: none;">
+      <div class="header header--tournament">
+        <h1>TOP 10</h1>
+        <div class="subtitle subtitle--tournament">GLOBAL RANKING</div>
+      </div>
+
+      <div id="leaderboardList" class="leaderboard-list">
       </div>
       
-      <div class="minimal-stats-vertical">
-        <div class="minimal-stat-vertical"><div class="minimal-icon">⏱️</div><div class="minimal-value" id="timer">30</div></div>
-        <div class="minimal-stat-vertical"><div class="minimal-icon">⭐</div><div class="minimal-value" id="score">0</div></div>
-        <div class="minimal-stat-vertical"><div class="minimal-icon">⚡</div><div class="minimal-value" id="multiplier">1</div></div>
+      <div class="my-position-sticky">
+        <div class="my-pos-left">
+          <span class="my-pos-label">Your rank:</span>
+          <span class="my-pos-val">#...</span>
+        </div>
+        <div class="my-pos-right">... 🎟️</div>
       </div>
     </div>
 
-<div id="resultModal" class="modal">
-      <div class="modal-content premium-modal">
-        <h2 class="modal-title-glow">TIME'S UP!</h2>
-        
-        <div class="result-score-box">
-          <div class="rs-label">YOUR SCORE</div>
-          <div class="rs-value" id="finalScore">12,450</div>
+    <div id="profile" class="tab-content" style="display: none;">
+      <div class="profile-hero" style="margin-top: 20px;">
+        <div class="p-avatar-box">👨‍🚀</div>
+        <div class="p-info">
+          <div class="p-name" id="profileName">Astronaut_99</div>
+          <div class="p-level" id="profileLevel">LEVEL 1</div>
         </div>
+      </div>
 
-        <div class="result-tickets-box">
-          <div class="rt-earned">
-            <span>Tickets earned:</span>
-            <span class="rt-val">+2 🎟️</span>
-          </div>
-          <div class="rt-progress-wrap">
-            <div class="rt-bar">
-              <div class="rt-fill" style="width: 49%;"></div>
-            </div>
-            <div class="rt-hint">2,450 / 5,000 to next ticket</div>
-          </div>
+      <div class="level-progress-wrap" style="margin: 0 15px 20px; padding: 15px; background: rgba(10,10,26,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; color: #fff; font-weight: 600; font-family: 'Orbitron', monospace;">
+          <span>PROGRESS</span>
+          <span id="levelProgressText">0 / 500</span>
         </div>
+        <div class="rt-bar" style="height: 10px; background: rgba(0,0,0,0.5); border-radius: 5px; overflow: hidden;">
+          <div id="levelProgressFill" class="rt-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff6b35, #f7c59f); border-radius: 5px; transition: width 0.5s ease;"></div>
+        </div>
+      </div>
 
-        <div class="modal-actions">
-          <button id="playAgainBtn" class="btn btn-play-again">
-            PLAY AGAIN <span style="font-size:0.7em; opacity:0.8;">(<span id="modalEnergy">3/3</span> ⚡)</span>
-          </button>
-          <button id="homeBtn" class="btn btn-home" onclick="document.getElementById('resultModal').style.display='none'; document.querySelector('.nav-btn[data-tab=\'home\']').click();">
-            HOME
-          </button>
+      <div class="profile-balances-large">
+        <div class="p-bal-card">
+          <div class="p-bal-val" id="profileTickets">0</div>
+          <div class="p-bal-lbl">TICKETS 🎟️</div>
         </div>
+        <div class="p-bal-card">
+          <div class="p-bal-val" id="profileTotalPointsLarge">0</div>
+          <div class="p-bal-lbl">TOTAL PTS ⭐</div>
+        </div>
+      </div>
+
+      <div class="profile-kpis">
+        <div class="kpi-card">
+          <div class="kpi-label">High Score</div>
+          <div class="kpi-value" id="profileHighScore">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Games Played</div>
+          <div class="kpi-value" id="profileGamesPlayed">0</div>
+        </div>
+      </div>
+
+      <div class="history-block">
+        <div class="history-header">
+          <div class="history-title">MATCH HISTORY</div>
+          <div class="history-note">UTC TIME</div>
+        </div>
+        <div id="historyList" class="history-list">
+          <div style="text-align: center; color: rgba(255,255,255,0.5); font-size: 0.8rem; padding: 20px;">
+            History is empty
+          </div>
+        </div>
+        <button id="historyLoadMore" class="history-loadmore" style="display: none;">LOAD MORE</button>
       </div>
     </div>
 
+    <div class="bottom-nav">
+      <button class="nav-btn active" data-tab="home">
+        <img src="assets/play.svg" class="nav-icon-svg" alt="Play">
+        <span class="nav-text">Play</span>
+      </button>
+      
+      <button class="nav-btn" data-tab="missions">
+        <img src="assets/missions.svg" class="nav-icon-svg" alt="Missions">
+        <span class="nav-text">Missions</span>
+      </button>
+      
+      <button class="nav-btn" data-tab="leaderboard">
+        <img src="assets/leaderboard.svg" class="nav-icon-svg" alt="Top 10">
+        <span class="nav-text">Top 10</span>
+      </button>
+      
+      <button class="nav-btn" data-tab="profile">
+        <img src="assets/profile.svg" class="nav-icon-svg" alt="Profile">
+        <span class="nav-text">Profile</span>
+      </button>
+    </div>
   </div>
-  
+
+  <div id="gameScreen" class="screen fullscreen-game">
+    <div id="fullscreenGameArea" class="game-area fullscreen-area">
+      <canvas id="playBgCanvas" class="bg-canvas"></canvas>
+      <canvas id="playCanvas"></canvas>
+    </div>
+    <div id="warmupOverlay" class="warmup-overlay hidden" aria-hidden="true">
+      <div class="warmup-countdown" id="warmupCountdown">3</div>
+    </div>
+    
+    <div class="minimal-stats-vertical">
+      <div class="minimal-stat-vertical"><div class="minimal-icon">⏱️</div><div class="minimal-value" id="timer">30</div></div>
+      <div class="minimal-stat-vertical"><div class="minimal-icon">⭐</div><div class="minimal-value" id="score">0</div></div>
+      <div class="minimal-stat-vertical"><div class="minimal-icon">⚡</div><div class="minimal-value" id="multiplier">1</div></div>
+    </div>
+  </div>
+
+  <div id="resultModal" class="modal">
+    <div class="modal-content premium-modal">
+      <h2 class="modal-title-glow">TIME'S UP!</h2>
+      
+      <div class="result-score-box">
+        <div class="rs-label">YOUR SCORE</div>
+        <div class="rs-value" id="finalScore">0</div>
+      </div>
+
+      <div class="result-tickets-box">
+        <div class="rt-earned">
+          <span>Tickets earned:</span>
+          <span class="rt-val">+0 🎟️</span>
+        </div>
+        <div class="rt-progress-wrap">
+          <div class="rt-bar">
+            <div class="rt-fill" style="width: 0%;"></div>
+          </div>
+          <div class="rt-hint">0 / 5,000 to next ticket</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="playAgainBtn" class="btn btn-play-again">
+          PLAY AGAIN <span style="font-size:0.7em; opacity:0.8;">(<span id="modalEnergy">3/3</span> ⚡)</span>
+        </button>
+        <button id="homeBtn" class="btn btn-home" onclick="document.getElementById('resultModal').style.display='none'; document.querySelector('.nav-btn[data-tab=\'home\']').click();">
+          HOME
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="assets.js"></script>
   <script src="telegram.js"></script>
   <script src="api.js"></script>
   <script src="game.js"></script>
 </body>
-
 </html>
