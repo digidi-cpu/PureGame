@@ -65,7 +65,8 @@ class GameAPI {
     return this.request(`/api/user/me/stats`);
   }
 
-  // Получить историю своих игр
+  // 👇 ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ИСТОРИИ 👇
+  // Получить историю своих игр (с пагинацией)
   async getMyHistory(offset = 0) {
     return this.request(`/api/user/me/history?offset=${offset}`);
   }
