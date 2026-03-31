@@ -289,6 +289,14 @@ class GameSandbox {
         const ticketCount = document.getElementById("ticketCount");
         if (ticketCount) ticketCount.textContent = stats.tickets;
 
+        // 👇 ОБНОВЛЯЕМ ПЛАШКУ "YOUR RANK" В ЛИДЕРБОРДЕ 👇
+        const myRankVal = document.querySelector(".my-pos-val");
+        if (myRankVal) myRankVal.textContent = `#${stats.rank || 0}`;
+
+        const myPosRight = document.querySelector(".my-pos-right");
+        if (myPosRight) myPosRight.textContent = `${stats.tickets || 0} 🎟️`;
+        // 👆 ========================================= 👆
+
         const modalEnergy = document.getElementById("modalEnergy");
         if (modalEnergy) modalEnergy.textContent = `${stats.energy}/3`;
 
@@ -334,6 +342,7 @@ class GameSandbox {
 
         // 👇 ЗАПУСКАЕМ ЗАГРУЗКУ ИСТОРИИ (ПЕРВУЮ ПОРЦИЮ) 👇
         this.loadMatchHistory(false);
+        
         // 👇 ЗАПУСКАЕМ ЗАГРУЗКУ ЛИДЕРБОРДА (ТОП-10) 👇
         this.loadLeaderboard();
       }
