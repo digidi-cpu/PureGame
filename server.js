@@ -1,4 +1,4 @@
-// server.js — Digit API (Сезонная версия: Энергия ⚡ и Билеты 🎟️)
+// server.js — Digit API (Сезонная версия: Энергия ⚡, Билеты 🎟️, Динамический Конфиг)
 'use strict';
 
 const express = require('express');
@@ -6,10 +6,13 @@ const cors = require('cors');
 const crypto = require('crypto');
 const { Pool } = require('pg');
 const { createClient } = require('redis');
-// Баланс игры (Server-Driven UI)
+
+/* =========================
+   БАЛАНС ИГРЫ (Server-Driven UI)
+========================= */
 const SESSION_TTL = 300;     // 5 минут на отправку результата игры
 const GAME_CONFIG = {
-  duration_sec: 30,          // Длительность одного матча
+  duration_sec: 30,          // Длительность одного матча (секунды)
   ticket_cost: 5000,         // Очков до 1 билета
   level_step: 500            // Очков для повышения уровня
 };
@@ -28,14 +31,9 @@ const PG_SSL_MODE   = (process.env.PG_SSL || 'require').toLowerCase();
 const DEBUG         = !!Number(process.env.DEBUG || '0');
 const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '';
 
-// Баланс игры
-const SESSION_TTL   = 300;     // 5 минут на отправку результата игры
-const TICKET_COST   = 5000;    // 5000 очков = 1 🎟️
-
 if (!DATABASE_URL) { console.error('❌ DATABASE_URL is not set'); process.exit(1); }
 if (!BOT_TOKEN)    { console.error('❌ BOT_TOKEN is not set');    process.exit(1); }
 if (!REDIS_URL)    { console.error('❌ REDIS_URL is not set');    process.exit(1); }
-
 
 // --- ГЕНЕРАТОР ПРИМЕРОВ ДЛЯ АНТИЧИТА ---
 function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
@@ -62,7 +60,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Telegram-Init-Data']
 }));
 
-// Отключаем кэширование, чтобы статистика всегда была свежей
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
@@ -84,7 +81,6 @@ const redis = createClient({ url: REDIS_URL });
 redis.on('error', (e) => console.error('Redis error', e));
 async function connectRedis() { if (!redis.isOpen) await redis.connect(); }
 
-// Строгий UTC-ключ дня (для обновления Энергии)
 function getUTCTodayKey() {
   const d = new Date();
   const yyyy = d.getUTCFullYear();
@@ -93,7 +89,6 @@ function getUTCTodayKey() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// Инициализация таблиц
 async function ensureSchema() {
   await pool.query(`
     create table if not exists users (
@@ -244,10 +239,11 @@ app.post('/api/session/start', requireTelegramSigned, async (req, res) => {
       equations.push(generateExample());
     }
 
+    // ИСПРАВЛЕНИЕ: Добавлена запятая после equations
     res.json({ 
       session_id, 
       energy_left: newEnergy,
-      equations: equations
+      equations: equations,
       duration_sec: GAME_CONFIG.duration_sec
     });
 
@@ -278,7 +274,6 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     let isValid = true;
     const fraudFlags = [];
     
-    // Античит
     if (duration_ms < 2000) { 
       isValid = false; 
       fraudFlags.push('too_short'); 
@@ -311,7 +306,8 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     if (isValid) {
       const totalPointsNow = newBalance + finalScore;
       ticketsEarnedNow = Math.floor(totalPointsNow / GAME_CONFIG.ticket_cost);
-      newBalance = totalPointsNow % GAME_CONFIG.ticket_cost;;
+      // ИСПРАВЛЕНИЕ: Убрана лишняя точка с запятой
+      newBalance = totalPointsNow % GAME_CONFIG.ticket_cost;
       newTickets += ticketsEarnedNow;
 
       await client.query(
@@ -397,9 +393,9 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
     );
     const highScore = hsRows[0]?.max_score || 0;
 
-    const currentLevel = Math.floor(Number(u.total_score) / 500) + 1;
+    // ИСПРАВЛЕНИЕ: Теперь уровень считается от конфига
+    const currentLevel = Math.floor(Number(u.total_score) / GAME_CONFIG.level_step) + 1;
       
-    // ИСПРАВЛЕНО: Теперь без лишних запятых
     res.json({
       exists: true,
       rank: Number(rankRows[0]?.pos || 0),
@@ -421,7 +417,6 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
   }
 });
 
-// 👇 НОВЫЙ МАРШРУТ: Пагинация истории матчей 👇
 app.get('/api/user/me/history', requireTelegramSigned, async (req, res) => {
   try {
     const userId = `tg_${req.tg.user.id}`;
@@ -444,7 +439,6 @@ app.get('/api/user/me/history', requireTelegramSigned, async (req, res) => {
   }
 });
 
-// Старый маршрут логов (оставляем на всякий случай)
 app.get('/api/user/me/events', requireTelegramSigned, async (req, res) => {
   try {
     const userId = `tg_${req.tg.user.id}`;
