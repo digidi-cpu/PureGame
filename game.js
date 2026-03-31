@@ -826,7 +826,7 @@ async endGame() {
       this.syncProfile();
     }
   }
-
+}
 document.addEventListener("DOMContentLoaded", () => { 
   window.gameSandbox = new GameSandbox(); 
   window.gameSandbox.syncProfile();
