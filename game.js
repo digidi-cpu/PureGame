@@ -334,6 +334,8 @@ class GameSandbox {
 
         // 👇 ЗАПУСКАЕМ ЗАГРУЗКУ ИСТОРИИ (ПЕРВУЮ ПОРЦИЮ) 👇
         this.loadMatchHistory(false);
+        // 👇 ЗАПУСКАЕМ ЗАГРУЗКУ ЛИДЕРБОРДА (ТОП-10) 👇
+        this.loadLeaderboard();
       }
     } catch (e) {
       console.error("Failed to sync profile:", e);
@@ -395,6 +397,64 @@ class GameSandbox {
     }
   }
 
+  
+  // 👇 НОВАЯ ФУНКЦИЯ: ЗАГРУЗКА ТОП-10 ИГРОКОВ 👇
+  async loadLeaderboard() {
+    // Убедись, что ID контейнера совпадает с твоим HTML (например, leaderboardList)
+    const list = document.getElementById("leaderboardList"); 
+    if (!list) return;
+
+    // Показываем анимацию или текст загрузки
+    list.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Loading Top 10... 🏆</div>`;
+
+    try {
+      // Запрашиваем с сервера ровно 10 игроков (offset = 0, limit = 10)
+      const data = await window.API.getLeaderboard(0, 10);
+      
+      list.innerHTML = ""; // Очищаем статус загрузки
+
+      if (!data || !data.items || data.items.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Leaderboard is empty yet. Be the first!</div>`;
+        return;
+      }
+
+      // Получаем наш собственный ID, чтобы подсветить себя в топе
+      const myId = window.TelegramAPI?.initDataUnsafe?.user?.id ? `tg_${window.TelegramAPI.initDataUnsafe.user.id}` : null;
+
+      data.items.forEach(player => {
+        // Выдаем красивые медальки первой тройке
+        let rankDisplay = player.rank;
+        if (player.rank === 1) rankDisplay = "🥇";
+        if (player.rank === 2) rankDisplay = "🥈";
+        if (player.rank === 3) rankDisplay = "🥉";
+
+        // Проверяем, это мы или нет (чтобы добавить класс для подсветки)
+        const isMe = myId === player.userId;
+        const highlightClass = isMe ? "lb-item-me" : ""; // Если есть класс lb-item-me, настрой его в CSS (например, золотая рамка)
+
+        const itemHtml = `
+          <div class="lb-item ${highlightClass}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 8px; border-radius: 12px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <div style="font-size: 1.5rem; width: 30px; text-align: center;">${rankDisplay}</div>
+              <div style="font-weight: bold; font-size: 1.1rem;">${player.username}</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="color: #ffd700; font-weight: 900;">${player.tickets} 🎟️</div>
+              <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">${player.score.toLocaleString()} PTS</div>
+            </div>
+          </div>
+        `;
+        list.insertAdjacentHTML('beforeend', itemHtml);
+      });
+
+    } catch (e) {
+      console.error("Failed to load leaderboard:", e);
+      list.innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">Connection error</div>`;
+    }
+  }
+  
+  
+  
   updateAtmosphere() {
     const fs = document.getElementById('gameScreen');
     const timerEl = document.getElementById('timer');
@@ -873,15 +933,29 @@ document.addEventListener('DOMContentLoaded', () => {
   navButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       window.TelegramAPI?.vibrate('light');
+      
       navButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      tabContents.forEach(tab => { tab.style.display = 'none'; tab.classList.remove('active'); });
+      
+      tabContents.forEach(tab => { 
+        tab.style.display = 'none'; 
+        tab.classList.remove('active'); 
+      });
 
       const targetTabId = btn.getAttribute('data-tab');
       const targetTab = document.getElementById(targetTabId);
+      
       if (targetTab) {
         targetTab.style.display = 'flex'; 
         setTimeout(() => targetTab.classList.add('active'), 10);
+        
+        // 👇 ОБНОВЛЯЕМ ЛИДЕРБОРД, ЕСЛИ ИГРОК ОТКРЫЛ ЭТУ ВКЛАДКУ 👇
+        if (targetTabId === 'leaderboardTab') { 
+          if (window.gameSandbox) {
+            window.gameSandbox.loadLeaderboard();
+          }
+        }
+        // 👆 ======================================== 👆
       }
     });
   });
