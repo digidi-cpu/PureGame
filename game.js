@@ -180,7 +180,9 @@ class GameSandbox {
 
       requestAnimationFrame(() => {
         requestAnimationFrame((now) => {
-          this.score = 0; this.timeLeft = 40; this.streak = 0; this.multiplier = 1;
+          this.score = 0; 
+          this.timeLeft = sessionData.duration_sec || 30; 
+          this.streak = 0; this.multiplier = 1;
           this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
           this.activeFreezeType = null;
           
@@ -273,11 +275,14 @@ class GameSandbox {
     document.getElementById("multiplier").textContent = this.multiplier;
   }
 
-  // Свежие данные с сервера прямо на экран
+// Свежие данные с сервера прямо на экран
   async syncProfile() {
     try {
       const stats = await window.API.getMyStats();
       if (stats && stats.exists) {
+        // 👇 СОХРАНЯЕМ КОНФИГ ГЛОБАЛЬНО 👇
+        this.gameConfig = stats.config || { ticket_cost: 5000, level_step: 500 };
+
         const energyCount = document.getElementById("energyCount");
         if (energyCount) energyCount.textContent = `${stats.energy}/3`;
 
@@ -312,13 +317,16 @@ class GameSandbox {
         const levelProgressFill = document.getElementById("levelProgressFill");
         const levelProgressText = document.getElementById("levelProgressText");
         
+        // 👇 УМНЫЙ РАСЧЕТ УРОВНЯ ЧЕРЕЗ КОНФИГ 👇
         if (levelProgressFill && levelProgressText) {
           const currentLvl = stats.level || 1;
           const score = stats.total_score || 0;
-          const nextLevelThreshold = currentLvl * 500;
-          const currentLevelStart = (currentLvl - 1) * 500;
+          const step = this.gameConfig.level_step; // Берем шаг с сервера!
+          
+          const nextLevelThreshold = currentLvl * step;
+          const currentLevelStart = (currentLvl - 1) * step;
           const pointsInCurrentLevel = score - currentLevelStart;
-          const percent = Math.min(100, Math.max(0, (pointsInCurrentLevel / 500) * 100));
+          const percent = Math.min(100, Math.max(0, (pointsInCurrentLevel / step) * 100));
           
           levelProgressFill.style.width = `${percent}%`;
           levelProgressText.textContent = `${score.toLocaleString()} / ${nextLevelThreshold.toLocaleString()} to LVL ${currentLvl + 1}`;
@@ -760,13 +768,14 @@ class GameSandbox {
 
   removeEntity(id) { const e = this.active.get(id); if (!e) return; e.node?.remove(); this.active.delete(id); if (e.type === "rocket") this.correctAnswers.delete(id); }
 
-  async endGame() {
+async endGame() {
     this.isPlaying = false; 
     clearInterval(this.timerId); 
     cancelAnimationFrame(this.rafId);
     this.bg.pause(); 
     document.getElementById('gameScreen').style.background = '#0a0a1a';
     
+    // 1. Показываем состояние ЗАГРУЗКИ в модалке
     document.getElementById("finalScore").textContent = "Calculating...";
     document.querySelector(".rt-val").textContent = "Wait... 🎟️";
     document.querySelector(".rt-hint").textContent = "Syncing with server...";
@@ -775,23 +784,32 @@ class GameSandbox {
     document.getElementById("resultModal").style.display = "flex";
 
     try {
+      // 2. ОТПРАВЛЯЕМ РЕЗУЛЬТАТ НА СЕРВЕР
       const result = await window.API.sessionFinish(this.currentSessionId, this.score);
 
+      // 3. СЕРВЕР ОТВЕТИЛ! Обновляем интерфейс
       if (result.success) {
         document.getElementById("finalScore").textContent = this.score;
+        
+        // Если античит забраковал игру
         if (result.is_valid === false) {
           document.querySelector(".rt-val").textContent = "+0 🎟️";
           document.querySelector(".rt-hint").textContent = "⚠️ Result rejected (Anti-cheat)";
           document.querySelector(".rt-hint").style.color = "#ff3333";
         } else {
+          // Игра честная, рисуем билеты и прогресс-бар
           const tickets = result.tickets_earned || 0;
           const balance = result.score_balance || 0;
           
+          // 👇 ДОСТАЕМ ЦЕНУ БИЛЕТА ИЗ КОНФИГА (или берем 5000 по умолчанию) 👇
+          const tCost = this.gameConfig ? this.gameConfig.ticket_cost : 5000;
+          
           document.querySelector(".rt-val").textContent = `+${tickets} 🎟️`;
           document.querySelector(".rt-hint").style.color = "rgba(255,255,255,0.6)"; 
-          document.querySelector(".rt-hint").textContent = `${balance} / 5,000 to next ticket`;
+          document.querySelector(".rt-hint").textContent = `${balance.toLocaleString()} / ${tCost.toLocaleString()} to next ticket`;
           
-          const percent = Math.min(100, Math.round((balance / 5000) * 100));
+          // Высчитываем проценты для полоски через серверную цену билета
+          const percent = Math.min(100, Math.round((balance / tCost) * 100));
           document.querySelector(".rt-fill").style.width = `${percent}%`;
         }
       }
@@ -799,13 +817,15 @@ class GameSandbox {
       console.error("End Game Error:", error);
       document.getElementById("finalScore").textContent = this.score;
       document.querySelector(".rt-val").textContent = "Offline";
+      
+      // Вывод точной ошибки сервера
       document.querySelector(".rt-hint").textContent = "Error: " + (error.reason || error.message);
       document.querySelector(".rt-hint").style.color = "#ff3333";
     } finally {
+      // Запускаем синхронизацию профиля и истории матчей
       this.syncProfile();
     }
   }
-}
 
 document.addEventListener("DOMContentLoaded", () => { 
   window.gameSandbox = new GameSandbox(); 
