@@ -452,6 +452,143 @@ app.get('/api/user/me/events', requireTelegramSigned, async (req, res) => {
 });
 
 /* =========================
+   API: МИССИИ И ЗАДАНИЯ (PTS Награды)
+========================= */
+
+// Конфиг наших миссий
+const MISSIONS_CONFIG = [
+  // Дейлики (Ежедневные)
+  { id: 'daily_play_3', type: 'daily', title: 'Play 3 Games', icon: '🎮', reward_pts: 100, target: 3 },
+  { id: 'daily_score_300', type: 'daily', title: 'Earn 300 PTS Today', icon: '⭐', reward_pts: 100, target: 300 },
+  // Единоразовые (Ачивки)
+  { id: 'onetime_sub_main', type: 'one_time', title: 'Join Digit Channel', icon: '📢', reward_pts: 200, target: 1, actionUrl: 'https://t.me/digit_community' },
+  { id: 'onetime_sub_dev', type: 'one_time', title: 'Join Creator Channel', icon: '👨‍💻', reward_pts: 200, target: 1, actionUrl: 'https://t.me/ТВОЙ_КАНАЛ' },
+  { id: 'onetime_veteran', type: 'one_time', title: 'Play 50 Games Total', icon: '🏆', reward_pts: 100, target: 50 },
+];
+
+// Генерируем миссии за Уровни (от 10 до 100)
+for (let i = 10; i <= 100; i += 10) {
+  MISSIONS_CONFIG.push({
+    id: `level_${i}`,
+    type: 'one_time',
+    title: `Reach Level ${i}`,
+    icon: i === 100 ? '👑' : '🆙',
+    reward_pts: i === 100 ? 500 : 100,
+    target: i
+  });
+}
+
+// 1. Получить список миссий и прогресс
+app.get('/api/user/me/missions', requireTelegramSigned, async (req, res) => {
+  try {
+    const userId = `tg_${req.tg.user.id}`;
+    const today = getUTCTodayKey();
+
+    // Достаем уже забранные награды
+    const { rows: claims } = await pool.query(`SELECT mission_id FROM mission_rewards WHERE user_id = $1`, [userId]);
+    const claimedSet = new Set(claims.map(r => r.mission_id));
+
+    // Достаем статистику игрока
+    const { rows: stats } = await pool.query(`SELECT games_played, total_score FROM users WHERE user_id = $1`, [userId]);
+    const userStats = stats[0] || { games_played: 0, total_score: 0 };
+    const currentLevel = Math.floor(Number(userStats.total_score) / GAME_CONFIG.level_step) + 1;
+
+    // Считаем статистику именно за СЕГОДНЯ
+    const { rows: todayStats } = await pool.query(
+      `SELECT count(*) as games, sum(final_score) as pts FROM game_sessions WHERE user_id = $1 AND started_at >= current_date AND is_valid = true`, [userId]
+    );
+    const gamesToday = parseInt(todayStats[0].games, 10) || 0;
+    const ptsToday = parseInt(todayStats[0].pts, 10) || 0;
+
+    const result = MISSIONS_CONFIG.map(m => {
+      // Для дейликов склеиваем ID с датой
+      const dbId = m.type === 'daily' ? `${m.id}_${today}` : m.id;
+      const isClaimed = claimedSet.has(dbId);
+
+      let progress = 0;
+      if (m.id === 'daily_play_3') progress = gamesToday;
+      if (m.id === 'daily_score_300') progress = ptsToday;
+      if (m.id === 'onetime_veteran') progress = userStats.games_played;
+      if (m.id.startsWith('level_')) progress = currentLevel;
+      if (m.actionUrl) progress = 1; // Соц. таски всегда можно выполнить
+
+      let status = 'available';
+      if (isClaimed) status = 'claimed';
+      else if (progress >= m.target) status = 'claimable';
+
+      return { ...m, progress, status, dbId };
+    });
+
+    res.json({ missions: result });
+  } catch (e) {
+    console.error("Missions API Error:", e);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// 2. Забрать награду за миссию
+app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const userId = `tg_${req.tg.user.id}`;
+    const { dbId } = req.body;
+    const today = getUTCTodayKey();
+
+    const baseId = dbId.replace(`_${today}`, '');
+    const missionConfig = MISSIONS_CONFIG.find(m => m.id === baseId || m.id === dbId);
+
+    if (!missionConfig) return res.status(400).json({ error: 'mission_not_found' });
+
+    await client.query('BEGIN');
+
+    // Пытаемся записать награду в БД
+    try {
+      await client.query(`INSERT INTO mission_rewards (user_id, mission_id) VALUES ($1, $2)`, [userId, dbId]);
+    } catch (err) {
+      if (err.code === '23505') { 
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'already_claimed' });
+      }
+      throw err;
+    }
+
+    // Достаем текущий баланс игрока
+    const { rows: userRows } = await client.query(
+      `SELECT tickets, score_balance FROM users WHERE user_id = $1 FOR UPDATE`, [userId]
+    );
+
+    let tickets = userRows[0].tickets;
+    let balance = userRows[0].score_balance;
+
+    // СЧИТАЕМ НОВЫЕ ОЧКИ И БИЛЕТЫ (Та же логика, что и в конце матча!)
+    const totalPointsNow = balance + missionConfig.reward_pts;
+    const ticketsEarnedNow = Math.floor(totalPointsNow / GAME_CONFIG.ticket_cost);
+    const newBalance = totalPointsNow % GAME_CONFIG.ticket_cost;
+    const newTickets = tickets + ticketsEarnedNow;
+
+    // Обновляем БД
+    await client.query(
+      `UPDATE users SET tickets = $1, score_balance = $2, total_score = total_score + $3, updated_at = now() WHERE user_id = $4`,
+      [newTickets, newBalance, missionConfig.reward_pts, userId]
+    );
+
+    // Записываем в логи
+    await addScoreEvent(client, {
+      userId, source: 'mission', title: `Mission: ${missionConfig.title}`, scoreAdd: missionConfig.reward_pts, ticketAdd: ticketsEarnedNow
+    });
+
+    await client.query('COMMIT');
+    res.json({ success: true, reward_pts: missionConfig.reward_pts, tickets_earned: ticketsEarnedNow, total_tickets: newTickets, score_balance: newBalance });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: 'internal_error' });
+  } finally {
+    client.release();
+  }
+});
+
+
+/* =========================
    СТАРТ СЕРВЕРА
 ========================= */
 app.use('*', (_req, res) => res.status(404).json({ error: 'Not found' }));
