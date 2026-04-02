@@ -65,10 +65,26 @@ class GameAPI {
     return this.request(`/api/user/me/stats`);
   }
 
-  // 👇 ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ИСТОРИИ 👇
   // Получить историю своих игр (с пагинацией)
   async getMyHistory(offset = 0) {
     return this.request(`/api/user/me/history?offset=${offset}`);
+  }
+
+  // ==========================================
+  // 🎯 МИССИИ
+  // ==========================================
+  
+  // Получить список миссий
+  async getMissions() {
+    return this.request(`/api/user/me/missions`);
+  }
+
+  // Забрать награду за миссию
+  async claimMission(dbId) {
+    return this.request(`/api/user/me/missions/claim`, {
+      method: "POST",
+      body: JSON.stringify({ dbId })
+    });
   }
 }
 
