@@ -462,7 +462,7 @@ const MISSIONS_CONFIG = [
   { id: 'daily_score_300', type: 'daily', title: 'Earn 300 PTS Today', icon: '⭐', reward_pts: 100, target: 300 },
   // Единоразовые (Ачивки)
   { id: 'onetime_sub_main', type: 'one_time', title: 'Join Digit Channel', icon: '📢', reward_pts: 200, target: 1, actionUrl: 'https://t.me/digit_community' },
-  { id: 'onetime_sub_dev', type: 'one_time', title: 'Join Creator Channel', icon: '👨‍💻', reward_pts: 200, target: 1, actionUrl: 'https://t.me/ТВОЙ_КАНАЛ' },
+  { id: 'onetime_sub_dev', type: 'one_time', title: 'Join Creator Channel', icon: '👨‍💻', reward_pts: 200, target: 1, actionUrl: 'https://t.me/stayrational' },
   { id: 'onetime_veteran', type: 'one_time', title: 'Play 50 Games Total', icon: '🏆', reward_pts: 100, target: 50 },
 ];
 
