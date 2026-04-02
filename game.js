@@ -143,7 +143,6 @@ class GameSandbox {
       this.startGame();
     });
 
-    // 👇 НОВАЯ КНОПКА ДЛЯ ИСТОРИИ МАТЧЕЙ 👇
     const loadMoreBtn = document.getElementById("historyLoadMore");
     if (loadMoreBtn) {
       loadMoreBtn.addEventListener("click", () => {
@@ -275,7 +274,7 @@ class GameSandbox {
     document.getElementById("multiplier").textContent = this.multiplier;
   }
 
-// Свежие данные с сервера прямо на экран
+  // Свежие данные с сервера прямо на экран
   async syncProfile() {
     try {
       const stats = await window.API.getMyStats();
@@ -289,13 +288,11 @@ class GameSandbox {
         const ticketCount = document.getElementById("ticketCount");
         if (ticketCount) ticketCount.textContent = stats.tickets;
 
-        // 👇 ОБНОВЛЯЕМ ПЛАШКУ "YOUR RANK" В ЛИДЕРБОРДЕ 👇
         const myRankVal = document.querySelector(".my-pos-val");
         if (myRankVal) myRankVal.textContent = `#${stats.rank || 0}`;
 
         const myPosRight = document.querySelector(".my-pos-right");
         if (myPosRight) myPosRight.textContent = `${stats.tickets || 0} 🎟️`;
-        // 👆 ========================================= 👆
 
         const modalEnergy = document.getElementById("modalEnergy");
         if (modalEnergy) modalEnergy.textContent = `${stats.energy}/3`;
@@ -329,7 +326,7 @@ class GameSandbox {
         if (levelProgressFill && levelProgressText) {
           const currentLvl = stats.level || 1;
           const score = stats.total_score || 0;
-          const step = this.gameConfig.level_step; // Берем шаг с сервера!
+          const step = this.gameConfig.level_step; 
           
           const nextLevelThreshold = currentLvl * step;
           const currentLevelStart = (currentLvl - 1) * step;
@@ -340,11 +337,10 @@ class GameSandbox {
           levelProgressText.textContent = `${score.toLocaleString()} / ${nextLevelThreshold.toLocaleString()} to LVL ${currentLvl + 1}`;
         }
 
-        // 👇 ЗАПУСКАЕМ ЗАГРУЗКУ ИСТОРИИ (ПЕРВУЮ ПОРЦИЮ) 👇
+        // 👇 ЗАПУСКАЕМ ЗАГРУЗКУ ВСЕХ ДАННЫХ 👇
         this.loadMatchHistory(false);
-        
-        // 👇 ЗАПУСКАЕМ ЗАГРУЗКУ ЛИДЕРБОРДА (ТОП-10) 👇
         this.loadLeaderboard();
+        this.loadMissions();
       }
     } catch (e) {
       console.error("Failed to sync profile:", e);
@@ -406,40 +402,32 @@ class GameSandbox {
     }
   }
 
-  
-  // 👇 НОВАЯ ФУНКЦИЯ: ЗАГРУЗКА ТОП-10 ИГРОКОВ 👇
+  // 👇 ЗАГРУЗКА ТОП-10 ИГРОКОВ 👇
   async loadLeaderboard() {
-    // Убедись, что ID контейнера совпадает с твоим HTML (например, leaderboardList)
     const list = document.getElementById("leaderboardList"); 
     if (!list) return;
 
-    // Показываем анимацию или текст загрузки
     list.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Loading Top 10... 🏆</div>`;
 
     try {
-      // Запрашиваем с сервера ровно 10 игроков (offset = 0, limit = 10)
       const data = await window.API.getLeaderboard(0, 10);
-      
-      list.innerHTML = ""; // Очищаем статус загрузки
+      list.innerHTML = ""; 
 
       if (!data || !data.items || data.items.length === 0) {
         list.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Leaderboard is empty yet. Be the first!</div>`;
         return;
       }
 
-      // Получаем наш собственный ID, чтобы подсветить себя в топе
       const myId = window.TelegramAPI?.initDataUnsafe?.user?.id ? `tg_${window.TelegramAPI.initDataUnsafe.user.id}` : null;
 
       data.items.forEach(player => {
-        // Выдаем красивые медальки первой тройке
         let rankDisplay = player.rank;
         if (player.rank === 1) rankDisplay = "🥇";
         if (player.rank === 2) rankDisplay = "🥈";
         if (player.rank === 3) rankDisplay = "🥉";
 
-        // Проверяем, это мы или нет (чтобы добавить класс для подсветки)
         const isMe = myId === player.userId;
-        const highlightClass = isMe ? "lb-item-me" : ""; // Если есть класс lb-item-me, настрой его в CSS (например, золотая рамка)
+        const highlightClass = isMe ? "lb-item-me" : ""; 
 
         const itemHtml = `
           <div class="lb-item ${highlightClass}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 8px; border-radius: 12px;">
@@ -461,8 +449,98 @@ class GameSandbox {
       list.innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">Connection error</div>`;
     }
   }
-  
-  
+
+  // 👇 НОВЫЕ ФУНКЦИИ МИССИЙ 👇
+  async loadMissions() {
+    const missionsList = document.querySelector(".missions-list");
+    if (!missionsList) return;
+
+    missionsList.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Loading missions... 🎯</div>`;
+
+    try {
+      const data = await window.API.getMissions();
+      if (!data || !data.missions) return;
+
+      missionsList.innerHTML = "";
+      
+      const activeTabBtn = document.querySelector(".custom-tabs .c-tab.active");
+      const filterType = activeTabBtn && activeTabBtn.textContent === "DAILY" ? "daily" : "one_time";
+
+      const filteredMissions = data.missions.filter(m => m.type === filterType);
+
+      if (filteredMissions.length === 0) {
+        missionsList.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">No missions available</div>`;
+        return;
+      }
+
+      filteredMissions.forEach(m => {
+        let btnHtml = "";
+        let doneClass = m.status === 'claimed' ? 'done' : '';
+
+        if (m.status === 'claimed') {
+          btnHtml = `<button class="mc-btn mc-btn--done" disabled>✔</button>`;
+        } else if (m.status === 'claimable') {
+          btnHtml = `<button class="mc-btn mc-btn--claim" onclick="window.gameSandbox.claimMission('${m.dbId}')">CLAIM</button>`;
+        } else {
+          if (m.actionUrl) {
+            btnHtml = `<button class="mc-btn mc-btn--go" onclick="window.gameSandbox.openMissionLink('${m.actionUrl}')">GO</button>`;
+          } else {
+            btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
+          }
+        }
+
+        const itemHtml = `
+          <div class="mission-card ${doneClass}">
+            <div class="mc-icon">${m.icon}</div>
+            <div class="mc-info">
+              <div class="mc-title">${m.title}</div>
+              <div class="mc-reward" style="color: #ffd700;">+${m.reward_pts} PTS</div>
+            </div>
+            ${btnHtml}
+          </div>
+        `;
+        missionsList.insertAdjacentHTML('beforeend', itemHtml);
+      });
+
+    } catch (e) {
+      console.error("Failed to load missions:", e);
+      missionsList.innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">Connection error</div>`;
+    }
+  }
+
+  async claimMission(dbId) {
+    window.TelegramAPI?.vibrate('medium');
+    try {
+      const result = await window.API.claimMission(dbId);
+      if (result && result.success) {
+        this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, `+${result.reward_pts} PTS`);
+        
+        if (result.tickets_earned > 0) {
+          setTimeout(() => {
+            this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2 + 50, `+${result.tickets_earned} 🎟️`);
+          }, 600);
+        }
+
+        this.syncProfile(); 
+        this.loadMissions(); 
+      }
+    } catch (e) {
+      alert("Mission error: " + (e.reason || e.message));
+    }
+  }
+
+  openMissionLink(url) {
+    window.TelegramAPI?.vibrate('light');
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+       window.Telegram.WebApp.openTelegramLink(url);
+    } else {
+       window.open(url, '_blank');
+    }
+    
+    setTimeout(() => {
+      this.loadMissions();
+    }, 3000);
+  }
   
   updateAtmosphere() {
     const fs = document.getElementById('gameScreen');
@@ -837,7 +915,7 @@ class GameSandbox {
 
   removeEntity(id) { const e = this.active.get(id); if (!e) return; e.node?.remove(); this.active.delete(id); if (e.type === "rocket") this.correctAnswers.delete(id); }
 
-async endGame() {
+  async endGame() {
     this.isPlaying = false; 
     clearInterval(this.timerId); 
     cancelAnimationFrame(this.rafId);
@@ -895,7 +973,8 @@ async endGame() {
       this.syncProfile();
     }
   }
-}
+} // Конец класса GameSandbox
+
 document.addEventListener("DOMContentLoaded", () => { 
   window.gameSandbox = new GameSandbox(); 
   window.gameSandbox.syncProfile();
@@ -958,13 +1037,35 @@ document.addEventListener('DOMContentLoaded', () => {
         targetTab.style.display = 'flex'; 
         setTimeout(() => targetTab.classList.add('active'), 10);
         
-        // 👇 ОБНОВЛЯЕМ ЛИДЕРБОРД, ЕСЛИ ИГРОК ОТКРЫЛ ЭТУ ВКЛАДКУ 👇
-        if (targetTabId === 'leaderboardTab') { 
+        // 👇 ОБНОВЛЯЕМ ЛИДЕРБОРД ИЛИ МИССИИ ПРИ ОТКРЫТИИ ВКЛАДКИ 👇
+        if (targetTabId === 'leaderboardTab' || targetTabId === 'leaderboard') { 
           if (window.gameSandbox) {
             window.gameSandbox.loadLeaderboard();
           }
         }
+        if (targetTabId === 'missionsTab' || targetTabId === 'missions') { 
+          if (window.gameSandbox) {
+            window.gameSandbox.loadMissions();
+          }
+        }
         // 👆 ======================================== 👆
+      }
+    });
+  });
+});
+
+// ==========================================
+// ЛОГИКА ВКЛАДОК В МИССИЯХ (DAILY / ONE-TIME)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+  const missionTabs = document.querySelectorAll('.custom-tabs .c-tab');
+  missionTabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      window.TelegramAPI?.vibrate('light');
+      missionTabs.forEach(t => t.classList.remove('active'));
+      e.target.classList.add('active');
+      if (window.gameSandbox) {
+        window.gameSandbox.loadMissions(); // Перезагружаем список миссий
       }
     });
   });
