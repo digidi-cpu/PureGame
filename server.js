@@ -423,11 +423,12 @@ app.get('/api/user/me/history', requireTelegramSigned, async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
     const limit = 10;
 
+    // Тянем всё из score_events (Матчи + Миссии)
     const { rows } = await pool.query(
-      `SELECT final_score, tickets_earned, started_at 
-       FROM game_sessions 
-       WHERE user_id = $1 AND is_valid = true 
-       ORDER BY started_at DESC 
+      `SELECT title, score_add as final_score, ticket_add as tickets_earned, ts as started_at 
+       FROM score_events 
+       WHERE user_id = $1 
+       ORDER BY ts DESC 
        LIMIT $2 OFFSET $3`,
       [userId, limit, offset]
     );
@@ -454,15 +455,30 @@ app.get('/api/user/me/events', requireTelegramSigned, async (req, res) => {
 /* =========================
    API: МИССИИ И ЗАДАНИЯ (PTS Награды)
 ========================= */
-
+// Функция для проверки подписки через Telegram API
+async function checkChannelSub(tgId, channelUsername) {
+  try {
+    const url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/getChatMember?chat_id=${channelUsername}&user_id=${tgId}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (data.ok) {
+      const status = data.result.status;
+      return ['member', 'administrator', 'creator'].includes(status);
+    }
+    return false;
+  } catch (e) {
+    console.error("TG Check Error:", e);
+    return false;
+  }
+}
 // Конфиг наших миссий
 const MISSIONS_CONFIG = [
   // Дейлики (Ежедневные)
   { id: 'daily_play_3', type: 'daily', title: 'Play 3 Games', icon: '🎮', reward_pts: 100, target: 3 },
   { id: 'daily_score_300', type: 'daily', title: 'Earn 300 PTS Today', icon: '⭐', reward_pts: 100, target: 300 },
   // Единоразовые (Ачивки)
-  { id: 'onetime_sub_main', type: 'one_time', title: 'Join Digit Channel', icon: '📢', reward_pts: 200, target: 1, actionUrl: 'https://t.me/digit_community' },
-  { id: 'onetime_sub_dev', type: 'one_time', title: 'Join Creator Channel', icon: '👨‍💻', reward_pts: 200, target: 1, actionUrl: 'https://t.me/stayrational' },
+  { id: 'onetime_sub_main', type: 'one_time', title: 'Join Digit Channel', icon: '📢', reward_pts: 200, target: 1, actionUrl: 'https://t.me/digit_community', tgChannel: '@digit_community' },
+  { id: 'onetime_sub_dev', type: 'one_time', title: 'Join Creator Channel', icon: '👨‍💻', reward_pts: 200, target: 1, actionUrl: 'https://t.me/stayrational', tgChannel: '@stayrational' },
   { id: 'onetime_veteran', type: 'one_time', title: 'Play 50 Games Total', icon: '🏆', reward_pts: 100, target: 50 },
 ];
 
@@ -538,7 +554,13 @@ app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) 
     const missionConfig = MISSIONS_CONFIG.find(m => m.id === baseId || m.id === dbId);
 
     if (!missionConfig) return res.status(400).json({ error: 'mission_not_found' });
-
+if (missionConfig.tgChannel) {
+      const rawTgId = req.tg.user.id; // Достаем чистый ID цифрами
+      const isSubbed = await checkChannelSub(rawTgId, missionConfig.tgChannel);
+      if (!isSubbed) {
+        return res.status(403).json({ error: 'not_subscribed', actionUrl: missionConfig.actionUrl });
+      }
+    }
     await client.query('BEGIN');
 
     // Пытаемся записать награду в БД
