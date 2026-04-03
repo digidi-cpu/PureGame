@@ -347,7 +347,7 @@ class GameSandbox {
     }
   }
 
-  // НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ ИСТОРИИ МАТЧЕЙ (с пагинацией)
+// 1. 👇 ОБНОВЛЕННАЯ ЗАГРУЗКА ИСТОРИИ (Матчи + Миссии) 👇
   async loadMatchHistory(isLoadMore = false) {
     const historyList = document.getElementById("historyList");
     const loadMoreBtn = document.getElementById("historyLoadMore");
@@ -379,14 +379,19 @@ class GameSandbox {
       const ticketsEarned = match.tickets_earned || 0;
       const rewardStyle = ticketsEarned > 0 ? '' : 'color: rgba(255,255,255,0.4);';
 
+      // Достаем название (Миссия или Матч)
+      const eventTitle = match.title || "Match played";
+
       const itemHtml = `
-        <div class="history-item">
+        <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
           <div class="h-left">
-            <div class="h-score">${matchScore} PTS</div>
-            <div class="h-date">${dateStr}, ${timeStr}</div>
+            <div class="h-score" style="font-weight: bold; font-size: 0.95rem; color: #fff;">${eventTitle}</div>
+            <div class="h-date" style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 4px;">
+              <span style="color: #ffcc00;">+${matchScore} PTS</span> • ${dateStr}, ${timeStr}
+            </div>
           </div>
           <div class="h-right">
-            <span class="h-reward" style="${rewardStyle}">+${ticketsEarned} 🎟️</span>
+            <span class="h-reward" style="font-weight: 900; ${rewardStyle}">+${ticketsEarned} 🎟️</span>
           </div>
         </div>
       `;
@@ -450,8 +455,7 @@ class GameSandbox {
     }
   }
 
-  // 👇 НОВЫЕ ФУНКЦИИ МИССИЙ 👇
-  async loadMissions() {
+async loadMissions() {
     const missionsList = document.querySelector(".missions-list");
     if (!missionsList) return;
 
@@ -462,10 +466,8 @@ class GameSandbox {
       if (!data || !data.missions) return;
 
       missionsList.innerHTML = "";
-      
       const activeTabBtn = document.querySelector(".custom-tabs .c-tab.active");
       const filterType = activeTabBtn && activeTabBtn.textContent === "DAILY" ? "daily" : "one_time";
-
       const filteredMissions = data.missions.filter(m => m.type === filterType);
 
       if (filteredMissions.length === 0) {
@@ -479,14 +481,18 @@ class GameSandbox {
 
         if (m.status === 'claimed') {
           btnHtml = `<button class="mc-btn mc-btn--done" disabled>✔</button>`;
+        } else if (m.actionUrl) {
+          // Две кнопки для социальных тасок
+          btnHtml = `
+            <div style="display: flex; gap: 6px;">
+              <button class="mc-btn mc-btn--go" onclick="window.gameSandbox.openMissionLink('${m.actionUrl}')">GO</button>
+              <button class="mc-btn mc-btn--claim" style="background: #00f3ff; color: #000;" onclick="window.gameSandbox.claimMission('${m.dbId}')">CHECK</button>
+            </div>
+          `;
         } else if (m.status === 'claimable') {
           btnHtml = `<button class="mc-btn mc-btn--claim" onclick="window.gameSandbox.claimMission('${m.dbId}')">CLAIM</button>`;
         } else {
-          if (m.actionUrl) {
-            btnHtml = `<button class="mc-btn mc-btn--go" onclick="window.gameSandbox.openMissionLink('${m.actionUrl}')">GO</button>`;
-          } else {
-            btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
-          }
+          btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
         }
 
         const itemHtml = `
@@ -501,31 +507,34 @@ class GameSandbox {
         `;
         missionsList.insertAdjacentHTML('beforeend', itemHtml);
       });
-
     } catch (e) {
-      console.error("Failed to load missions:", e);
       missionsList.innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">Connection error</div>`;
     }
   }
 
-  async claimMission(dbId) {
+async claimMission(dbId) {
     window.TelegramAPI?.vibrate('medium');
     try {
       const result = await window.API.claimMission(dbId);
       if (result && result.success) {
         this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, `+${result.reward_pts} PTS`);
-        
         if (result.tickets_earned > 0) {
           setTimeout(() => {
             this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2 + 50, `+${result.tickets_earned} 🎟️`);
           }, 600);
         }
-
-        this.syncProfile(); 
-        this.loadMissions(); 
+        this.syncProfile();
+        this.loadMissions();
       }
     } catch (e) {
-      alert("Mission error: " + (e.reason || e.message));
+      // Если сервер ответил, что игрок не подписан
+      if (e.error === 'not_subscribed') {
+         alert("Join the channel first to claim the reward! 🚀");
+         // Автоматически открываем канал
+         if (e.actionUrl) this.openMissionLink(e.actionUrl);
+      } else {
+         alert("Mission error: " + (e.reason || e.message));
+      }
     }
   }
 
