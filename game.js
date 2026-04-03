@@ -347,7 +347,7 @@ class GameSandbox {
     }
   }
 
-// 1. 👇 ОБНОВЛЕННАЯ ЗАГРУЗКА ИСТОРИИ (Матчи + Миссии) 👇
+// 👇 ОБНОВЛЕННАЯ ЗАГРУЗКА ИСТОРИИ (Только очки справа, чисто и красиво) 👇
   async loadMatchHistory(isLoadMore = false) {
     const historyList = document.getElementById("historyList");
     const loadMoreBtn = document.getElementById("historyLoadMore");
@@ -375,23 +375,21 @@ class GameSandbox {
       const dateObj = new Date(match.started_at);
       const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      
+      // Достаем очки и название
       const matchScore = (match.final_score || 0).toLocaleString();
-      const ticketsEarned = match.tickets_earned || 0;
-      const rewardStyle = ticketsEarned > 0 ? '' : 'color: rgba(255,255,255,0.4);';
-
-      // Достаем название (Миссия или Матч)
       const eventTitle = match.title || "Match played";
 
       const itemHtml = `
-        <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
-          <div class="h-left">
-            <div class="h-score" style="font-weight: bold; font-size: 0.95rem; color: #fff;">${eventTitle}</div>
-            <div class="h-date" style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 4px;">
-              <span style="color: #ffcc00;">+${matchScore} PTS</span> • ${dateStr}, ${timeStr}
+        <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+          <div class="h-left" style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="font-weight: 700; font-size: 1rem; color: #fff;">${eventTitle}</div>
+            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">
+              ${dateStr}, ${timeStr}
             </div>
           </div>
-          <div class="h-right">
-            <span class="h-reward" style="font-weight: 900; ${rewardStyle}">+${ticketsEarned} 🎟️</span>
+          <div class="h-right" style="text-align: right;">
+            <span style="font-weight: 900; font-size: 1.1rem; color: #ffcc00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.2);">+${matchScore} PTS</span>
           </div>
         </div>
       `;
