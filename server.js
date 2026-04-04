@@ -16,7 +16,7 @@ const GAME_CONFIG = {
   ticket_cost: 5000,         // Очков до 1 билета
   level_step: 500,           // Очков для повышения уровня
   
-  // 👇 НОВЫЕ ПАРАМЕТРЫ (Сезон и Баланс) 👇
+  // НОВЫЕ ПАРАМЕТРЫ (Сезон и Баланс)
   season_end_date: '2026-06-01T18:00:00Z', // Дата конца сезона (UTC)
   toxic_multiplier: 2,       // Множитель очков при зеленой комете
   max_streak_multiplier: 10, // Максимальный множитель за комбо
@@ -147,6 +147,11 @@ async function ensureSchema() {
       primary key (user_id, mission_id)
     );
   `);
+  
+  // Безопасное добавление новых колонок для Ежедневного входа (Daily Check-in)
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_checkin_date text;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS checkin_streak integer not null default 0;`);
+  
   console.log('✅ Database schema initialized');
 }
 
@@ -413,7 +418,6 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
       energy: u.energy,
       level: currentLevel,
       high_score: Number(highScore),
-      // 👇 ТЕПЕРЬ СЕРВЕР ОТДАЕТ ВСЕ НАСТРОЙКИ БАЛАНСА КЛИЕНТУ 👇
       config: {
         ticket_cost: GAME_CONFIG.ticket_cost,
         level_step: GAME_CONFIG.level_step,
@@ -452,17 +456,108 @@ app.get('/api/user/me/history', requireTelegramSigned, async (req, res) => {
   }
 });
 
-app.get('/api/user/me/events', requireTelegramSigned, async (req, res) => {
+
+/* =========================
+   API: ЕЖЕДНЕВНЫЙ ВХОД (Daily Check-in)
+========================= */
+const DAILY_REWARDS = [10, 20, 30, 40, 50, 60, 100]; // PTS за 1-7 дни
+
+app.get('/api/user/checkin/status', requireTelegramSigned, async (req, res) => {
   try {
     const userId = `tg_${req.tg.user.id}`;
+    const today = getUTCTodayKey();
+    
     const { rows } = await pool.query(
-      `SELECT ts, title, score_add, ticket_add FROM score_events WHERE user_id = $1 ORDER BY ts DESC LIMIT 50`, [userId]
+      `SELECT last_checkin_date, checkin_streak FROM users WHERE user_id = $1`, [userId]
     );
-    res.json({ items: rows });
+    
+    if (!rows.length) return res.status(404).json({ error: 'user_not_found' });
+    
+    const user = rows[0];
+    let canClaim = user.last_checkin_date !== today;
+    let streak = user.checkin_streak || 0;
+
+    // Если последний вход был раньше чем вчера — стрик сбрасывается
+    if (user.last_checkin_date) {
+      const lastDate = new Date(user.last_checkin_date);
+      const todayDate = new Date(today);
+      const diff = (todayDate - lastDate) / (1000 * 60 * 60 * 24);
+      if (diff > 1) streak = 0; 
+    }
+
+    res.json({ canClaim, streak: streak % 7, rewards: DAILY_REWARDS });
   } catch (e) {
+    console.error("Checkin Status Error:", e);
     res.status(500).json({ error: 'internal_error' });
   }
 });
+
+app.post('/api/user/checkin/claim', requireTelegramSigned, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const userId = `tg_${req.tg.user.id}`;
+    const today = getUTCTodayKey();
+
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT last_checkin_date, checkin_streak, tickets, score_balance FROM users WHERE user_id = $1 FOR UPDATE`, [userId]
+    );
+    
+    if (!rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'user_not_found' });
+    }
+    
+    const user = rows[0];
+
+    if (user.last_checkin_date === today) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'already_claimed' });
+    }
+
+    // Логика стрика
+    let newStreak = (user.checkin_streak || 0) + 1;
+    if (user.last_checkin_date) {
+      const lastDate = new Date(user.last_checkin_date);
+      const todayDate = new Date(today);
+      if ((todayDate - lastDate) / (1000 * 60 * 60 * 24) > 1) newStreak = 1;
+    }
+
+    const dayIndex = (newStreak - 1) % 7;
+    const rewardPts = DAILY_REWARDS[dayIndex];
+
+    // Начисляем очки
+    const totalPointsNow = user.score_balance + rewardPts;
+    const ticketsEarnedNow = Math.floor(totalPointsNow / GAME_CONFIG.ticket_cost);
+    const newBalance = totalPointsNow % GAME_CONFIG.ticket_cost;
+
+    await client.query(
+      `UPDATE users SET 
+        tickets = tickets + $1, 
+        score_balance = $2, 
+        total_score = total_score + $3,
+        last_checkin_date = $4,
+        checkin_streak = $5,
+        updated_at = now()
+       WHERE user_id = $6`,
+      [ticketsEarnedNow, newBalance, rewardPts, today, newStreak, userId]
+    );
+
+    await addScoreEvent(client, {
+      userId, source: 'checkin', title: `Daily Check-in (Day ${dayIndex + 1})`, scoreAdd: rewardPts, ticketAdd: ticketsEarnedNow
+    });
+
+    await client.query('COMMIT');
+    res.json({ success: true, reward_pts: rewardPts, tickets_earned: ticketsEarnedNow, streak: newStreak % 7 });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error("Checkin Claim Error:", e);
+    res.status(500).json({ error: 'internal_error' });
+  } finally {
+    client.release();
+  }
+});
+
 
 /* =========================
    API: МИССИИ И ЗАДАНИЯ (PTS Награды)
