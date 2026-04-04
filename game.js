@@ -112,7 +112,7 @@ class GameSandbox {
     this.isWarmup = false;
     this.magnetUntil = 0;
     
-    // 👇 НОВАЯ ПЕРЕМЕННАЯ ДЛЯ ПАГИНАЦИИ ИСТОРИИ 👇
+    // Пагинация истории
     this.historyOffset = 0; 
     
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
@@ -133,12 +133,12 @@ class GameSandbox {
 
   bindUI() {
     document.getElementById("startGameBtn").addEventListener("click", () => {
-      TelegramAPI.vibrate('medium'); 
+      window.TelegramAPI?.vibrate('medium'); 
       this.startGame();
     });
 
     document.getElementById("playAgainBtn").addEventListener("click", () => {
-      TelegramAPI.vibrate('medium'); 
+      window.TelegramAPI?.vibrate('medium'); 
       document.getElementById("resultModal").style.display = "none";
       this.startGame();
     });
@@ -279,8 +279,12 @@ class GameSandbox {
     try {
       const stats = await window.API.getMyStats();
       if (stats && stats.exists) {
-        // 👇 СОХРАНЯЕМ КОНФИГ ГЛОБАЛЬНО 👇
+        
+        // 👇 СОХРАНЯЕМ КОНФИГ И ЗАПУСКАЕМ ТАЙМЕР ОТ СЕРВЕРА 👇
         this.gameConfig = stats.config || { ticket_cost: 5000, level_step: 500 };
+        if (this.gameConfig.season_end_date) {
+          window.startSeasonTimer(this.gameConfig.season_end_date);
+        }
 
         const energyCount = document.getElementById("energyCount");
         if (energyCount) energyCount.textContent = `${stats.energy}/3`;
@@ -322,7 +326,6 @@ class GameSandbox {
         const levelProgressFill = document.getElementById("levelProgressFill");
         const levelProgressText = document.getElementById("levelProgressText");
         
-        // 👇 УМНЫЙ РАСЧЕТ УРОВНЯ ЧЕРЕЗ КОНФИГ 👇
         if (levelProgressFill && levelProgressText) {
           const currentLvl = stats.level || 1;
           const score = stats.total_score || 0;
@@ -337,7 +340,7 @@ class GameSandbox {
           levelProgressText.textContent = `${score.toLocaleString()} / ${nextLevelThreshold.toLocaleString()} to LVL ${currentLvl + 1}`;
         }
 
-        // 👇 ЗАПУСКАЕМ ЗАГРУЗКУ ВСЕХ ДАННЫХ 👇
+        // Запускаем загрузку всех данных
         this.loadMatchHistory(false);
         this.loadLeaderboard();
         this.loadMissions();
@@ -347,7 +350,7 @@ class GameSandbox {
     }
   }
 
-// 👇 ОБНОВЛЕННАЯ ЗАГРУЗКА ИСТОРИИ (Только очки справа, чисто и красиво) 👇
+  // ЗАГРУЗКА ИСТОРИИ (Только очки справа, чисто и красиво)
   async loadMatchHistory(isLoadMore = false) {
     const historyList = document.getElementById("historyList");
     const loadMoreBtn = document.getElementById("historyLoadMore");
@@ -376,7 +379,6 @@ class GameSandbox {
       const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
       
-      // Достаем очки и название
       const matchScore = (match.final_score || 0).toLocaleString();
       const eventTitle = match.title || "Match played";
 
@@ -405,7 +407,7 @@ class GameSandbox {
     }
   }
 
-  // 👇 ЗАГРУЗКА ТОП-10 ИГРОКОВ 👇
+  // ЗАГРУЗКА ТОП-10 ИГРОКОВ
   async loadLeaderboard() {
     const list = document.getElementById("leaderboardList"); 
     if (!list) return;
@@ -453,7 +455,8 @@ class GameSandbox {
     }
   }
 
-async loadMissions() {
+  // МИССИИ (GO / CHECK)
+  async loadMissions() {
     const missionsList = document.querySelector(".missions-list");
     if (!missionsList) return;
 
@@ -510,7 +513,7 @@ async loadMissions() {
     }
   }
 
-async claimMission(dbId) {
+  async claimMission(dbId) {
     window.TelegramAPI?.vibrate('medium');
     try {
       const result = await window.API.claimMission(dbId);
@@ -525,10 +528,9 @@ async claimMission(dbId) {
         this.loadMissions();
       }
     } catch (e) {
-      // Если сервер ответил, что игрок не подписан
+      // Ловим серверную ошибку подписки
       if (e.error === 'not_subscribed') {
          alert("Join the channel first to claim the reward! 🚀");
-         // Автоматически открываем канал
          if (e.actionUrl) this.openMissionLink(e.actionUrl);
       } else {
          alert("Mission error: " + (e.reason || e.message));
@@ -830,13 +832,17 @@ async claimMission(dbId) {
     }
   }
 
+  // 👇 ОБНОВЛЕНО: Тайминги комет берутся с сервера 👇
   activateFreeze(id, type) {
     const e = this.active.get(id);
     if (!e) return;
 
-    let duration = 5000, popupText = "❄️ FROZEN!", explodeColor = '#00f3ff';
-    if (type === 'toxic') { duration = 3500; popupText = "🧪 TOXIC x2!"; explodeColor = '#39ff14'; } 
-    else if (type === 'solar') { duration = 8000; popupText = "☀️ SOLAR SLOW!"; explodeColor = '#ffcc00'; }
+    const durations = this.gameConfig?.freeze_durations || { ice: 5000, toxic: 3500, solar: 8000 };
+    const toxicMult = this.gameConfig?.toxic_multiplier || 2;
+
+    let duration = durations.ice, popupText = "❄️ FROZEN!", explodeColor = '#00f3ff';
+    if (type === 'toxic') { duration = durations.toxic; popupText = `🧪 TOXIC x${toxicMult}!`; explodeColor = '#39ff14'; } 
+    else if (type === 'solar') { duration = durations.solar; popupText = "☀️ SOLAR SLOW!"; explodeColor = '#ffcc00'; }
 
     this.fx.explode(e.x + 40, e.y + 40, explodeColor, 30);
     this.fadeAndRemove(id);
@@ -879,15 +885,22 @@ async claimMission(dbId) {
     }
   }
 
+  // 👇 ОБНОВЛЕНО: Лимиты и множители (х2 Токсик) берутся с сервера 👇
   applyCorrect(planetId) {
     const r = this.active.get(this.selectedRocket); const p = this.active.get(planetId);
-    this.streak++; this.multiplier = Math.min(10, Math.floor(this.streak / 2) + 1);
+    
+    const maxMult = this.gameConfig?.max_streak_multiplier || 10;
+    this.streak++; 
+    this.multiplier = Math.min(maxMult, Math.floor(this.streak / 2) + 1);
     
     let pts = 1 * this.multiplier; 
-    if (performance.now() < this.freezeUntil && this.activeFreezeType === 'toxic') pts *= 2; 
+    
+    if (performance.now() < this.freezeUntil && this.activeFreezeType === 'toxic') {
+       pts *= (this.gameConfig?.toxic_multiplier || 2);
+    }
     
     this.score += pts;
-    TelegramAPI.vibrate('light'); 
+    window.TelegramAPI?.vibrate('light'); 
     
     this.updateAtmosphere(); r.node.classList.add("correct"); p.node.classList.add("correct");
     this.showScorePopup(p.x + 40, p.y + 40, `+${pts}`);
@@ -899,7 +912,7 @@ async claimMission(dbId) {
     this.streak = 0; this.multiplier = 1; 
 
     this.shakeScreen('hard'); 
-    TelegramAPI.vibrate('error'); 
+    window.TelegramAPI?.vibrate('error'); 
 
     this.updateAtmosphere();
     r.node.classList.add("wrong"); p.node.classList.add("wrong"); this.updateUI();
@@ -909,7 +922,7 @@ async claimMission(dbId) {
   applyBomb(planetId) {
     this.streak = 0; this.multiplier = 1; this.score = Math.max(0, this.score - 5);
     this.shakeScreen('hard'); 
-    TelegramAPI.vibrate('heavy'); 
+    window.TelegramAPI?.vibrate('heavy'); 
 
     this.updateAtmosphere(); this.updateUI();
     this.fadeAndRemove(planetId); if (this.selectedRocket !== null) { const r = this.active.get(this.selectedRocket); r.node.classList.remove("selected"); } this.selectedRocket = null;
@@ -929,7 +942,6 @@ async claimMission(dbId) {
     this.bg.pause(); 
     document.getElementById('gameScreen').style.background = '#0a0a1a';
     
-    // 1. Показываем состояние ЗАГРУЗКИ в модалке
     document.getElementById("finalScore").textContent = "Calculating...";
     document.querySelector(".rt-val").textContent = "Wait... 🎟️";
     document.querySelector(".rt-hint").textContent = "Syncing with server...";
@@ -938,31 +950,24 @@ async claimMission(dbId) {
     document.getElementById("resultModal").style.display = "flex";
 
     try {
-      // 2. ОТПРАВЛЯЕМ РЕЗУЛЬТАТ НА СЕРВЕР
       const result = await window.API.sessionFinish(this.currentSessionId, this.score);
 
-      // 3. СЕРВЕР ОТВЕТИЛ! Обновляем интерфейс
       if (result.success) {
         document.getElementById("finalScore").textContent = this.score;
         
-        // Если античит забраковал игру
         if (result.is_valid === false) {
           document.querySelector(".rt-val").textContent = "+0 🎟️";
           document.querySelector(".rt-hint").textContent = "⚠️ Result rejected (Anti-cheat)";
           document.querySelector(".rt-hint").style.color = "#ff3333";
         } else {
-          // Игра честная, рисуем билеты и прогресс-бар
           const tickets = result.tickets_earned || 0;
           const balance = result.score_balance || 0;
-          
-          // 👇 ДОСТАЕМ ЦЕНУ БИЛЕТА ИЗ КОНФИГА (или берем 5000 по умолчанию) 👇
           const tCost = this.gameConfig ? this.gameConfig.ticket_cost : 5000;
           
           document.querySelector(".rt-val").textContent = `+${tickets} 🎟️`;
           document.querySelector(".rt-hint").style.color = "rgba(255,255,255,0.6)"; 
           document.querySelector(".rt-hint").textContent = `${balance.toLocaleString()} / ${tCost.toLocaleString()} to next ticket`;
           
-          // Высчитываем проценты для полоски через серверную цену билета
           const percent = Math.min(100, Math.round((balance / tCost) * 100));
           document.querySelector(".rt-fill").style.width = `${percent}%`;
         }
@@ -971,12 +976,9 @@ async claimMission(dbId) {
       console.error("End Game Error:", error);
       document.getElementById("finalScore").textContent = this.score;
       document.querySelector(".rt-val").textContent = "Offline";
-      
-      // Вывод точной ошибки сервера
       document.querySelector(".rt-hint").textContent = "Error: " + (error.reason || error.message);
       document.querySelector(".rt-hint").style.color = "#ff3333";
     } finally {
-      // Запускаем синхронизацию профиля и истории матчей
       this.syncProfile();
     }
   }
@@ -987,11 +989,13 @@ document.addEventListener("DOMContentLoaded", () => {
   window.gameSandbox.syncProfile();
 });
 
-// ==========================================
-// ЛЮКСОВЫЙ ТАЙМЕР ДЛЯ ГЛАВНОГО ЭКРАНА
-// ==========================================
-function startSeasonTimer() {
-  const seasonEndDate = new Date(Date.UTC(2026, 5, 1, 18, 0, 0));
+// 👇 ОБНОВЛЕНО: Таймер сезона запускается только по команде от сервера 👇
+window.seasonTimerInterval = null;
+
+window.startSeasonTimer = function(dateString) {
+  if (window.seasonTimerInterval) clearInterval(window.seasonTimerInterval);
+  const seasonEndDate = new Date(dateString);
+  
   function updateTimer() {
     const now = new Date();
     const diff = seasonEndDate - now;
@@ -1013,10 +1017,10 @@ function startSeasonTimer() {
     const elM1 = document.getElementById('heroTimerM1'); const elM2 = document.getElementById('heroTimerM2');
     if (elM1 && elM2) { elM1.textContent = mStr[0]; elM2.textContent = mStr[1]; }
   }
+  
   updateTimer();
-  setInterval(updateTimer, 10000); 
-}
-document.addEventListener('DOMContentLoaded', startSeasonTimer);
+  window.seasonTimerInterval = setInterval(updateTimer, 10000); 
+};
 
 // ==========================================
 // НАВИГАЦИЯ ПО НИЖНЕМУ МЕНЮ
@@ -1044,7 +1048,6 @@ document.addEventListener('DOMContentLoaded', () => {
         targetTab.style.display = 'flex'; 
         setTimeout(() => targetTab.classList.add('active'), 10);
         
-        // 👇 ОБНОВЛЯЕМ ЛИДЕРБОРД ИЛИ МИССИИ ПРИ ОТКРЫТИИ ВКЛАДКИ 👇
         if (targetTabId === 'leaderboardTab' || targetTabId === 'leaderboard') { 
           if (window.gameSandbox) {
             window.gameSandbox.loadLeaderboard();
@@ -1055,7 +1058,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.gameSandbox.loadMissions();
           }
         }
-        // 👆 ======================================== 👆
       }
     });
   });
@@ -1072,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
       missionTabs.forEach(t => t.classList.remove('active'));
       e.target.classList.add('active');
       if (window.gameSandbox) {
-        window.gameSandbox.loadMissions(); // Перезагружаем список миссий
+        window.gameSandbox.loadMissions(); 
       }
     });
   });
