@@ -21,9 +21,11 @@ class MinimalSpaceBG {
     this.resize(); this.buildStars();
     window.addEventListener('resize', () => this.resize());
   }
+// 👇 ОБНОВЛЕННАЯ ФУНКЦИЯ (Берет размер окна, а не скрытого элемента) 👇
   resize() {
-    const parent = this.canvas.parentElement;
-    if (parent) { this.canvas.width = parent.clientWidth; this.canvas.height = parent.clientHeight; this.buildStars(); }
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+    this.buildStars();
   }
   buildStars() {
     this.starField = Array.from({ length: 60 }, () => ({
