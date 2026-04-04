@@ -21,7 +21,7 @@ class MinimalSpaceBG {
     this.resize(); this.buildStars();
     window.addEventListener('resize', () => this.resize());
   }
-// 👇 ОБНОВЛЕННАЯ ФУНКЦИЯ (Берет размер окна, а не скрытого элемента) 👇
+  // Исправление "черного экрана": берем размер окна, а не скрытого контейнера
   resize() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
@@ -114,7 +114,6 @@ class GameSandbox {
     this.isWarmup = false;
     this.magnetUntil = 0;
     
-    // Пагинация истории
     this.historyOffset = 0; 
     
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
@@ -276,13 +275,11 @@ class GameSandbox {
     document.getElementById("multiplier").textContent = this.multiplier;
   }
 
-  // Свежие данные с сервера прямо на экран
   async syncProfile() {
     try {
       const stats = await window.API.getMyStats();
       if (stats && stats.exists) {
         
-        // 👇 СОХРАНЯЕМ КОНФИГ И ЗАПУСКАЕМ ТАЙМЕР ОТ СЕРВЕРА 👇
         this.gameConfig = stats.config || { ticket_cost: 5000, level_step: 500 };
         if (this.gameConfig.season_end_date) {
           window.startSeasonTimer(this.gameConfig.season_end_date);
@@ -342,7 +339,6 @@ class GameSandbox {
           levelProgressText.textContent = `${score.toLocaleString()} / ${nextLevelThreshold.toLocaleString()} to LVL ${currentLvl + 1}`;
         }
 
-        // Запускаем загрузку всех данных
         this.loadMatchHistory(false);
         this.loadLeaderboard();
         this.loadMissions();
@@ -352,7 +348,6 @@ class GameSandbox {
     }
   }
 
-  // ЗАГРУЗКА ИСТОРИИ (Только очки справа, чисто и красиво)
   async loadMatchHistory(isLoadMore = false) {
     const historyList = document.getElementById("historyList");
     const loadMoreBtn = document.getElementById("historyLoadMore");
@@ -409,7 +404,6 @@ class GameSandbox {
     }
   }
 
-  // ЗАГРУЗКА ТОП-10 ИГРОКОВ
   async loadLeaderboard() {
     const list = document.getElementById("leaderboardList"); 
     if (!list) return;
@@ -457,7 +451,81 @@ class GameSandbox {
     }
   }
 
-// МИССИИ (GO / CHECK) + ЕЖЕДНЕВНЫЙ ВХОД
+  // ==========================================
+  // ЕЖЕДНЕВНЫЙ ВХОД (DAILY CHECK-IN)
+  // ==========================================
+  async loadDailyCheckin() {
+    const container = document.querySelector(".missions-list");
+    if (!container) return;
+
+    try {
+      const data = await window.API.getCheckinStatus();
+      if (!data || !data.rewards) return;
+
+      let daysHtml = "";
+      data.rewards.forEach((pts, i) => {
+        const isToday = i === data.streak && data.canClaim;
+        const isDone = i < data.streak;
+        const activeClass = isToday ? "daily-day--active" : "";
+        const doneClass = isDone ? "daily-day--done" : "";
+
+        daysHtml += `
+          <div class="daily-day ${activeClass} ${doneClass}">
+            <div class="dd-label">Day ${i+1}</div>
+            <div class="dd-pts">+${pts}</div>
+          </div>
+        `;
+      });
+
+      const btnStyle = data.canClaim 
+        ? "width: 100%; margin-top: 15px; padding: 12px; font-size: 1rem;" 
+        : "width: 100%; margin-top: 15px; padding: 12px; font-size: 1rem; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); border: none;";
+
+      const checkinBlock = `
+        <div class="daily-checkin-card">
+          <div class="dc-title">🗓️ 7-DAY LOGIN STREAK</div>
+          <div class="dc-grid">${daysHtml}</div>
+          <button id="claimDailyBtn" class="mc-btn mc-btn--claim" ${!data.canClaim ? "disabled" : ""} style="${btnStyle}">
+            ${data.canClaim ? "CLAIM DAILY REWARD" : "COME BACK TOMORROW"}
+          </button>
+        </div>
+      `;
+
+      const oldBlock = document.querySelector(".daily-checkin-card");
+      if (oldBlock) oldBlock.remove();
+      container.insertAdjacentHTML('afterbegin', checkinBlock);
+
+      const claimBtn = document.getElementById("claimDailyBtn");
+      if (claimBtn && data.canClaim) {
+        claimBtn.addEventListener("click", () => this.claimDailyReward());
+      }
+    } catch (e) {
+      console.error("Checkin load error", e);
+    }
+  }
+
+  async claimDailyReward() {
+    window.TelegramAPI?.vibrate('medium');
+    try {
+      const res = await window.API.claimDaily();
+      if (res && res.success) {
+        this.showScorePopup(window.innerWidth/2, window.innerHeight/2, `+${res.reward_pts} PTS`);
+        if (res.tickets_earned > 0) {
+          setTimeout(() => {
+            this.showScorePopup(window.innerWidth/2, window.innerHeight/2 + 50, `+${res.tickets_earned} 🎟️`);
+          }, 600);
+        }
+        this.syncProfile();
+        this.loadDailyCheckin();
+      }
+    } catch (e) {
+      alert("Daily Claim Error: " + (e.reason || e.message || "Already claimed"));
+    }
+  }
+
+  // ==========================================
+  // МИССИИ (GO / CHECK)
+  // ==========================================
   async loadMissions() {
     const missionsList = document.querySelector(".missions-list");
     if (!missionsList) return;
@@ -468,17 +536,16 @@ class GameSandbox {
       const data = await window.API.getMissions();
       if (!data || !data.missions) return;
 
-      // Очищаем список перед рендером
+      // Очищаем список
       missionsList.innerHTML = "";
       
-      // 👇 ВЫЗЫВАЕМ КАЛЕНДАРЬ ЕЖЕДНЕВНЫХ НАГРАД СЮДА 👇
+      // ВЫЗЫВАЕМ КАЛЕНДАРЬ
       this.loadDailyCheckin();
 
       const activeTabBtn = document.querySelector(".custom-tabs .c-tab.active");
       const filterType = activeTabBtn && activeTabBtn.textContent === "DAILY" ? "daily" : "one_time";
       const filteredMissions = data.missions.filter(m => m.type === filterType);
 
-      // Если миссий нет в этой вкладке
       if (filteredMissions.length === 0) {
         missionsList.insertAdjacentHTML('beforeend', `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">No missions available</div>`);
         return;
@@ -491,7 +558,6 @@ class GameSandbox {
         if (m.status === 'claimed') {
           btnHtml = `<button class="mc-btn mc-btn--done" disabled>✔</button>`;
         } else if (m.actionUrl) {
-          // Две кнопки для социальных тасок
           btnHtml = `
             <div style="display: flex; gap: 6px;">
               <button class="mc-btn mc-btn--go" onclick="window.gameSandbox.openMissionLink('${m.actionUrl}')">GO</button>
@@ -536,7 +602,6 @@ class GameSandbox {
         this.loadMissions();
       }
     } catch (e) {
-      // Ловим серверную ошибку подписки
       if (e.error === 'not_subscribed') {
          alert("Join the channel first to claim the reward! 🚀");
          if (e.actionUrl) this.openMissionLink(e.actionUrl);
@@ -840,7 +905,6 @@ class GameSandbox {
     }
   }
 
-  // 👇 ОБНОВЛЕНО: Тайминги комет берутся с сервера 👇
   activateFreeze(id, type) {
     const e = this.active.get(id);
     if (!e) return;
@@ -893,7 +957,6 @@ class GameSandbox {
     }
   }
 
-  // 👇 ОБНОВЛЕНО: Лимиты и множители (х2 Токсик) берутся с сервера 👇
   applyCorrect(planetId) {
     const r = this.active.get(this.selectedRocket); const p = this.active.get(planetId);
     
@@ -992,12 +1055,17 @@ class GameSandbox {
   }
 } // Конец класса GameSandbox
 
+// ==========================================
+// ИНИЦИАЛИЗАЦИЯ ИГРЫ
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => { 
   window.gameSandbox = new GameSandbox(); 
   window.gameSandbox.syncProfile();
 });
 
-// 👇 ОБНОВЛЕНО: Таймер сезона запускается только по команде от сервера 👇
+// ==========================================
+// СЕРВЕРНЫЙ ТАЙМЕР
+// ==========================================
 window.seasonTimerInterval = null;
 
 window.startSeasonTimer = function(dateString) {
