@@ -25,6 +25,10 @@ class GameAPI {
       const error = new Error(errorData.error || `HTTP ${response.status}`);
       error.status = response.status;
       error.reason = errorData.reason;
+      
+      // 👇 ВАЖНО: Прокидываем все данные ошибки (включая actionUrl для Телеграма) 👇
+      Object.assign(error, errorData);
+      
       throw error;
     }
 
@@ -85,6 +89,18 @@ class GameAPI {
       method: "POST",
       body: JSON.stringify({ dbId })
     });
+  }
+
+  // ==========================================
+  // 🗓️ ЕЖЕДНЕВНЫЙ ВХОД (DAILY CHECK-IN)
+  // ==========================================
+  
+  async getCheckinStatus() {
+    return this.request(`/api/user/checkin/status`);
+  }
+
+  async claimDaily() {
+    return this.request(`/api/user/checkin/claim`, { method: "POST" });
   }
 }
 
