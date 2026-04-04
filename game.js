@@ -457,7 +457,7 @@ class GameSandbox {
     }
   }
 
-  // МИССИИ (GO / CHECK)
+// МИССИИ (GO / CHECK) + ЕЖЕДНЕВНЫЙ ВХОД
   async loadMissions() {
     const missionsList = document.querySelector(".missions-list");
     if (!missionsList) return;
@@ -468,13 +468,19 @@ class GameSandbox {
       const data = await window.API.getMissions();
       if (!data || !data.missions) return;
 
+      // Очищаем список перед рендером
       missionsList.innerHTML = "";
+      
+      // 👇 ВЫЗЫВАЕМ КАЛЕНДАРЬ ЕЖЕДНЕВНЫХ НАГРАД СЮДА 👇
+      this.loadDailyCheckin();
+
       const activeTabBtn = document.querySelector(".custom-tabs .c-tab.active");
       const filterType = activeTabBtn && activeTabBtn.textContent === "DAILY" ? "daily" : "one_time";
       const filteredMissions = data.missions.filter(m => m.type === filterType);
 
+      // Если миссий нет в этой вкладке
       if (filteredMissions.length === 0) {
-        missionsList.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">No missions available</div>`;
+        missionsList.insertAdjacentHTML('beforeend', `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">No missions available</div>`);
         return;
       }
 
