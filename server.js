@@ -14,7 +14,17 @@ const SESSION_TTL = 300;     // 5 минут на отправку резуль�
 const GAME_CONFIG = {
   duration_sec: 30,          // Длительность одного матча (секунды)
   ticket_cost: 5000,         // Очков до 1 билета
-  level_step: 500            // Очков для повышения уровня
+  level_step: 500,           // Очков для повышения уровня
+  
+  // 👇 НОВЫЕ ПАРАМЕТРЫ (Сезон и Баланс) 👇
+  season_end_date: '2026-06-01T18:00:00Z', // Дата конца сезона (UTC)
+  toxic_multiplier: 2,       // Множитель очков при зеленой комете
+  max_streak_multiplier: 10, // Максимальный множитель за комбо
+  freeze_durations: {        // Длительность комет в миллисекундах
+    ice: 5000,
+    toxic: 3500,
+    solar: 8000
+  }
 };
 
 const app = express();
@@ -239,7 +249,6 @@ app.post('/api/session/start', requireTelegramSigned, async (req, res) => {
       equations.push(generateExample());
     }
 
-    // ИСПРАВЛЕНИЕ: Добавлена запятая после equations
     res.json({ 
       session_id, 
       energy_left: newEnergy,
@@ -306,7 +315,6 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     if (isValid) {
       const totalPointsNow = newBalance + finalScore;
       ticketsEarnedNow = Math.floor(totalPointsNow / GAME_CONFIG.ticket_cost);
-      // ИСПРАВЛЕНИЕ: Убрана лишняя точка с запятой
       newBalance = totalPointsNow % GAME_CONFIG.ticket_cost;
       newTickets += ticketsEarnedNow;
 
@@ -393,7 +401,6 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
     );
     const highScore = hsRows[0]?.max_score || 0;
 
-    // ИСПРАВЛЕНИЕ: Теперь уровень считается от конфига
     const currentLevel = Math.floor(Number(u.total_score) / GAME_CONFIG.level_step) + 1;
       
     res.json({
@@ -406,9 +413,14 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
       energy: u.energy,
       level: currentLevel,
       high_score: Number(highScore),
+      // 👇 ТЕПЕРЬ СЕРВЕР ОТДАЕТ ВСЕ НАСТРОЙКИ БАЛАНСА КЛИЕНТУ 👇
       config: {
         ticket_cost: GAME_CONFIG.ticket_cost,
-        level_step: GAME_CONFIG.level_step
+        level_step: GAME_CONFIG.level_step,
+        toxic_multiplier: GAME_CONFIG.toxic_multiplier,
+        max_streak_multiplier: GAME_CONFIG.max_streak_multiplier,
+        freeze_durations: GAME_CONFIG.freeze_durations,
+        season_end_date: GAME_CONFIG.season_end_date
       }
     });
   } catch (e) {
@@ -554,13 +566,16 @@ app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) 
     const missionConfig = MISSIONS_CONFIG.find(m => m.id === baseId || m.id === dbId);
 
     if (!missionConfig) return res.status(400).json({ error: 'mission_not_found' });
-if (missionConfig.tgChannel) {
+    
+    // ПРОВЕРКА ПОДПИСКИ
+    if (missionConfig.tgChannel) {
       const rawTgId = req.tg.user.id; // Достаем чистый ID цифрами
       const isSubbed = await checkChannelSub(rawTgId, missionConfig.tgChannel);
       if (!isSubbed) {
         return res.status(403).json({ error: 'not_subscribed', actionUrl: missionConfig.actionUrl });
       }
     }
+    
     await client.query('BEGIN');
 
     // Пытаемся записать награду в БД
