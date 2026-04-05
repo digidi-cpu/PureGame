@@ -21,7 +21,6 @@ class MinimalSpaceBG {
     this.resize(); this.buildStars();
     window.addEventListener('resize', () => this.resize());
   }
-  // Исправление "черного экрана": берем размер окна, а не скрытого контейнера
   resize() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
@@ -114,7 +113,15 @@ class GameSandbox {
     this.isWarmup = false;
     this.magnetUntil = 0;
     
+    // Пагинация истории
     this.historyOffset = 0; 
+    
+    // 👇 УМНОЕ КЭШИРОВАНИЕ 👇
+    this.cache = {
+      missions: null, missionsTime: 0,
+      checkin: null, checkinTime: 0,
+      leaderboard: null, leaderboardTime: 0
+    };
     
     this.active = new Map(); this.correctAnswers = new Map(); this.idSeq = 0;
     this.lastRAF = 0; this.lastRocketSpawnAt = 0; this.lastPlanetSpawnAt = 0;
@@ -130,6 +137,13 @@ class GameSandbox {
     this.bindUI();
     this.startBg.init();
     this.startBg.start();
+  }
+
+  // Очистка кэша, чтобы загрузить свежие данные после игры или сбора наград
+  invalidateCache() {
+    this.cache.missionsTime = 0;
+    this.cache.checkinTime = 0;
+    this.cache.leaderboardTime = 0;
   }
 
   bindUI() {
@@ -404,103 +418,120 @@ class GameSandbox {
     }
   }
 
+  // ЗАГРУЗКА ТОП-10 (С КЭШИРОВАНИЕМ)
   async loadLeaderboard() {
     const list = document.getElementById("leaderboardList"); 
     if (!list) return;
 
-    list.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Loading Top 10... 🏆</div>`;
+    const now = Date.now();
+    let data = this.cache.leaderboard;
 
-    try {
-      const data = await window.API.getLeaderboard(0, 10);
-      list.innerHTML = ""; 
-
-      if (!data || !data.items || data.items.length === 0) {
-        list.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Leaderboard is empty yet. Be the first!</div>`;
+    // Если кэш пустой или старше 2 минут (120000 мс) — грузим заново
+    if (!data || now - this.cache.leaderboardTime > 120000) {
+      list.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Loading Top 10... 🏆</div>`;
+      try {
+        data = await window.API.getLeaderboard(0, 10);
+        this.cache.leaderboard = data;
+        this.cache.leaderboardTime = now;
+      } catch (e) {
+        console.error("Failed to load leaderboard:", e);
+        list.innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">Connection error</div>`;
         return;
       }
-
-      const myId = window.TelegramAPI?.initDataUnsafe?.user?.id ? `tg_${window.TelegramAPI.initDataUnsafe.user.id}` : null;
-
-      data.items.forEach(player => {
-        let rankDisplay = player.rank;
-        if (player.rank === 1) rankDisplay = "🥇";
-        if (player.rank === 2) rankDisplay = "🥈";
-        if (player.rank === 3) rankDisplay = "🥉";
-
-        const isMe = myId === player.userId;
-        const highlightClass = isMe ? "lb-item-me" : ""; 
-
-        const itemHtml = `
-          <div class="lb-item ${highlightClass}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 8px; border-radius: 12px;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-              <div style="font-size: 1.5rem; width: 30px; text-align: center;">${rankDisplay}</div>
-              <div style="font-weight: bold; font-size: 1.1rem;">${player.username}</div>
-            </div>
-            <div style="text-align: right;">
-              <div style="color: #ffd700; font-weight: 900;">${player.tickets} 🎟️</div>
-              <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">${player.score.toLocaleString()} PTS</div>
-            </div>
-          </div>
-        `;
-        list.insertAdjacentHTML('beforeend', itemHtml);
-      });
-
-    } catch (e) {
-      console.error("Failed to load leaderboard:", e);
-      list.innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">Connection error</div>`;
     }
+
+    list.innerHTML = ""; 
+    if (!data || !data.items || data.items.length === 0) {
+      list.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Leaderboard is empty yet. Be the first!</div>`;
+      return;
+    }
+
+    const myId = window.TelegramAPI?.initDataUnsafe?.user?.id ? `tg_${window.TelegramAPI.initDataUnsafe.user.id}` : null;
+
+    data.items.forEach(player => {
+      let rankDisplay = player.rank;
+      if (player.rank === 1) rankDisplay = "🥇";
+      if (player.rank === 2) rankDisplay = "🥈";
+      if (player.rank === 3) rankDisplay = "🥉";
+
+      const isMe = myId === player.userId;
+      const highlightClass = isMe ? "lb-item-me" : ""; 
+
+      const itemHtml = `
+        <div class="lb-item ${highlightClass}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 8px; border-radius: 12px;">
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-size: 1.5rem; width: 30px; text-align: center;">${rankDisplay}</div>
+            <div style="font-weight: bold; font-size: 1.1rem;">${player.username}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="color: #ffd700; font-weight: 900;">${player.tickets} 🎟️</div>
+            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">${player.score.toLocaleString()} PTS</div>
+          </div>
+        </div>
+      `;
+      list.insertAdjacentHTML('beforeend', itemHtml);
+    });
   }
 
   // ==========================================
-  // ЕЖЕДНЕВНЫЙ ВХОД (DAILY CHECK-IN)
+  // ЕЖЕДНЕВНЫЙ ВХОД (С КЭШИРОВАНИЕМ)
   // ==========================================
   async loadDailyCheckin() {
     const container = document.querySelector(".missions-list");
     if (!container) return;
 
-    try {
-      const data = await window.API.getCheckinStatus();
-      if (!data || !data.rewards) return;
+    const now = Date.now();
+    let data = this.cache.checkin;
 
-      let daysHtml = "";
-      data.rewards.forEach((pts, i) => {
-        const isToday = i === data.streak && data.canClaim;
-        const isDone = i < data.streak;
-        const activeClass = isToday ? "daily-day--active" : "";
-        const doneClass = isDone ? "daily-day--done" : "";
+    if (!data || now - this.cache.checkinTime > 120000) {
+      try {
+        data = await window.API.getCheckinStatus();
+        this.cache.checkin = data;
+        this.cache.checkinTime = now;
+      } catch (e) {
+        console.error("Checkin load error", e);
+        return;
+      }
+    }
 
-        daysHtml += `
-          <div class="daily-day ${activeClass} ${doneClass}">
-            <div class="dd-label">Day ${i+1}</div>
-            <div class="dd-pts">+${pts}</div>
-          </div>
-        `;
-      });
+    if (!data || !data.rewards) return;
 
-      const btnStyle = data.canClaim 
-        ? "width: 100%; margin-top: 15px; padding: 12px; font-size: 1rem;" 
-        : "width: 100%; margin-top: 15px; padding: 12px; font-size: 1rem; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); border: none;";
+    let daysHtml = "";
+    data.rewards.forEach((pts, i) => {
+      const isToday = i === data.streak && data.canClaim;
+      const isDone = i < data.streak;
+      const activeClass = isToday ? "daily-day--active" : "";
+      const doneClass = isDone ? "daily-day--done" : "";
 
-      const checkinBlock = `
-        <div class="daily-checkin-card">
-          <div class="dc-title">🗓️ 7-DAY LOGIN STREAK</div>
-          <div class="dc-grid">${daysHtml}</div>
-          <button id="claimDailyBtn" class="mc-btn mc-btn--claim" ${!data.canClaim ? "disabled" : ""} style="${btnStyle}">
-            ${data.canClaim ? "CLAIM DAILY REWARD" : "COME BACK TOMORROW"}
-          </button>
+      daysHtml += `
+        <div class="daily-day ${activeClass} ${doneClass}">
+          <div class="dd-label">Day ${i+1}</div>
+          <div class="dd-pts">+${pts}</div>
         </div>
       `;
+    });
 
-      const oldBlock = document.querySelector(".daily-checkin-card");
-      if (oldBlock) oldBlock.remove();
-      container.insertAdjacentHTML('afterbegin', checkinBlock);
+    const btnStyle = data.canClaim 
+      ? "width: 100%; margin-top: 15px; padding: 12px; font-size: 1rem;" 
+      : "width: 100%; margin-top: 15px; padding: 12px; font-size: 1rem; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); border: none;";
 
-      const claimBtn = document.getElementById("claimDailyBtn");
-      if (claimBtn && data.canClaim) {
-        claimBtn.addEventListener("click", () => this.claimDailyReward());
-      }
-    } catch (e) {
-      console.error("Checkin load error", e);
+    const checkinBlock = `
+      <div class="daily-checkin-card">
+        <div class="dc-title">🗓️ 7-DAY LOGIN STREAK</div>
+        <div class="dc-grid">${daysHtml}</div>
+        <button id="claimDailyBtn" class="mc-btn mc-btn--claim" ${!data.canClaim ? "disabled" : ""} style="${btnStyle}">
+          ${data.canClaim ? "CLAIM DAILY REWARD" : "COME BACK TOMORROW"}
+        </button>
+      </div>
+    `;
+
+    const oldBlock = document.querySelector(".daily-checkin-card");
+    if (oldBlock) oldBlock.remove();
+    container.insertAdjacentHTML('afterbegin', checkinBlock);
+
+    const claimBtn = document.getElementById("claimDailyBtn");
+    if (claimBtn && data.canClaim) {
+      claimBtn.addEventListener("click", () => this.claimDailyReward());
     }
   }
 
@@ -515,8 +546,10 @@ class GameSandbox {
             this.showScorePopup(window.innerWidth/2, window.innerHeight/2 + 50, `+${res.tickets_earned} 🎟️`);
           }, 600);
         }
-        this.syncProfile();
-        this.loadDailyCheckin();
+        
+        // Сбрасываем кэш, чтобы загрузить новые данные
+        this.invalidateCache();
+        this.syncProfile(); 
       }
     } catch (e) {
       alert("Daily Claim Error: " + (e.reason || e.message || "Already claimed"));
@@ -524,67 +557,79 @@ class GameSandbox {
   }
 
   // ==========================================
-  // МИССИИ (GO / CHECK)
+  // МИССИИ (С КЭШИРОВАНИЕМ И ПРОВЕРКОЙ ВКЛАДКИ)
   // ==========================================
   async loadMissions() {
     const missionsList = document.querySelector(".missions-list");
     if (!missionsList) return;
 
-    missionsList.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Loading missions... 🎯</div>`;
+    const now = Date.now();
+    let data = this.cache.missions;
 
-    try {
-      const data = await window.API.getMissions();
-      if (!data || !data.missions) return;
-
-      // Очищаем список
-      missionsList.innerHTML = "";
-      
-      // ВЫЗЫВАЕМ КАЛЕНДАРЬ
-      this.loadDailyCheckin();
-
-      const activeTabBtn = document.querySelector(".custom-tabs .c-tab.active");
-      const filterType = activeTabBtn && activeTabBtn.textContent === "DAILY" ? "daily" : "one_time";
-      const filteredMissions = data.missions.filter(m => m.type === filterType);
-
-      if (filteredMissions.length === 0) {
-        missionsList.insertAdjacentHTML('beforeend', `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">No missions available</div>`);
+    if (!data || now - this.cache.missionsTime > 120000) {
+      missionsList.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Loading missions... 🎯</div>`;
+      try {
+        data = await window.API.getMissions();
+        this.cache.missions = data;
+        this.cache.missionsTime = now;
+      } catch (e) {
+        console.error("Missions catch error:", e);
+        missionsList.innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">Connection error</div>`;
         return;
       }
+    }
 
-      filteredMissions.forEach(m => {
-        let btnHtml = "";
-        let doneClass = m.status === 'claimed' ? 'done' : '';
+    if (!data || !data.missions) return;
 
-        if (m.status === 'claimed') {
-          btnHtml = `<button class="mc-btn mc-btn--done" disabled>✔</button>`;
-        } else if (m.actionUrl) {
-          btnHtml = `
-            <div style="display: flex; gap: 6px;">
-              <button class="mc-btn mc-btn--go" onclick="window.gameSandbox.openMissionLink('${m.actionUrl}')">GO</button>
-              <button class="mc-btn mc-btn--claim" style="background: #00f3ff; color: #000;" onclick="window.gameSandbox.claimMission('${m.dbId}')">CHECK</button>
-            </div>
-          `;
-        } else if (m.status === 'claimable') {
-          btnHtml = `<button class="mc-btn mc-btn--claim" onclick="window.gameSandbox.claimMission('${m.dbId}')">CLAIM</button>`;
-        } else {
-          btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
-        }
+    // Очищаем список перед рендером
+    missionsList.innerHTML = "";
+    
+    const activeTabBtn = document.querySelector(".custom-tabs .c-tab.active");
+    const filterType = activeTabBtn && activeTabBtn.textContent === "DAILY" ? "daily" : "one_time";
 
-        const itemHtml = `
-          <div class="mission-card ${doneClass}">
-            <div class="mc-icon">${m.icon}</div>
-            <div class="mc-info">
-              <div class="mc-title">${m.title}</div>
-              <div class="mc-reward" style="color: #ffd700;">+${m.reward_pts} PTS</div>
-            </div>
-            ${btnHtml}
+    // 👇 ВЫЗЫВАЕМ КАЛЕНДАРЬ ТОЛЬКО ВО ВКЛАДКЕ DAILY 👇
+    if (filterType === "daily") {
+      this.loadDailyCheckin();
+    }
+
+    const filteredMissions = data.missions.filter(m => m.type === filterType);
+
+    if (filteredMissions.length === 0) {
+      missionsList.insertAdjacentHTML('beforeend', `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">No missions available</div>`);
+      return;
+    }
+
+    filteredMissions.forEach(m => {
+      let btnHtml = "";
+      let doneClass = m.status === 'claimed' ? 'done' : '';
+
+      if (m.status === 'claimed') {
+        btnHtml = `<button class="mc-btn mc-btn--done" disabled>✔</button>`;
+      } else if (m.actionUrl) {
+        btnHtml = `
+          <div style="display: flex; gap: 6px;">
+            <button class="mc-btn mc-btn--go" onclick="window.gameSandbox.openMissionLink('${m.actionUrl}')">GO</button>
+            <button class="mc-btn mc-btn--claim" style="background: #00f3ff; color: #000;" onclick="window.gameSandbox.claimMission('${m.dbId}')">CHECK</button>
           </div>
         `;
-        missionsList.insertAdjacentHTML('beforeend', itemHtml);
-      });
-    } catch (e) {
-      missionsList.innerHTML = `<div style="text-align:center; padding:20px; color:#ff3333;">Connection error</div>`;
-    }
+      } else if (m.status === 'claimable') {
+        btnHtml = `<button class="mc-btn mc-btn--claim" onclick="window.gameSandbox.claimMission('${m.dbId}')">CLAIM</button>`;
+      } else {
+        btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
+      }
+
+      const itemHtml = `
+        <div class="mission-card ${doneClass}">
+          <div class="mc-icon">${m.icon}</div>
+          <div class="mc-info">
+            <div class="mc-title">${m.title}</div>
+            <div class="mc-reward" style="color: #ffd700;">+${m.reward_pts} PTS</div>
+          </div>
+          ${btnHtml}
+        </div>
+      `;
+      missionsList.insertAdjacentHTML('beforeend', itemHtml);
+    });
   }
 
   async claimMission(dbId) {
@@ -598,8 +643,10 @@ class GameSandbox {
             this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2 + 50, `+${result.tickets_earned} 🎟️`);
           }, 600);
         }
+        
+        // Сбрасываем кэш, чтобы загрузить свежие миссии
+        this.invalidateCache();
         this.syncProfile();
-        this.loadMissions();
       }
     } catch (e) {
       if (e.error === 'not_subscribed') {
@@ -619,7 +666,9 @@ class GameSandbox {
        window.open(url, '_blank');
     }
     
+    // Сбрасываем кэш, чтобы после возвращения миссия обновилась
     setTimeout(() => {
+      this.invalidateCache();
       this.loadMissions();
     }, 3000);
   }
@@ -1050,6 +1099,7 @@ class GameSandbox {
       document.querySelector(".rt-hint").textContent = "Error: " + (error.reason || error.message);
       document.querySelector(".rt-hint").style.color = "#ff3333";
     } finally {
+      this.invalidateCache();
       this.syncProfile();
     }
   }
@@ -1064,7 +1114,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// СЕРВЕРНЫЙ ТАЙМЕР
+// СЕРВЕРНЫЙ ТАЙМЕР СЕЗОНА
 // ==========================================
 window.seasonTimerInterval = null;
 
@@ -1125,14 +1175,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => targetTab.classList.add('active'), 10);
         
         if (targetTabId === 'leaderboardTab' || targetTabId === 'leaderboard') { 
-          if (window.gameSandbox) {
-            window.gameSandbox.loadLeaderboard();
-          }
+          if (window.gameSandbox) window.gameSandbox.loadLeaderboard();
         }
         if (targetTabId === 'missionsTab' || targetTabId === 'missions') { 
-          if (window.gameSandbox) {
-            window.gameSandbox.loadMissions();
-          }
+          if (window.gameSandbox) window.gameSandbox.loadMissions();
         }
       }
     });
@@ -1149,9 +1195,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.TelegramAPI?.vibrate('light');
       missionTabs.forEach(t => t.classList.remove('active'));
       e.target.classList.add('active');
-      if (window.gameSandbox) {
-        window.gameSandbox.loadMissions(); 
-      }
+      if (window.gameSandbox) window.gameSandbox.loadMissions(); 
     });
   });
 });
