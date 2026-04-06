@@ -329,7 +329,7 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
       );
 
       await addScoreEvent(client, {
-        userId, source: 'game', title: `Match played`, scoreAdd: finalScore, ticketAdd: ticketsEarnedNow, meta: { session_id }
+        userId, source: 'game', title: `GAME`, scoreAdd: finalScore, ticketAdd: ticketsEarnedNow, meta: { session_id }
       });
     }
 
