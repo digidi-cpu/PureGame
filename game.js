@@ -394,7 +394,7 @@ class GameSandbox {
       const eventTitle = match.title || "Match played";
 
       const itemHtml = `
-        <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
           <div class="h-left" style="display: flex; flex-direction: column; gap: 4px;">
             <div style="font-weight: 700; font-size: 1rem; color: #fff;">${eventTitle}</div>
             <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">
@@ -402,7 +402,7 @@ class GameSandbox {
             </div>
           </div>
           <div class="h-right" style="text-align: right;">
-            <span style="font-weight: 900; font-size: 1.1rem; color: #ffcc00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.2);">+${matchScore} PTS</span>
+            <span style="font-weight: 900; font-size: 1.1rem; color: #ffcc00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.2);">+${matchScore}</span>
           </div>
         </div>
       `;
