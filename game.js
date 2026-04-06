@@ -394,7 +394,7 @@ class GameSandbox {
       const eventTitle = match.title || "Match played";
 
       const itemHtml = `
-        <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05);">
           <div class="h-left" style="display: flex; flex-direction: column; gap: 4px;">
             <div style="font-weight: 700; font-size: 1rem; color: #fff;">${eventTitle}</div>
             <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">
