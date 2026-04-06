@@ -146,7 +146,7 @@ class GameSandbox {
     this.cache.leaderboardTime = 0;
   }
 
-  bindUI() {
+bindUI() {
     document.getElementById("startGameBtn").addEventListener("click", () => {
       window.TelegramAPI?.vibrate('medium'); 
       this.startGame();
@@ -157,6 +157,24 @@ class GameSandbox {
       document.getElementById("resultModal").style.display = "none";
       this.startGame();
     });
+
+    // 👇 ДОБАВЛЯЕМ ОБРАБОТЧИК ДЛЯ КНОПКИ HOME СЮДА 👇
+    document.getElementById("homeBtn")?.addEventListener("click", () => {
+      window.TelegramAPI?.vibrate('light'); 
+      document.getElementById("resultModal").style.display = "none";
+      
+      // Прячем экран игры и показываем главное меню
+      document.getElementById("gameScreen").classList.remove("active");
+      document.getElementById("startScreen").classList.add("active");
+      
+      // Снова запускаем летящие звезды на фоне меню
+      if (this.startBg) this.startBg.start();
+      
+      // Принудительно открываем вкладку "Play" в меню
+      const homeTab = document.querySelector('.nav-btn[data-tab="home"]');
+      if (homeTab) homeTab.click();
+    });
+    // 👆 ==================================== 👆
 
     const loadMoreBtn = document.getElementById("historyLoadMore");
     if (loadMoreBtn) {
@@ -1055,15 +1073,15 @@ class GameSandbox {
 
   removeEntity(id) { const e = this.active.get(id); if (!e) return; e.node?.remove(); this.active.delete(id); if (e.type === "rocket") this.correctAnswers.delete(id); }
 
-  async endGame() {
+async endGame() {
     this.isPlaying = false; 
     clearInterval(this.timerId); 
     cancelAnimationFrame(this.rafId);
     this.bg.pause(); 
     document.getElementById('gameScreen').style.background = '#0a0a1a';
     
+    // Показываем состояние загрузки
     document.getElementById("finalScore").textContent = "Calculating...";
-    document.querySelector(".rt-val").textContent = "Wait... 🎟️";
     document.querySelector(".rt-hint").textContent = "Syncing with server...";
     document.querySelector(".rt-fill").style.width = "0%";
     
@@ -1076,15 +1094,14 @@ class GameSandbox {
         document.getElementById("finalScore").textContent = this.score;
         
         if (result.is_valid === false) {
-          document.querySelector(".rt-val").textContent = "+0 🎟️";
+          // Античит
           document.querySelector(".rt-hint").textContent = "⚠️ Result rejected (Anti-cheat)";
           document.querySelector(".rt-hint").style.color = "#ff3333";
         } else {
-          const tickets = result.tickets_earned || 0;
+          // Успешная игра: обновляем только прогресс-бар
           const balance = result.score_balance || 0;
           const tCost = this.gameConfig ? this.gameConfig.ticket_cost : 5000;
           
-          document.querySelector(".rt-val").textContent = `+${tickets} 🎟️`;
           document.querySelector(".rt-hint").style.color = "rgba(255,255,255,0.6)"; 
           document.querySelector(".rt-hint").textContent = `${balance.toLocaleString()} / ${tCost.toLocaleString()} to next ticket`;
           
@@ -1095,7 +1112,6 @@ class GameSandbox {
     } catch (error) {
       console.error("End Game Error:", error);
       document.getElementById("finalScore").textContent = this.score;
-      document.querySelector(".rt-val").textContent = "Offline";
       document.querySelector(".rt-hint").textContent = "Error: " + (error.reason || error.message);
       document.querySelector(".rt-hint").style.color = "#ff3333";
     } finally {
