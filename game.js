@@ -152,6 +152,10 @@ bindUI() {
       this.startGame();
     });
 
+    document.getElementById("buyEnergyBtn")?.addEventListener("click", () => {
+      this.buyEnergy();
+    });
+
     document.getElementById("playAgainBtn").addEventListener("click", () => {
       window.TelegramAPI?.vibrate('medium'); 
       document.getElementById("resultModal").style.display = "none";
@@ -377,6 +381,43 @@ bindUI() {
       }
     } catch (e) {
       console.error("Failed to sync profile:", e);
+    }
+  }
+
+  async buyEnergy() {
+    window.TelegramAPI?.vibrate('medium');
+    const btn = document.getElementById("buyEnergyBtn");
+    if (btn) btn.innerHTML = "WAIT...";
+
+    try {
+      // 1. Просим сервер создать чек
+      const res = await window.API.getEnergyInvoice();
+
+      if (res && res.invoiceLink) {
+        // 2. Открываем нативное окно оплаты Telegram Stars
+        if (window.Telegram?.WebApp?.openInvoice) {
+          window.Telegram.WebApp.openInvoice(res.invoiceLink, async (status) => {
+            if (status === 'paid') {
+              this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "+3 ⚡");
+              // Платеж прошел, сервер уже должен был обновить базу через Webhook.
+              // Сбрасываем кэш и синхронизируем профиль, чтобы обновить UI.
+              setTimeout(async () => {
+                this.invalidateCache();
+                await this.syncProfile();
+              }, 1500); // Даем серверу 1.5 секунды на обработку вебхука
+            } else if (status === 'failed') {
+              alert("Payment failed.");
+            }
+            if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
+          });
+        } else {
+          alert("Telegram WebApp API is not fully loaded.");
+          if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
+        }
+      }
+    } catch (e) {
+      alert(e.reason || "Failed to generate invoice");
+      if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
     }
   }
 
