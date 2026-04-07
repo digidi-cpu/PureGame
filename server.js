@@ -152,6 +152,9 @@ async function ensureSchema() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_checkin_date text;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS checkin_streak integer not null default 0;`);
   
+  // 👇 НОВАЯ КОЛОНКА ДЛЯ ПОКУПКИ ЭНЕРГИИ 👇
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_energy_buy_date text;`);
+  
   console.log('✅ Database schema initialized');
 }
 
