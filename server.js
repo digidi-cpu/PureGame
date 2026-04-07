@@ -768,11 +768,29 @@ app.post('/api/payment/invoice', requireTelegramSigned, async (req, res) => {
   }
 });
 
-// 2. ВЕБХУК (Сюда Telegram пришлет квитанцию об успешной оплате)
+// 2. ВЕБХУК (Сюда Telegram пришлет запросы на проверку и квитанции)
 app.post('/api/webhook/telegram', async (req, res) => {
   const update = req.body;
 
-  // Если это сообщение об успешном платеже Stars
+  // А) Telegram спрашивает: "Можно ли списывать Звезды?" (pre_checkout_query)
+  if (update && update.pre_checkout_query) {
+    try {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerPreCheckoutQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pre_checkout_query_id: update.pre_checkout_query.id,
+          ok: true // 🟢 Даем зеленый свет на списание!
+        })
+      });
+      console.log(`✅ Pre-checkout approved for ${update.pre_checkout_query.from.id}`);
+    } catch (e) {
+      console.error("Failed to answer pre_checkout_query", e);
+    }
+    return res.sendStatus(200);
+  }
+
+  // Б) Сообщение об успешном платеже Stars (successful_payment)
   if (update && update.message && update.message.successful_payment) {
     const payment = update.message.successful_payment;
     const payload = payment.invoice_payload;
@@ -796,7 +814,7 @@ app.post('/api/webhook/telegram', async (req, res) => {
     }
   }
   
-  // Всегда отвечаем 200 OK, иначе Telegram будет долбить этот роут бесконечно
+  // Всегда отвечаем 200 OK, чтобы Telegram не присылал запрос повторно
   res.sendStatus(200); 
 });
 /* =========================
