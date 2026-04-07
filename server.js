@@ -719,7 +719,79 @@ app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) 
   }
 });
 
+/* =========================
+   API: TELEGRAM STARS (ПЛАТЕЖИ)
+========================= */
 
+// 1. Генерация ссылки на оплату (Инвойс)
+app.post('/api/payment/invoice', requireTelegramSigned, async (req, res) => {
+  try {
+    const userId = req.tg.user.id; // Нужен чистый ID цифрами
+    const today = getUTCTodayKey();
+
+    // Проверяем лимит (1 покупка в день)
+    const { rows } = await pool.query(`SELECT last_energy_buy_date FROM users WHERE user_id = $1`, [`tg_${userId}`]);
+    if (rows.length && rows[0].last_energy_buy_date === today) {
+        return res.status(400).json({ error: 'limit_reached', reason: 'You can only buy energy once a day.' });
+    }
+
+    // Запрос к Telegram Bot API на создание инвойса
+    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Energy Recharge',
+        description: '+3 ⚡ for Digit Math Game',
+        payload: `energy_${userId}_${Date.now()}`, // Секретная метка платежа
+        provider_token: '', // Для Stars строка ОБЯЗАТЕЛЬНО должна быть пустой!
+        currency: 'XTR',    // XTR — это код валюты Telegram Stars
+        prices: [{ label: '3 Energy', amount: 1 }] // Цена: 1 Звезда
+      })
+    });
+
+    const data = await response.json();
+    if (data.ok) {
+      res.json({ invoiceLink: data.result });
+    } else {
+      res.status(500).json({ error: 'invoice_failed', reason: data.description });
+    }
+  } catch (e) {
+    console.error("Invoice Error:", e);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// 2. ВЕБХУК (Сюда Telegram пришлет квитанцию об успешной оплате)
+app.post('/api/webhook/telegram', async (req, res) => {
+  const update = req.body;
+
+  // Если это сообщение об успешном платеже Stars
+  if (update && update.message && update.message.successful_payment) {
+    const payment = update.message.successful_payment;
+    const payload = payment.invoice_payload;
+
+    // Если пейлоад наш (начинается с energy_)
+    if (payload && payload.startsWith('energy_')) {
+      const parts = payload.split('_');
+      const userId = `tg_${parts[1]}`;
+      const today = getUTCTodayKey();
+
+      // Начисляем энергию в базу данных
+      try {
+        await pool.query(
+          `UPDATE users SET energy = energy + 3, last_energy_buy_date = $1 WHERE user_id = $2`,
+          [today, userId]
+        );
+        console.log(`✅ Stars payment successful! Added 3 energy to ${userId}`);
+      } catch (err) {
+        console.error("DB Error on Webhook:", err);
+      }
+    }
+  }
+  
+  // Всегда отвечаем 200 OK, иначе Telegram будет долбить этот роут бесконечно
+  res.sendStatus(200); 
+});
 /* =========================
    СТАРТ СЕРВЕРА
 ========================= */
