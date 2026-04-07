@@ -148,12 +148,13 @@ async function ensureSchema() {
     );
   `);
   
-  // Безопасное добавление новых колонок для Ежедневного входа (Daily Check-in)
+  // Безопасное добавление новых колонок для Ежедневного входа
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_checkin_date text;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS checkin_streak integer not null default 0;`);
   
-  // 👇 НОВАЯ КОЛОНКА ДЛЯ ПОКУПКИ ЭНЕРГИИ 👇
+  // Колонки для покупок энергии
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_energy_buy_date text;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS energy_bought_count integer not null default 0;`);
   
   console.log('✅ Database schema initialized');
 }
@@ -386,13 +387,14 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
-// Получить статистику профиля
+// Получить статистику профиля и ЛИМИТЫ ПОКУПОК
 app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
   try {
     const userId = `tg_${req.tg.user.id}`;
     
+    // Достаем данные пользователя включая счетчики покупок
     const { rows } = await pool.query(
-      `SELECT tickets, score_balance, total_score, games_played, energy FROM users WHERE user_id = $1`, [userId]
+      `SELECT tickets, score_balance, total_score, games_played, energy, last_energy_buy_date, energy_bought_count FROM users WHERE user_id = $1`, [userId]
     );
 
     if (!rows.length) return res.json({ exists: false });
@@ -409,7 +411,12 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
     );
     const highScore = hsRows[0]?.max_score || 0;
 
+    // РАСЧЕТ УРОВНЯ И ЛИМИТОВ
     const currentLevel = Math.floor(Number(u.total_score) / GAME_CONFIG.level_step) + 1;
+    const dailyEnergyLimit = Math.min(10, Math.floor(currentLevel / 10) + 1);
+    
+    const today = getUTCTodayKey();
+    const energyBoughtToday = (u.last_energy_buy_date === today) ? (u.energy_bought_count || 0) : 0;
       
     res.json({
       exists: true,
@@ -421,6 +428,8 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
       energy: u.energy,
       level: currentLevel,
       high_score: Number(highScore),
+      daily_energy_limit: dailyEnergyLimit, // Передаем на фронт
+      energy_bought_today: energyBoughtToday, // Передаем на фронт
       config: {
         ticket_cost: GAME_CONFIG.ticket_cost,
         level_step: GAME_CONFIG.level_step,
@@ -442,7 +451,6 @@ app.get('/api/user/me/history', requireTelegramSigned, async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
     const limit = 10;
 
-    // Тянем всё из score_events (Матчи + Миссии)
     const { rows } = await pool.query(
       `SELECT title, score_add as final_score, ticket_add as tickets_earned, ts as started_at 
        FROM score_events 
@@ -480,7 +488,6 @@ app.get('/api/user/checkin/status', requireTelegramSigned, async (req, res) => {
     let canClaim = user.last_checkin_date !== today;
     let streak = user.checkin_streak || 0;
 
-    // Если последний вход был раньше чем вчера — стрик сбрасывается
     if (user.last_checkin_date) {
       const lastDate = new Date(user.last_checkin_date);
       const todayDate = new Date(today);
@@ -518,7 +525,6 @@ app.post('/api/user/checkin/claim', requireTelegramSigned, async (req, res) => {
       return res.status(400).json({ error: 'already_claimed' });
     }
 
-    // Логика стрика
     let newStreak = (user.checkin_streak || 0) + 1;
     if (user.last_checkin_date) {
       const lastDate = new Date(user.last_checkin_date);
@@ -529,7 +535,6 @@ app.post('/api/user/checkin/claim', requireTelegramSigned, async (req, res) => {
     const dayIndex = (newStreak - 1) % 7;
     const rewardPts = DAILY_REWARDS[dayIndex];
 
-    // Начисляем очки
     const totalPointsNow = user.score_balance + rewardPts;
     const ticketsEarnedNow = Math.floor(totalPointsNow / GAME_CONFIG.ticket_cost);
     const newBalance = totalPointsNow % GAME_CONFIG.ticket_cost;
@@ -563,9 +568,8 @@ app.post('/api/user/checkin/claim', requireTelegramSigned, async (req, res) => {
 
 
 /* =========================
-   API: МИССИИ И ЗАДАНИЯ (PTS Награды)
+   API: МИССИИ И ЗАДАНИЯ
 ========================= */
-// Функция для проверки подписки через Telegram API
 async function checkChannelSub(tgId, channelUsername) {
   try {
     const url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/getChatMember?chat_id=${channelUsername}&user_id=${tgId}`;
@@ -581,18 +585,15 @@ async function checkChannelSub(tgId, channelUsername) {
     return false;
   }
 }
-// Конфиг наших миссий
+
 const MISSIONS_CONFIG = [
-  // Дейлики (Ежедневные)
   { id: 'daily_play_3', type: 'daily', title: 'Play 3 Games', icon: '🎮', reward_pts: 100, target: 3 },
   { id: 'daily_score_300', type: 'daily', title: 'Earn 300 PTS Today', icon: '⭐', reward_pts: 100, target: 300 },
-  // Единоразовые (Ачивки)
   { id: 'onetime_sub_main', type: 'one_time', title: 'Join Digit Channel', icon: '📢', reward_pts: 200, target: 1, actionUrl: 'https://t.me/digit_community', tgChannel: '@digit_community' },
   { id: 'onetime_sub_dev', type: 'one_time', title: 'Join Creator Channel', icon: '👨‍💻', reward_pts: 200, target: 1, actionUrl: 'https://t.me/stayrational', tgChannel: '@stayrational' },
   { id: 'onetime_veteran', type: 'one_time', title: 'Play 50 Games Total', icon: '🏆', reward_pts: 100, target: 50 },
 ];
 
-// Генерируем миссии за Уровни (от 10 до 100)
 for (let i = 10; i <= 100; i += 10) {
   MISSIONS_CONFIG.push({
     id: `level_${i}`,
@@ -604,22 +605,18 @@ for (let i = 10; i <= 100; i += 10) {
   });
 }
 
-// 1. Получить список миссий и прогресс
 app.get('/api/user/me/missions', requireTelegramSigned, async (req, res) => {
   try {
     const userId = `tg_${req.tg.user.id}`;
     const today = getUTCTodayKey();
 
-    // Достаем уже забранные награды
     const { rows: claims } = await pool.query(`SELECT mission_id FROM mission_rewards WHERE user_id = $1`, [userId]);
     const claimedSet = new Set(claims.map(r => r.mission_id));
 
-    // Достаем статистику игрока
     const { rows: stats } = await pool.query(`SELECT games_played, total_score FROM users WHERE user_id = $1`, [userId]);
     const userStats = stats[0] || { games_played: 0, total_score: 0 };
     const currentLevel = Math.floor(Number(userStats.total_score) / GAME_CONFIG.level_step) + 1;
 
-    // Считаем статистику именно за СЕГОДНЯ
     const { rows: todayStats } = await pool.query(
       `SELECT count(*) as games, sum(final_score) as pts FROM game_sessions WHERE user_id = $1 AND started_at >= current_date AND is_valid = true`, [userId]
     );
@@ -627,7 +624,6 @@ app.get('/api/user/me/missions', requireTelegramSigned, async (req, res) => {
     const ptsToday = parseInt(todayStats[0].pts, 10) || 0;
 
     const result = MISSIONS_CONFIG.map(m => {
-      // Для дейликов склеиваем ID с датой
       const dbId = m.type === 'daily' ? `${m.id}_${today}` : m.id;
       const isClaimed = claimedSet.has(dbId);
 
@@ -636,7 +632,7 @@ app.get('/api/user/me/missions', requireTelegramSigned, async (req, res) => {
       if (m.id === 'daily_score_300') progress = ptsToday;
       if (m.id === 'onetime_veteran') progress = userStats.games_played;
       if (m.id.startsWith('level_')) progress = currentLevel;
-      if (m.actionUrl) progress = 1; // Соц. таски всегда можно выполнить
+      if (m.actionUrl) progress = 1;
 
       let status = 'available';
       if (isClaimed) status = 'claimed';
@@ -647,12 +643,10 @@ app.get('/api/user/me/missions', requireTelegramSigned, async (req, res) => {
 
     res.json({ missions: result });
   } catch (e) {
-    console.error("Missions API Error:", e);
     res.status(500).json({ error: 'internal_error' });
   }
 });
 
-// 2. Забрать награду за миссию
 app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) => {
   const client = await pool.connect();
   try {
@@ -665,18 +659,14 @@ app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) 
 
     if (!missionConfig) return res.status(400).json({ error: 'mission_not_found' });
     
-    // ПРОВЕРКА ПОДПИСКИ
     if (missionConfig.tgChannel) {
-      const rawTgId = req.tg.user.id; // Достаем чистый ID цифрами
+      const rawTgId = req.tg.user.id; 
       const isSubbed = await checkChannelSub(rawTgId, missionConfig.tgChannel);
-      if (!isSubbed) {
-        return res.status(403).json({ error: 'not_subscribed', actionUrl: missionConfig.actionUrl });
-      }
+      if (!isSubbed) return res.status(403).json({ error: 'not_subscribed', actionUrl: missionConfig.actionUrl });
     }
     
     await client.query('BEGIN');
 
-    // Пытаемся записать награду в БД
     try {
       await client.query(`INSERT INTO mission_rewards (user_id, mission_id) VALUES ($1, $2)`, [userId, dbId]);
     } catch (err) {
@@ -687,7 +677,6 @@ app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) 
       throw err;
     }
 
-    // Достаем текущий баланс игрока
     const { rows: userRows } = await client.query(
       `SELECT tickets, score_balance FROM users WHERE user_id = $1 FOR UPDATE`, [userId]
     );
@@ -695,19 +684,16 @@ app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) 
     let tickets = userRows[0].tickets;
     let balance = userRows[0].score_balance;
 
-    // СЧИТАЕМ НОВЫЕ ОЧКИ И БИЛЕТЫ (Та же логика, что и в конце матча!)
     const totalPointsNow = balance + missionConfig.reward_pts;
     const ticketsEarnedNow = Math.floor(totalPointsNow / GAME_CONFIG.ticket_cost);
     const newBalance = totalPointsNow % GAME_CONFIG.ticket_cost;
     const newTickets = tickets + ticketsEarnedNow;
 
-    // Обновляем БД
     await client.query(
       `UPDATE users SET tickets = $1, score_balance = $2, total_score = total_score + $3, updated_at = now() WHERE user_id = $4`,
       [newTickets, newBalance, missionConfig.reward_pts, userId]
     );
 
-    // Записываем в логи
     await addScoreEvent(client, {
       userId, source: 'mission', title: `Mission: ${missionConfig.title}`, scoreAdd: missionConfig.reward_pts, ticketAdd: ticketsEarnedNow
     });
@@ -723,32 +709,45 @@ app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) 
 });
 
 /* =========================
-   API: TELEGRAM STARS (ПЛАТЕЖИ)
+   API: TELEGRAM STARS (ПЛАТЕЖИ С ДИНАМИЧЕСКИМ ЛИМИТОМ)
 ========================= */
 
 // 1. Генерация ссылки на оплату (Инвойс)
 app.post('/api/payment/invoice', requireTelegramSigned, async (req, res) => {
   try {
-    const userId = req.tg.user.id; // Нужен чистый ID цифрами
+    const userId = req.tg.user.id; 
     const today = getUTCTodayKey();
 
-    // Проверяем лимит (1 покупка в день)
-    const { rows } = await pool.query(`SELECT last_energy_buy_date FROM users WHERE user_id = $1`, [`tg_${userId}`]);
-    if (rows.length && rows[0].last_energy_buy_date === today) {
-        return res.status(400).json({ error: 'limit_reached', reason: 'You can only buy energy once a day.' });
+    // Проверяем динамический лимит
+    const { rows } = await pool.query(
+      `SELECT total_score, last_energy_buy_date, energy_bought_count FROM users WHERE user_id = $1`, 
+      [`tg_${userId}`]
+    );
+    
+    if (!rows.length) return res.status(404).json({ error: 'user_not_found' });
+    
+    const u = rows[0];
+    const level = Math.floor(Number(u.total_score) / GAME_CONFIG.level_step) + 1;
+    const dailyLimit = Math.min(10, Math.floor(level / 10) + 1);
+    const boughtToday = (u.last_energy_buy_date === today) ? (u.energy_bought_count || 0) : 0;
+
+    if (boughtToday >= dailyLimit) {
+        return res.status(400).json({ 
+          error: 'limit_reached', 
+          reason: `Daily limit reached (${dailyLimit}). Level up for more purchases!` 
+        });
     }
 
-    // Запрос к Telegram Bot API на создание инвойса
     const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title: 'Energy Recharge',
         description: '+3 ⚡ for Digit Math Game',
-        payload: `energy_${userId}_${Date.now()}`, // Секретная метка платежа
-        provider_token: '', // Для Stars строка ОБЯЗАТЕЛЬНО должна быть пустой!
-        currency: 'XTR',    // XTR — это код валюты Telegram Stars
-        prices: [{ label: '3 Energy', amount: 1 }] // Цена: 1 Звезда
+        payload: `energy_${userId}_${Date.now()}`, 
+        provider_token: '', 
+        currency: 'XTR',    
+        prices: [{ label: '3 Energy', amount: 1 }] 
       })
     });
 
@@ -760,19 +759,14 @@ app.post('/api/payment/invoice', requireTelegramSigned, async (req, res) => {
     }
 } catch (e) {
     console.error("Invoice Error:", e);
-    // 👇 Теперь сервер отправит текст ошибки прямо в игру 👇
-    res.status(500).json({ 
-      error: 'internal_error', 
-      reason: e.message || "Unknown error" 
-    });
+    res.status(500).json({ error: 'internal_error', reason: e.message || "Unknown error" });
   }
 });
 
-// 2. ВЕБХУК (Сюда Telegram пришлет запросы на проверку и квитанции)
+// 2. ВЕБХУК 
 app.post('/api/webhook/telegram', async (req, res) => {
   const update = req.body;
 
-  // А) Telegram спрашивает: "Можно ли списывать Звезды?" (pre_checkout_query)
   if (update && update.pre_checkout_query) {
     try {
       await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerPreCheckoutQuery`, {
@@ -780,43 +774,47 @@ app.post('/api/webhook/telegram', async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           pre_checkout_query_id: update.pre_checkout_query.id,
-          ok: true // 🟢 Даем зеленый свет на списание!
+          ok: true 
         })
       });
-      console.log(`✅ Pre-checkout approved for ${update.pre_checkout_query.from.id}`);
     } catch (e) {
       console.error("Failed to answer pre_checkout_query", e);
     }
     return res.sendStatus(200);
   }
 
-  // Б) Сообщение об успешном платеже Stars (successful_payment)
   if (update && update.message && update.message.successful_payment) {
     const payment = update.message.successful_payment;
     const payload = payment.invoice_payload;
 
-    // Если пейлоад наш (начинается с energy_)
     if (payload && payload.startsWith('energy_')) {
       const parts = payload.split('_');
       const userId = `tg_${parts[1]}`;
       const today = getUTCTodayKey();
 
-      // Начисляем энергию в базу данных
       try {
-        await pool.query(
-          `UPDATE users SET energy = energy + 3, last_energy_buy_date = $1 WHERE user_id = $2`,
-          [today, userId]
+        const { rows } = await pool.query(
+          `SELECT last_energy_buy_date, energy_bought_count FROM users WHERE user_id = $1`, [userId]
         );
-        console.log(`✅ Stars payment successful! Added 3 energy to ${userId}`);
+        if (rows.length > 0) {
+           const u = rows[0];
+           const currentBought = (u.last_energy_buy_date === today) ? (u.energy_bought_count || 0) : 0;
+           
+           await pool.query(
+             `UPDATE users SET energy = energy + 3, last_energy_buy_date = $1, energy_bought_count = $2 WHERE user_id = $3`,
+             [today, currentBought + 1, userId]
+           );
+           console.log(`✅ Stars payment successful! Added 3 energy to ${userId}`);
+        }
       } catch (err) {
         console.error("DB Error on Webhook:", err);
       }
     }
   }
   
-  // Всегда отвечаем 200 OK, чтобы Telegram не присылал запрос повторно
   res.sendStatus(200); 
 });
+
 /* =========================
    СТАРТ СЕРВЕРА
 ========================= */
