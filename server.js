@@ -755,9 +755,13 @@ app.post('/api/payment/invoice', requireTelegramSigned, async (req, res) => {
     } else {
       res.status(500).json({ error: 'invoice_failed', reason: data.description });
     }
-  } catch (e) {
+} catch (e) {
     console.error("Invoice Error:", e);
-    res.status(500).json({ error: 'internal_error' });
+    // 👇 Теперь сервер отправит текст ошибки прямо в игру 👇
+    res.status(500).json({ 
+      error: 'internal_error', 
+      reason: e.message || "Unknown error" 
+    });
   }
 });
 
