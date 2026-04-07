@@ -102,6 +102,11 @@ class GameAPI {
   async claimDaily() {
     return this.request(`/api/user/checkin/claim`, { method: "POST" });
   }
+
+  // Получить чек на оплату звездами
+  async getEnergyInvoice() {
+    return this.request(`/api/payment/invoice`, { method: "POST" });
+  }
 }
 
 // Делаем API глобальным, чтобы game.js мог к нему обращаться
