@@ -111,7 +111,7 @@
         </div>
       </div>
 
-      <div class="league-preview" aria-label="Level system">
+<div class="league-preview" aria-label="Level system">
         <div class="league-preview__head">
           <span class="lp-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -123,16 +123,17 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
           <div style="display: flex; flex-direction: column;">
-            <span style="font-family: 'Orbitron', monospace; font-size: 1.2rem; color: #fff; font-weight: 900;">LEVEL 1</span>
-            <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Max 1 purchase / day</span>
+            <span id="mainPageLevel" style="font-family: 'Orbitron', monospace; font-size: 1.2rem; color: #fff; font-weight: 900;">LEVEL 1</span>
+            <span id="mainPageMaxHint" style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Max 1 purchase / day</span>
           </div>
+          
           <button id="buyEnergyBtn" style="background: rgba(10,10,26,0.8); border: 1px solid var(--cosmic-primary); border-radius: 12px; padding: 8px 15px; color: #fff; font-weight: 700; font-family: 'Orbitron', monospace; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(255, 107, 53, 0.2); transition: transform 0.1s;">
             +3 ⚡ FOR 1 ⭐
           </button>
         </div>
         
-        <div style="text-align: center; margin-top: 12px; font-size: 0.7rem; color: rgba(255,204,0,0.8);">
-          Purchases available today: 1 / 1
+    <div id="buyEnergyHint" style="text-align: center; margin-top: 12px; font-size: 0.7rem; color: rgba(255,204,0,0.8);">
+          Loading limits...
         </div>
       </div>
 
