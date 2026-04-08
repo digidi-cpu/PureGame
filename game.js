@@ -423,7 +423,7 @@ async syncProfile() {
     }
   }
 
-  async buyEnergy() {
+async buyEnergy() {
     window.TelegramAPI?.vibrate('medium');
     const btn = document.getElementById("buyEnergyBtn");
     if (btn) btn.innerHTML = "WAIT...";
@@ -433,21 +433,33 @@ async syncProfile() {
       const res = await window.API.getEnergyInvoice();
 
       if (res && res.invoiceLink) {
-        // 2. Открываем нативное окно оплаты Telegram Stars
+        // 2. Открываем окно оплаты Telegram
         if (window.Telegram?.WebApp?.openInvoice) {
           window.Telegram.WebApp.openInvoice(res.invoiceLink, async (status) => {
+            
             if (status === 'paid') {
-              this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "+3 ⚡");
-              // Платеж прошел, сервер уже должен был обновить базу через Webhook.
-              // Сбрасываем кэш и синхронизируем профиль, чтобы обновить UI.
+              // ИГРОК ОПЛАТИЛ! 
+              // Меняем текст кнопки, чтобы игрок видел процесс синхронизации
+              if (btn) btn.innerHTML = "SYNCING... ⏳";
+              
+              // Даем серверу ровно 2 секунды на обработку вебхука от Telegram
               setTimeout(async () => {
+                // Сбрасываем кэш и запрашиваем реальные данные из базы
                 this.invalidateCache();
-                await this.syncProfile();
-              }, 1500); // Даем серверу 1.5 секунды на обработку вебхука
+                await this.syncProfile(); 
+                
+                // Красивый пупыш +3 появится только тогда, когда данные реально обновились
+                this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "+3 ⚡");
+              }, 2000); 
+
             } else if (status === 'failed') {
               alert("Payment failed.");
+              if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
+            } else {
+              // Если игрок просто закрыл окно оплаты (status === 'cancelled' или 'pending')
+              if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
             }
-            if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
+
           });
         } else {
           alert("Telegram WebApp API is not fully loaded.");
