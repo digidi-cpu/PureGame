@@ -311,7 +311,7 @@ bindUI() {
     document.getElementById("multiplier").textContent = this.multiplier;
   }
 
-  async syncProfile() {
+async syncProfile() {
     try {
       const stats = await window.API.getMyStats();
       if (stats && stats.exists) {
@@ -342,8 +342,13 @@ bindUI() {
         const profileTotalPointsLarge = document.getElementById("profileTotalPointsLarge");
         if (profileTotalPointsLarge) profileTotalPointsLarge.textContent = (stats.total_score || 0).toLocaleString();
 
+        // --- УРОВНИ ---
         const profileLevel = document.getElementById("profileLevel");
         if (profileLevel) profileLevel.textContent = `LEVEL ${stats.level || 1}`;
+
+        // 👇 Обновление уровня на главном экране
+        const mainPageLevel = document.getElementById("mainPageLevel");
+        if (mainPageLevel) mainPageLevel.textContent = `LEVEL ${stats.level || 1}`;
 
         const profileGamesPlayed = document.getElementById("profileGamesPlayed");
         if (profileGamesPlayed) profileGamesPlayed.textContent = (stats.games_played || 0).toLocaleString();
@@ -374,6 +379,40 @@ bindUI() {
           levelProgressFill.style.width = `${percent}%`;
           levelProgressText.textContent = `${score.toLocaleString()} / ${nextLevelThreshold.toLocaleString()} to LVL ${currentLvl + 1}`;
         }
+
+        // 👇 ЛОГИКА ПОКУПКИ ЭНЕРГИИ И ЛИМИТОВ 👇
+        const buyBtn = document.getElementById("buyEnergyBtn");
+        const buyHint = document.getElementById("buyEnergyHint");
+        const maxHint = document.getElementById("mainPageMaxHint"); 
+        
+        const limit = stats.daily_energy_limit || 1;
+        const bought = stats.energy_bought_today || 0;
+        
+        // Обновляем текст мелким шрифтом "Max X purchase / day"
+        if (maxHint) {
+            maxHint.textContent = `Max ${limit} purchase${limit > 1 ? 's' : ''} / day`;
+        }
+
+        // Убираем "Loading limits..." и ставим реальные цифры
+        if (buyHint) {
+          buyHint.textContent = `Purchases available today: ${limit - bought} / ${limit}`;
+        }
+        
+        // Блокируем кнопку, если лимит на сегодня исчерпан
+        if (bought >= limit) {
+          if (buyBtn) { 
+              buyBtn.disabled = true; 
+              buyBtn.style.opacity = "0.4"; 
+              buyBtn.style.cursor = "not-allowed"; 
+          }
+        } else {
+          if (buyBtn) { 
+              buyBtn.disabled = false; 
+              buyBtn.style.opacity = "1"; 
+              buyBtn.style.cursor = "pointer"; 
+          }
+        }
+        // 👆 ===================================== 👆
 
         this.loadMatchHistory(false);
         this.loadLeaderboard();
