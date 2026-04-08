@@ -391,14 +391,25 @@ app.get('/api/leaderboard', async (req, res) => {
 app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
   try {
     const userId = `tg_${req.tg.user.id}`;
+    const today = getUTCTodayKey(); // Вынесли наверх
     
     // Достаем данные пользователя включая счетчики покупок
     const { rows } = await pool.query(
-      `SELECT tickets, score_balance, total_score, games_played, energy, last_energy_buy_date, energy_bought_count FROM users WHERE user_id = $1`, [userId]
+      `SELECT tickets, score_balance, total_score, games_played, energy, last_energy_day, last_energy_buy_date, energy_bought_count FROM users WHERE user_id = $1`, [userId]
     );
 
     if (!rows.length) return res.json({ exists: false });
-    const u = rows[0];
+    let u = rows[0]; // Заменили const на let, чтобы можно было обновить энергию
+    
+    // 👇 НОВЫЙ БЛОК: ВОССТАНАВЛИВАЕМ ЭНЕРГИЮ ПРИ ВХОДЕ В ИГРУ 👇
+    if (u.last_energy_day !== today) {
+      u.energy = Math.max(u.energy, 3);
+      await pool.query(
+        `UPDATE users SET energy = $1, last_energy_day = $2 WHERE user_id = $3`, 
+        [u.energy, today, userId]
+      );
+    }
+    // 👆 ====================================================== 👆
     
     const { rows: rankRows } = await pool.query(
       `SELECT 1 + count(*) as pos FROM users WHERE tickets > $1 OR (tickets = $1 AND total_score > $2)`,
@@ -415,7 +426,6 @@ app.get('/api/user/me/stats', requireTelegramSigned, async (req, res) => {
     const currentLevel = Math.floor(Number(u.total_score) / GAME_CONFIG.level_step) + 1;
     const dailyEnergyLimit = Math.min(10, Math.floor(currentLevel / 10) + 1);
     
-    const today = getUTCTodayKey();
     const energyBoughtToday = (u.last_energy_buy_date === today) ? (u.energy_bought_count || 0) : 0;
       
     res.json({
