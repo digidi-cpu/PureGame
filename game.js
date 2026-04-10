@@ -1190,7 +1190,7 @@ async endGame() {
           document.querySelector(".rt-hint").textContent = "⚠️ Result rejected (Anti-cheat)";
           document.querySelector(".rt-hint").style.color = "#ff3333";
         } else {
-          // Успешная игра: обновляем только прогресс-бар
+          // Успешная игра: обновляем прогресс-бар
           const balance = result.score_balance || 0;
           const tCost = this.gameConfig ? this.gameConfig.ticket_cost : 5000;
           
@@ -1199,6 +1199,19 @@ async endGame() {
           
           const percent = Math.min(100, Math.round((balance / tCost) * 100));
           document.querySelector(".rt-fill").style.width = `${percent}%`;
+
+          // ==========================================
+          // ВЫЗОВ ЭПИЧНОЙ АНИМАЦИИ (ЕСЛИ ЗАРАБОТАН БИЛЕТ)
+          // ==========================================
+          if (result.tickets_earned && result.tickets_earned > 0) {
+            // Ждем полсекунды, чтобы игрок успел прочитать свой счет, 
+            // а затем запускаем оверлей с 3D-орбитой и конфетти
+            setTimeout(() => {
+                if (typeof window.startWinFlow === 'function') {
+                    window.startWinFlow();
+                }
+            }, 500);
+          }
         }
       }
     } catch (error) {
@@ -1349,3 +1362,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (obScreen && slides.length > 0) updateSlider();
 });
+// ==========================================
+// ЛОГИКА АНИМАЦИИ ПОБЕДЫ (TICKET & NFT)
+// ==========================================
+
+window.startWinFlow = function() {
+  const overlay = document.getElementById('fxOverlay');
+  if(overlay) overlay.classList.add('active');
+  
+  window.switchView('viewWin');
+  
+  // Вибрация успеха через твой API
+  window.TelegramAPI?.vibrate('success');
+  
+  window.spawnConfetti();
+};
+
+window.switchView = function(viewId) {
+  document.querySelectorAll('.reward-window').forEach(w => w.classList.remove('active'));
+  const view = document.getElementById(viewId);
+  if(view) view.classList.add('active');
+  
+  window.TelegramAPI?.vibrate('light');
+};
+
+window.closeAll = function() {
+  const overlay = document.getElementById('fxOverlay');
+  if(overlay) overlay.classList.remove('active');
+  
+  // Сбрасываем на первый экран через полсекунды (когда анимация закрытия пройдет)
+  setTimeout(() => {
+      window.switchView('viewWin');
+  }, 500);
+};
+
+window.spawnConfetti = function() {
+  for (let i = 0; i < 60; i++) {
+      const p = document.createElement('div');
+      p.className = 'p-star'; 
+      
+      const inner = document.createElement('div');
+      inner.className = 'icon-svg mask-star';
+      p.appendChild(inner);
+
+      p.style.width = p.style.height = (Math.random() * 10 + 6) + 'px';
+      p.style.left = '50%'; p.style.top = '50%';
+      document.body.appendChild(p);
+
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = Math.random() * 400 + 150;
+      const tx = Math.cos(angle) * velocity;
+      const ty = Math.sin(angle) * velocity;
+      const rot = Math.random() * 720 - 360;
+
+      p.animate([
+          { transform: 'translate(-50%, -50%) scale(1) rotate(0deg)', opacity: 1 },
+          { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0) rotate(${rot}deg)`, opacity: 0 }
+      ], {
+          duration: Math.random() * 800 + 800,
+          easing: 'cubic-bezier(0, .9, .57, 1)'
+      }).onfinish = () => p.remove();
+  }
+};
