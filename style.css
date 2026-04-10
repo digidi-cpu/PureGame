@@ -1015,3 +1015,108 @@ body {
 }
 .dd-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); }
 .dd-pts { font-weight: 900; font-size: 0.8rem; color: #fff; margin-top: 2px; }
+
+/* =========================================
+   СТИЛИ ДЛЯ АНИМАЦИИ ПОБЕДЫ (TICKET & NFT)
+   ========================================= */
+
+.fx-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999; visibility: hidden; transition: all 0.5s ease;
+}
+.fx-overlay.active {
+    visibility: visible; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px);
+}
+
+.window-container { width: 100%; max-width: 400px; position: relative; }
+
+.reward-window {
+    text-align: center; display: none;
+    animation: windowIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes windowIn {
+    from { opacity: 0; transform: scale(0.5) translateY(100px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.reward-window.active { display: block; }
+
+/* 3D Сцена */
+.orbit-scene {
+    width: 100%; height: 250px; margin-bottom: 20px;
+    position: relative; display: flex; justify-content: center; align-items: center;
+    perspective: 1000px;
+}
+.orbit-wrapper {
+    position: absolute; width: 1px; height: 1px;
+    transform-style: preserve-3d; transform: rotateX(-10deg); 
+}
+.main-ticket-anchor {
+    position: absolute; left: -100px; top: -40px; 
+    width: 200px; height: 80px;
+    transform: translateZ(0); z-index: 10;
+}
+.main-ticket {
+    width: 100%; height: 100%;
+    background-image: url('assets/ticket.svg');
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+    filter: drop-shadow(0 0 25px rgba(255, 204, 0, 0.6));
+    animation: floatTicket 4s infinite ease-in-out;
+}
+.nft-item {
+    position: absolute; width: 65px; height: 65px;
+    margin-left: -32px; margin-top: -32px;
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
+}
+
+.nft1 { background-image: url('assets/nft1.svg'); animation: orbit1 12s infinite linear; }
+.nft2 { background-image: url('assets/nft2.svg'); animation: orbit2 12s infinite linear; }
+.nft3 { background-image: url('assets/nft3.svg'); animation: orbit3 12s infinite linear; }
+
+@keyframes orbit1 {
+    from { transform: rotateY(0deg) translateX(140px) rotateY(0deg); }
+    to   { transform: rotateY(360deg) translateX(140px) rotateY(-360deg); }
+}
+@keyframes orbit2 {
+    from { transform: rotateY(120deg) translateX(140px) rotateY(-120deg); }
+    to   { transform: rotateY(480deg) translateX(140px) rotateY(-480deg); }
+}
+@keyframes orbit3 {
+    from { transform: rotateY(240deg) translateX(140px) rotateY(-240deg); }
+    to   { transform: rotateY(600deg) translateX(140px) rotateY(-600deg); }
+}
+@keyframes floatTicket {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-12px) rotate(3deg); }
+}
+
+/* Блестки и частицы */
+.sparkle {
+    position: absolute; width: 12px; height: 12px; color: white; opacity: 0;
+    mask-image: url('assets/star.svg'); -webkit-mask-image: url('assets/star.svg');
+    background-color: currentColor; mask-size: contain; -webkit-mask-size: contain;
+    animation: sparklePulse 2s infinite;
+}
+@keyframes sparklePulse {
+    0%, 100% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1) rotate(90deg); opacity: 0.8; }
+}
+.p-star { position: absolute; pointer-events: none; z-index: 1001; color: #ffcc00; }
+
+/* UI Элементы */
+.win-title { font-family: 'Orbitron', sans-serif; font-size: 2.2rem; color: #ffcc00; margin: 0; text-shadow: 0 0 20px rgba(255, 204, 0, 0.6); }
+.win-desc { color: rgba(255,255,255,0.7); margin: 10px 0 30px; font-size: 1rem; }
+.prize-list { background: rgba(255,255,255,0.03); border-radius: 24px; padding: 20px; text-align: left; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; }
+.prize-item { display: flex; align-items: center; gap: 16px; margin-bottom: 15px; }
+.prize-item:last-child { margin-bottom: 0; }
+.prize-icon-wrap { width: 40px; height: 40px; flex-shrink: 0; }
+.icon-svg { display: inline-block; width: 100%; height: 100%; background-color: currentColor; mask-repeat: no-repeat; mask-position: center; mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain; }
+.mask-star { -webkit-mask-image: url('assets/star.svg'); mask-image: url('assets/star.svg'); }
+.prize-info b { display: block; color: #ffcc00; font-size: 1rem; }
+.prize-info span { font-size: 0.8rem; color: rgba(255,255,255,0.4); }
+
+.btn-main { width: 100%; background: none; border: 2px solid #ffcc00; color: #ffcc00; padding: 16px; border-radius: 16px; font-family: 'Orbitron', sans-serif; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+.btn-main:active { background: rgba(255,204,0,0.1); transform: scale(0.98); }
+.btn-tg { width: 100%; background: #24A1DE; color: white; border: none; padding: 16px; border-radius: 16px; font-family: 'Orbitron', sans-serif; font-weight: 900; text-decoration: none; display: block; box-sizing: border-box; text-transform: uppercase; text-align: center; }
+.btn-close { margin-top: 20px; background: none; border: none; color: rgba(255,255,255,0.3); text-decoration: underline; cursor: pointer; }
