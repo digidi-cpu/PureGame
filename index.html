@@ -325,6 +325,61 @@
     </div>
   </div>
 
+  <div id="fxOverlay" class="fx-overlay">
+        <div class="window-container">
+            
+            <div id="viewWin" class="reward-window">
+                <div class="orbit-scene">
+                    <div class="sparkle" style="top: 20%; left: 10%; animation-delay: 0s;"></div>
+                    <div class="sparkle" style="top: 80%; left: 85%; animation-delay: 0.5s;"></div>
+                    <div class="sparkle" style="top: 60%; left: 15%; animation-delay: 1s;"></div>
+                    <div class="sparkle" style="top: 15%; left: 75%; animation-delay: 1.5s; color: #e0e0e0;"></div>
+
+                    <div class="main-ticket-anchor">
+                        <div class="main-ticket"></div>
+                    </div>
+
+                    <div class="orbit-wrapper">
+                        <div class="nft-item nft1"></div>
+                        <div class="nft-item nft2"></div>
+                        <div class="nft-item nft3"></div>
+                    </div>
+                </div>
+
+                <h1 class="win-title">EPIC WIN!</h1>
+                <p class="win-desc">You've earned a ticket for the Seasonal Prize Draw!</p>
+                <button class="btn-main" onclick="switchView('viewPrizes')">Show Seasonal Prizes</button>
+                <button class="btn-close" onclick="closeAll()">Close</button>
+            </div>
+
+            <div id="viewPrizes" class="reward-window">
+                <h2 style="font-family: 'Orbitron'; color: #ffcc00; margin-bottom: 20px;">PRIZE POOL</h2>
+                <div class="prize-list">
+                    <div class="prize-item">
+                        <div class="prize-icon-wrap" style="background-image: url('assets/nft1.svg'); background-size: contain; border-radius: 8px;"></div>
+                        <div class="prize-info">
+                            <b>10x NFT Telegram Gifts</b>
+                            <span>Randomly drawn collectible items</span>
+                        </div>
+                    </div>
+                    <div class="prize-item">
+                        <div class="prize-icon-wrap" style="color: #ffcc00;">
+                            <div class="icon-svg mask-star"></div>
+                        </div>
+                        <div class="prize-info">
+                            <b>10x Packs of 100 Stars</b>
+                            <span>Telegram currency rewards</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <a href="https://t.me/твой_канал" class="btn-tg" target="_blank">Check Channel for Rules</a>
+                <button class="btn-close" onclick="closeAll()">Back to game</button>
+            </div>
+
+        </div>
+    </div>
+
   <script src="assets.js"></script>
   <script src="telegram.js"></script>
   <script src="api.js"></script>
