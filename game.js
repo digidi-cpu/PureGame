@@ -528,7 +528,7 @@ async buyEnergy() {
     }
   }
 
-  // ЗАГРУЗКА ТОП-10 (С КЭШИРОВАНИЕМ)
+// ЗАГРУЗКА ТОП-10 (С КЭШИРОВАНИЕМ)
   async loadLeaderboard() {
     const list = document.getElementById("leaderboardList"); 
     if (!list) return;
@@ -559,10 +559,15 @@ async buyEnergy() {
     const myId = window.TelegramAPI?.initDataUnsafe?.user?.id ? `tg_${window.TelegramAPI.initDataUnsafe.user.id}` : null;
 
     data.items.forEach(player => {
-      let rankDisplay = player.rank;
-      if (player.rank === 1) rankDisplay = "🥇";
-      if (player.rank === 2) rankDisplay = "🥈";
-      if (player.rank === 3) rankDisplay = "🥉";
+      
+      // === НОВАЯ ЛОГИКА МЕДАЛЕЙ ===
+      // По умолчанию показываем номер с решеткой (например, #4)
+      let rankDisplay = `<span style="color: rgba(255,255,255,0.4); font-size: 1.1rem; font-weight: 900; font-family: 'Orbitron', monospace;">#${player.rank}</span>`;
+      
+      // Если это топ-3, подменяем на картинки
+      if (player.rank === 1) rankDisplay = `<img src="assets/medal1.svg" class="lb-medal" alt="1">`;
+      if (player.rank === 2) rankDisplay = `<img src="assets/medal2.svg" class="lb-medal" alt="2">`;
+      if (player.rank === 3) rankDisplay = `<img src="assets/medal3.svg" class="lb-medal" alt="3">`;
 
       const isMe = myId === player.userId;
       const highlightClass = isMe ? "lb-item-me" : ""; 
@@ -570,7 +575,9 @@ async buyEnergy() {
       const itemHtml = `
         <div class="lb-item ${highlightClass}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 8px; border-radius: 12px;">
           <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 1.5rem; width: 30px; text-align: center;">${rankDisplay}</div>
+            <div style="width: 32px; height: 32px; display: flex; justify-content: center; align-items: center;">
+              ${rankDisplay}
+            </div>
             <div style="font-weight: bold; font-size: 1.1rem;">${player.username}</div>
           </div>
           <div style="text-align: right;">
