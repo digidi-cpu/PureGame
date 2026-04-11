@@ -1160,3 +1160,20 @@ body {
     /* Премиальное свечение */
     filter: drop-shadow(0 2px 4px rgba(255, 204, 0, 0.4));
 }
+
+
+/* =========================================
+   МЕДАЛИ В ЛИДЕРБОРДЕ
+   ========================================= */
+.lb-medal {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    /* Создаем сочный объем с помощью свечения/тени */
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+    transition: transform 0.3s ease;
+}
+
+.lb-item:hover .lb-medal {
+    transform: scale(1.15) rotate(5deg);
+}
