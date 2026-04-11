@@ -1134,16 +1134,29 @@ body {
 
 
 /* =========================================
-   ИНЛАЙН ИКОНКА БИЛЕТА (ВМЕСТО ЭМОДЗИ)
+   ИНЛАЙН ИКОНКА БИЛЕТА (CSS-МАСКА С ГРАДИЕНТОМ)
    ========================================= */
 .icon-ticket-inline {
     display: inline-block;
-    width: 1.2em;
-    height: 1.2em;
-    background-image: url('assets/ticket.svg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    vertical-align: middle;
-    margin-top: -0.1em; /* Выравнивание по центру текста */
+    width: 1.3em;
+    height: 1.3em;
+    vertical-align: -0.2em;
+    flex-shrink: 0;
+    
+    /* 1. Заливаем сам элемент роскошным золотым градиентом */
+    background: linear-gradient(135deg, #FFE066 0%, #FFC107 40%, #FF9800 70%, #B26500 100%);
+    
+    /* 2. Используем твой SVG как трафарет (маску) */
+    -webkit-mask-image: url('assets/ticket.svg');
+    mask-image: url('assets/ticket.svg');
+    
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    
+    /* Премиальное свечение */
+    filter: drop-shadow(0 2px 4px rgba(255, 204, 0, 0.4));
 }
