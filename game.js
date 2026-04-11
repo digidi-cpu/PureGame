@@ -560,14 +560,14 @@ async buyEnergy() {
 
     data.items.forEach(player => {
       
-      // === НОВАЯ ЛОГИКА МЕДАЛЕЙ ===
+      // === НОВАЯ ЛОГИКА МЕДАЛЕЙ (CSS-МАСКИ) ===
       // По умолчанию показываем номер с решеткой (например, #4)
       let rankDisplay = `<span style="color: rgba(255,255,255,0.4); font-size: 1.1rem; font-weight: 900; font-family: 'Orbitron', monospace;">#${player.rank}</span>`;
       
-      // Если это топ-3, подменяем на картинки
-      if (player.rank === 1) rankDisplay = `<img src="assets/medal1.svg" class="lb-medal" alt="1">`;
-      if (player.rank === 2) rankDisplay = `<img src="assets/medal2.svg" class="lb-medal" alt="2">`;
-      if (player.rank === 3) rankDisplay = `<img src="assets/medal3.svg" class="lb-medal" alt="3">`;
+      // Если это топ-3, подменяем на пустой <i> с нужными классами градиентов
+      if (player.rank === 1) rankDisplay = `<i class="lb-medal lb-medal-gold" aria-label="1"></i>`;
+      if (player.rank === 2) rankDisplay = `<i class="lb-medal lb-medal-silver" aria-label="2"></i>`;
+      if (player.rank === 3) rankDisplay = `<i class="lb-medal lb-medal-bronze" aria-label="3"></i>`;
 
       const isMe = myId === player.userId;
       const highlightClass = isMe ? "lb-item-me" : ""; 
