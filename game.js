@@ -331,7 +331,7 @@ async syncProfile() {
         if (myRankVal) myRankVal.textContent = `#${stats.rank || 0}`;
 
         const myPosRight = document.querySelector(".my-pos-right");
-        if (myPosRight) myPosRight.textContent = `${stats.tickets || 0} 🎟️`;
+        if (myPosRight) myPosRight.innerHTML = `${stats.tickets || 0} <i class="icon-ticket-inline"></i>`;
 
         const modalEnergy = document.getElementById("modalEnergy");
         if (modalEnergy) modalEnergy.textContent = `${stats.energy}/3`;
@@ -574,7 +574,9 @@ async buyEnergy() {
             <div style="font-weight: bold; font-size: 1.1rem;">${player.username}</div>
           </div>
           <div style="text-align: right;">
-            <div style="color: #ffd700; font-weight: 900;">${player.tickets} 🎟️</div>
+            <div style="color: #ffd700; font-weight: 900; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+              ${player.tickets} <i class="icon-ticket-inline"></i>
+            </div>
             <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">${player.score.toLocaleString()} PTS</div>
           </div>
         </div>
@@ -653,7 +655,7 @@ async buyEnergy() {
         this.showScorePopup(window.innerWidth/2, window.innerHeight/2, `+${res.reward_pts} PTS`);
         if (res.tickets_earned > 0) {
           setTimeout(() => {
-            this.showScorePopup(window.innerWidth/2, window.innerHeight/2 + 50, `+${res.tickets_earned} 🎟️`);
+            this.showScorePopup(window.innerWidth/2, window.innerHeight/2 + 50, `+${res.tickets_earned} <i class="icon-ticket-inline"></i>`);
           }, 600);
         }
         
@@ -750,7 +752,7 @@ async buyEnergy() {
         this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, `+${result.reward_pts} PTS`);
         if (result.tickets_earned > 0) {
           setTimeout(() => {
-            this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2 + 50, `+${result.tickets_earned} 🎟️`);
+            this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2 + 50, `+${result.tickets_earned} <i class="icon-ticket-inline"></i>`);
           }, 600);
         }
         
@@ -818,10 +820,15 @@ async buyEnergy() {
     setTimeout(() => app.classList.remove(cls), 350);
   }
 
-  showScorePopup(x, y, text) {
+showScorePopup(x, y, textHtml) {
     const el = document.createElement("div");
-    el.style.cssText = `position:fixed;left:${x}px;top:${y}px;transform:translate(-50%,-50%);font-size:1.5em;font-weight:900;color:#ffd700;text-shadow:0 0 10px #ffd700;z-index:2500;pointer-events:none;font-family:'Orbitron',monospace;opacity:0;transition:all 0.6s ease-out;`;
-    el.textContent = text; document.body.appendChild(el);
+    // Я добавил 'display: flex; align-items: center; gap: 5px;' для идеального выравнивания
+    el.style.cssText = `position:fixed;left:${x}px;top:${y}px;transform:translate(-50%,-50%);font-size:1.5em;font-weight:900;color:#ffd700;text-shadow:0 0 10px #ffd700;z-index:2500;pointer-events:none;font-family:'Orbitron',monospace;opacity:0;transition:all 0.6s ease-out; display: flex; align-items: center; gap: 5px;`;
+    
+    // Меняем textContent на innerHTML
+    el.innerHTML = textHtml; 
+    
+    document.body.appendChild(el);
     requestAnimationFrame(() => { el.style.opacity = "1"; el.style.transform = `translate(-50%,-70px)`; });
     setTimeout(() => { el.style.opacity = "0"; setTimeout(() => el.remove(), 600); }, 400);
   }
