@@ -1179,8 +1179,8 @@ async endGame() {
     this.bg.pause(); 
     document.getElementById('gameScreen').style.background = '#0a0a1a';
     
-    const fillEl = document.querySelector(".rt-fill");
-    const hintEl = document.querySelector(".rt-hint");
+    const fillEl = document.querySelector("#resultModal .rt-fill");
+    const hintEl = document.querySelector("#resultModal .rt-hint");
     
     document.getElementById("finalScore").textContent = "Calculating...";
     if (hintEl) hintEl.textContent = "Syncing with server...";
