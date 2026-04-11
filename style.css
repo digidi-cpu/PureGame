@@ -1131,3 +1131,19 @@ body {
 .btn-main:active { background: rgba(255,204,0,0.1); transform: scale(0.98); }
 .btn-tg { width: 100%; background: #24A1DE; color: white; border: none; padding: 16px; border-radius: 16px; font-family: 'Orbitron', sans-serif; font-weight: 900; text-decoration: none; display: block; box-sizing: border-box; text-transform: uppercase; text-align: center; }
 .btn-close { margin-top: 20px; background: none; border: none; color: rgba(255,255,255,0.3); text-decoration: underline; cursor: pointer; }
+
+
+/* =========================================
+   ИНЛАЙН ИКОНКА БИЛЕТА (ВМЕСТО ЭМОДЗИ)
+   ========================================= */
+.icon-ticket-inline {
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    background-image: url('assets/ticket.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    vertical-align: middle;
+    margin-top: -0.1em; /* Выравнивание по центру текста */
+}
