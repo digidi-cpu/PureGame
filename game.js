@@ -1179,21 +1179,22 @@ async endGame() {
     this.bg.pause(); 
     document.getElementById('gameScreen').style.background = '#0a0a1a';
     
-    // Безопасно находим элементы (чтобы игра не крашнулась, если их нет)
     const fillEl = document.querySelector(".rt-fill");
     const hintEl = document.querySelector(".rt-hint");
     
-    // Показываем состояние загрузки
     document.getElementById("finalScore").textContent = "Calculating...";
     if (hintEl) hintEl.textContent = "Syncing with server...";
     
+    // 1. Сначала показываем окно
+    document.getElementById("resultModal").style.display = "flex";
+
+    // 2. МАГИЯ ЗДЕСЬ: Сбрасываем полоску ВНУТРИ уже открытого окна
     if (fillEl) {
-      // ❗️ СЕКРЕТ ПЛАВНОСТИ: мгновенно сбрасываем в 0 без анимации
       fillEl.style.transition = "none"; 
       fillEl.style.width = "0%";
+      // Эта команда заставляет браузер принудительно перерисовать элемент (Forced Reflow)
+      void fillEl.offsetWidth; 
     }
-    
-    document.getElementById("resultModal").style.display = "flex";
 
     try {
       const result = await window.API.sessionFinish(this.currentSessionId, this.score);
@@ -1202,13 +1203,11 @@ async endGame() {
         document.getElementById("finalScore").textContent = this.score;
         
         if (result.is_valid === false) {
-          // Античит
           if (hintEl) {
             hintEl.textContent = "⚠️ Result rejected (Anti-cheat)";
             hintEl.style.color = "#ff3333";
           }
         } else {
-          // Успешная игра: обновляем прогресс-бар
           const balance = result.score_balance || 0;
           const tCost = this.gameConfig ? this.gameConfig.ticket_cost : 5000;
           
@@ -1219,24 +1218,21 @@ async endGame() {
           
           const percent = Math.min(100, Math.max(0, Math.round((balance / tCost) * 100)));
           
+          // 3. Запускаем красивую анимацию
           if (fillEl) {
-            // ❗️ Возвращаем анимацию и задаем ширину с микро-задержкой, 
-            // чтобы браузер успел отрисовать старт с нуля
+            // Небольшая задержка, чтобы глаз успел зацепиться
             setTimeout(() => {
-                fillEl.style.transition = "width 1s cubic-bezier(0.34, 1.56, 0.64, 1)";
+                fillEl.style.transition = "width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)";
                 fillEl.style.width = `${percent}%`;
-            }, 50);
+            }, 100);
           }
 
-          // ==========================================
-          // ВЫЗОВ ЭПИЧНОЙ АНИМАЦИИ (ЕСЛИ ЗАРАБОТАН БИЛЕТ)
-          // ==========================================
           if (result.tickets_earned && result.tickets_earned > 0) {
             setTimeout(() => {
                 if (typeof window.startWinFlow === 'function') {
                     window.startWinFlow();
                 }
-            }, 600); // Чуть увеличил задержку (0.6 сек), чтобы полоска успела красиво проехать
+            }, 700); 
           }
         }
       }
