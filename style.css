@@ -1161,57 +1161,36 @@ body {
     filter: drop-shadow(0 2px 4px rgba(255, 204, 0, 0.4));
 }
 
-
 /* =========================================
-   МЕДАЛИ В ЛИДЕРБОРДЕ (CSS-МАСКИ И ГРАДИЕНТЫ)
+   МЕДАЛИ В ЛИДЕРБОРДЕ (СОЧНЫЕ И ОБЪЕМНЫЕ)
    ========================================= */
-
-/* Общие стили для всех медалей */
 .lb-medal {
-    display: inline-block;
-    width: 32px;  /* Подбери размер под свою строку */
+    width: 32px;
     height: 32px;
     vertical-align: middle;
     flex-shrink: 0;
 
-    /* Общие настройки маски */
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
+    /* МАГИЯ ЗДЕСЬ: 
+       saturate(1.6) - делает цвета на 60% более насыщенными и яркими
+       brightness(1.1) - слегка осветляет, чтобы металл блестел
+       contrast(1.1) - делает тени внутри SVG более глубокими
+       drop-shadow - добавляет реальный 3D-объем позади медали
+    */
+    filter: 
+        saturate(1.6) 
+        brightness(1.1) 
+        contrast(1.1) 
+        drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
 
-    /* Премиальное сочное свечение и глубина 🌟 */
-    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5)) saturate(1.2);
+    transition: transform 0.3s ease, filter 0.3s ease;
 }
 
-/* 🥇 ЗОЛОТАЯ МЕДАЛЬ (1 место) */
-.lb-medal-gold {
-    /* Роскошный золотой градиент */
-    background: linear-gradient(135deg, #FFE066 0%, #FFC107 40%, #FF9800 70%, #B26500 100%);
-
-    /* Используем вашу medal1.svg как трафарет */
-    -webkit-mask-image: url('assets/medal1.svg');
-    mask-image: url('assets/medal1.svg');
-}
-
-/* 🥈 СЕРЕБРЯНАЯ МЕДАЛЬ (2 место) */
-.lb-medal-silver {
-    /* Холодный серебряный градиент */
-    background: linear-gradient(135deg, #FFFFFF 0%, #DEE2E6 40%, #ADB5BD 70%, #6C757D 100%);
-
-    /* Используем вашу medal2.svg как трафарет */
-    -webkit-mask-image: url('assets/medal2.svg');
-    mask-image: url('assets/medal2.svg');
-}
-
-/* 🥉 БРОНЗОВАЯ МЕДАЛЬ (3 место) */
-.lb-medal-bronze {
-    /* Теплый бронзовый градиент */
-    background: linear-gradient(135deg, #FFDAB9 0%, #D2691E 40%, #8B4513 70%, #5C2E00 100%);
-
-    /* Используем вашу medal3.svg как трафарет */
-    -webkit-mask-image: url('assets/medal3.svg');
-    mask-image: url('assets/medal3.svg');
+/* При наведении они становятся еще ярче и немного приподнимаются */
+.lb-item:hover .lb-medal {
+    transform: scale(1.15) rotate(5deg);
+    filter: 
+        saturate(2) 
+        brightness(1.2) 
+        contrast(1.15) 
+        drop-shadow(0 6px 8px rgba(0, 0, 0, 0.8));
 }
