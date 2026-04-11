@@ -1172,10 +1172,19 @@ async endGame() {
     this.bg.pause(); 
     document.getElementById('gameScreen').style.background = '#0a0a1a';
     
+    // Безопасно находим элементы (чтобы игра не крашнулась, если их нет)
+    const fillEl = document.querySelector(".rt-fill");
+    const hintEl = document.querySelector(".rt-hint");
+    
     // Показываем состояние загрузки
     document.getElementById("finalScore").textContent = "Calculating...";
-    document.querySelector(".rt-hint").textContent = "Syncing with server...";
-    document.querySelector(".rt-fill").style.width = "0%";
+    if (hintEl) hintEl.textContent = "Syncing with server...";
+    
+    if (fillEl) {
+      // ❗️ СЕКРЕТ ПЛАВНОСТИ: мгновенно сбрасываем в 0 без анимации
+      fillEl.style.transition = "none"; 
+      fillEl.style.width = "0%";
+    }
     
     document.getElementById("resultModal").style.display = "flex";
 
@@ -1187,38 +1196,50 @@ async endGame() {
         
         if (result.is_valid === false) {
           // Античит
-          document.querySelector(".rt-hint").textContent = "⚠️ Result rejected (Anti-cheat)";
-          document.querySelector(".rt-hint").style.color = "#ff3333";
+          if (hintEl) {
+            hintEl.textContent = "⚠️ Result rejected (Anti-cheat)";
+            hintEl.style.color = "#ff3333";
+          }
         } else {
           // Успешная игра: обновляем прогресс-бар
           const balance = result.score_balance || 0;
           const tCost = this.gameConfig ? this.gameConfig.ticket_cost : 5000;
           
-          document.querySelector(".rt-hint").style.color = "rgba(255,255,255,0.6)"; 
-          document.querySelector(".rt-hint").textContent = `${balance.toLocaleString()} / ${tCost.toLocaleString()} to next ticket`;
+          if (hintEl) {
+            hintEl.style.color = "rgba(255,255,255,0.6)"; 
+            hintEl.textContent = `${balance.toLocaleString()} / ${tCost.toLocaleString()} to next ticket`;
+          }
           
-          const percent = Math.min(100, Math.round((balance / tCost) * 100));
-          document.querySelector(".rt-fill").style.width = `${percent}%`;
+          const percent = Math.min(100, Math.max(0, Math.round((balance / tCost) * 100)));
+          
+          if (fillEl) {
+            // ❗️ Возвращаем анимацию и задаем ширину с микро-задержкой, 
+            // чтобы браузер успел отрисовать старт с нуля
+            setTimeout(() => {
+                fillEl.style.transition = "width 1s cubic-bezier(0.34, 1.56, 0.64, 1)";
+                fillEl.style.width = `${percent}%`;
+            }, 50);
+          }
 
           // ==========================================
           // ВЫЗОВ ЭПИЧНОЙ АНИМАЦИИ (ЕСЛИ ЗАРАБОТАН БИЛЕТ)
           // ==========================================
           if (result.tickets_earned && result.tickets_earned > 0) {
-            // Ждем полсекунды, чтобы игрок успел прочитать свой счет, 
-            // а затем запускаем оверлей с 3D-орбитой и конфетти
             setTimeout(() => {
                 if (typeof window.startWinFlow === 'function') {
                     window.startWinFlow();
                 }
-            }, 500);
+            }, 600); // Чуть увеличил задержку (0.6 сек), чтобы полоска успела красиво проехать
           }
         }
       }
     } catch (error) {
       console.error("End Game Error:", error);
       document.getElementById("finalScore").textContent = this.score;
-      document.querySelector(".rt-hint").textContent = "Error: " + (error.reason || error.message);
-      document.querySelector(".rt-hint").style.color = "#ff3333";
+      if (hintEl) {
+        hintEl.textContent = "Error: " + (error.reason || error.message);
+        hintEl.style.color = "#ff3333";
+      }
     } finally {
       this.invalidateCache();
       this.syncProfile();
