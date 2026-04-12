@@ -275,7 +275,7 @@ bindUI() {
       console.error("Start Game Error:", error);
       window.TelegramAPI?.vibrate('error');
       if (error.message === 'not_enough_energy' || error.reason === 'not_enough_energy') {
-        alert("⚡ Not enough energy! Come back tomorrow or buy more."); 
+        alert("Not enough energy! Come back tomorrow or buy more."); 
       } else {
         alert("Server error: " + (error.reason || error.message));
       }
