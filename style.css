@@ -1194,3 +1194,32 @@ body {
         contrast(1.15) 
         drop-shadow(0 6px 8px rgba(0, 0, 0, 0.8));
 }
+
+
+/* =========================================
+   ИНЛАЙН ИКОНКА ЭНЕРГИИ (CSS-МАСКА)
+   ========================================= */
+.icon-energy-inline {
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: -0.2em;
+    flex-shrink: 0;
+    
+    /* Сочный электрический градиент */
+    background: linear-gradient(135deg, #FFFDE4 0%, #FFE066 40%, #FFC107 100%);
+    
+    /* Используем твою черную молнию как трафарет */
+    -webkit-mask-image: url('assets/energy.svg?v=1');
+    mask-image: url('assets/energy.svg?v=1');
+    
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    
+    /* Неоновое свечение ⚡ */
+    filter: drop-shadow(0 0 6px rgba(255, 193, 7, 0.6));
+}
