@@ -1223,3 +1223,76 @@ body {
     /* Неоновое свечение ⚡ */
     filter: drop-shadow(0 0 6px rgba(255, 193, 7, 0.6));
 }
+
+
+/* =========================================
+   БЕГУЩАЯ СТРОКА С НАГРАДАМИ (TICKER TAPE)
+   ========================================= */
+.marquee-container {
+    width: 100%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03); /* Очень легкая подложка */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 8px 0;
+    display: flex;
+    margin-bottom: 15px; /* Отступ до таймера */
+    
+    /* Эффект плавного растворения по краям экрана */
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.marquee-track {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Расстояние между блоками */
+    width: max-content;
+    /* 15s - скорость. Чем меньше цифра, тем быстрее бежит */
+    animation: scroll-marquee 15s linear infinite; 
+}
+
+/* Остановка анимации при удержании пальца/мыши */
+.marquee-container:hover .marquee-track,
+.marquee-container:active .marquee-track {
+    animation-play-state: paused;
+}
+
+/* Выравниваем текст и иконки в одну ровную линию */
+.marquee-item {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #ffd700;
+    white-space: nowrap;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Расстояние между иконками и текстом */
+}
+
+/* Картинки NFT в ленте */
+.marquee-nft {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 6px; /* Легкое скругление */
+    /* Тень, чтобы картинки казались объемными */
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+}
+
+/* Класс для наклона билета под 45 градусов */
+.tilt-ticket {
+    transform: rotate(45deg);
+    /* Чуть увеличиваем размер билета для лучшей читаемости под углом */
+    width: 1.3em;
+    height: 1.3em;
+}
+
+/* Бесконечный цикл сдвига */
+@keyframes scroll-marquee {
+    0% { transform: translateX(0); }
+    /* Сдвигаем ровно на 50% (на длину первой группы), 
+       и цикл незаметно начинается заново! */
+    100% { transform: translateX(-50%); } 
+}
