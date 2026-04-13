@@ -1296,3 +1296,31 @@ body {
        и цикл незаметно начинается заново! */
     100% { transform: translateX(-50%); } 
 }
+
+/* =========================================
+   ИНЛАЙН ИКОНКА ЗВЕЗДЫ (ТЕЛЕГРАМ ЗВЕЗДЫ)
+   ========================================= */
+.icon-star-inline {
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: -0.2em;
+    flex-shrink: 0;
+    
+    /* Красивый золотой градиент */
+    background: linear-gradient(135deg, #FFF0B3 0%, #FFD700 50%, #FFAA00 100%);
+    
+    /* Используем твой star.svg как трафарет */
+    -webkit-mask-image: url('assets/star.svg');
+    mask-image: url('assets/star.svg');
+    
+    -webkit-mask-size: contain; 
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat; 
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center; 
+    mask-position: center;
+    
+    /* Золотое неоновое свечение */
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
+}
