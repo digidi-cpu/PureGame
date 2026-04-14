@@ -1086,12 +1086,24 @@ body {
 }
 
 .main-ticket {
-    width: 100%; height: 100%;
-    background-image: url('assets/ticket.svg');
-    background-size: contain; 
-    background-repeat: no-repeat; 
-    background-position: center;
-    filter: drop-shadow(0 0 25px rgba(255, 204, 0, 0.6));
+    width: 100%; 
+    height: 100%;
+    
+    /* 1. Создаем сочный золотой градиент (это будет цвет билета) */
+    background: linear-gradient(135deg, #FFD700 0%, #FF8C00 80%, #FF6B35 100%);
+    
+    /* 2. Используем черную картинку SVG как трафарет */
+    -webkit-mask-image: url('assets/ticket.svg');
+    mask-image: url('assets/ticket.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+
+    /* 3. Оставляем твое премиальное свечение и анимацию */
+    filter: drop-shadow(0 0 25px rgba(255, 204, 0, 0.8));
     animation: floatTicket 4s infinite ease-in-out;
 }
 
