@@ -1389,3 +1389,27 @@ body {
     /* Золотое неоновое свечение */
     filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
 }
+
+
+
+
+/* Класс для градиентной иконки UP */
+.mission-icon-up {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    /* Твой настроенный градиент: 46 градусов, лайм -> изумруд */
+    background: linear-gradient(46deg, #BEF264 0%, #10B981 100%);
+    
+    /* Используем твой up.svg как трафарет */
+    -webkit-mask-image: url('assets/up.svg');
+    mask-image: url('assets/up.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    
+    vertical-align: middle;
+}
