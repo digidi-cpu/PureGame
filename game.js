@@ -737,9 +737,15 @@ async buyEnergy() {
         btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
       }
 
+// 👇 1. СОЗДАЕМ ПРОВЕРКУ ДЛЯ ИКОНКИ 👇
+      const iconContent = m.icon === 'icon_up_gradient' 
+          ? '<i class="mission-icon-up"></i>' 
+          : m.icon;
+
+      // 👇 2. ВСТАВЛЯЕМ iconContent ВМЕСТО m.icon 👇
       const itemHtml = `
         <div class="mission-card ${doneClass}">
-          <div class="mc-icon">${m.icon}</div>
+          <div class="mc-icon">${iconContent}</div>
           <div class="mc-info">
             <div class="mc-title">${m.title}</div>
             <div class="mc-reward" style="color: #ffd700;">+${m.reward_pts} PTS</div>
