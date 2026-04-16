@@ -609,7 +609,8 @@ for (let i = 10; i <= 100; i += 10) {
     id: `level_${i}`,
     type: 'one_time',
     title: `Reach Level ${i}`,
-    icon: i === 100 ? '👑' : '🆙',
+    // Заменяем эмодзи на уникальный идентификатор иконки
+    icon: i === 100 ? '👑' : 'icon_up_gradient', 
     reward_pts: i === 100 ? 500 : 100,
     target: i
   });
