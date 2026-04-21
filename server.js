@@ -172,9 +172,18 @@ async function addScoreEvent(client, { userId, source, title, scoreAdd = 0, tick
 }
 
 /* =========================
-   TELEGRAM АВТОРИЗАЦИЯ
+   TELEGRAM АВТОРИЗАЦИЯ (Мульти-бот поддержка)
 ========================= */
-const tgSecretKey = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+// Достаем тестовый токен (основной BOT_TOKEN уже объявлен у тебя в начале файла)
+const TEST_BOT_TOKEN = process.env.TEST_BOT_TOKEN || '';
+
+// Собираем все токены в массив. Если TEST_BOT_TOKEN пустой, фильтр его уберет
+const validTokens = [BOT_TOKEN, TEST_BOT_TOKEN].filter(Boolean);
+
+// Заранее создаем криптографические ключи для всех ботов, чтобы не нагружать сервер
+const secretKeys = validTokens.map(token => 
+  crypto.createHmac('sha256', 'WebAppData').update(token).digest()
+);
 
 function verifyTelegramInitData(initDataRaw) {
   if (!initDataRaw || typeof initDataRaw !== 'string') return { ok: false, reason: 'no_init_data' };
@@ -186,13 +195,20 @@ function verifyTelegramInitData(initDataRaw) {
   for (const [k, v] of params.entries()) if (k !== 'hash') data[k] = v;
   
   const checkString = Object.keys(data).sort().map(k => `${k}=${data[k]}`).join('\n');
-  const hmac = crypto.createHmac('sha256', tgSecretKey).update(checkString).digest('hex');
   
-  if (crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(hash))) {
-    let user = null;
-    try { user = JSON.parse(data.user); } catch {}
-    return { ok: true, user, raw: data };
+  // Проверяем подпись каждым ключом по очереди
+  for (const secretKey of secretKeys) {
+    const hmac = crypto.createHmac('sha256', secretKey).update(checkString).digest('hex');
+    
+    // Если хэш совпал — значит запрос пришел от одного из наших ботов
+    if (crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(hash))) {
+      let user = null;
+      try { user = JSON.parse(data.user); } catch {}
+      return { ok: true, user, raw: data };
+    }
   }
+
+  // Если ни один ключ не подошел
   return { ok: false, reason: 'bad_signature' };
 }
 
