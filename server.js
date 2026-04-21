@@ -617,7 +617,7 @@ async function checkChannelSub(tgId, channelUsername) {
 }
 
 const MISSIONS_CONFIG = [
-  { id: 'daily_play_3', type: 'daily', title: 'Play 3 Games', icon: '🎮', reward_pts: 100, target: 3 },
+  { id: 'daily_play_3', type: 'daily', title: 'Play 3 Games', icon: 'assets/gamepad.svg', reward_pts: 100, target: 3 },
   { id: 'daily_score_300', type: 'daily', title: 'Earn 300 PTS Today', icon: '⭐', reward_pts: 100, target: 300 },
   { id: 'onetime_sub_main', type: 'one_time', title: 'Join Digit Channel', icon: '📢', reward_pts: 200, target: 1, actionUrl: 'https://t.me/digit_community', tgChannel: '@digit_community' },
   { id: 'onetime_sub_dev', type: 'one_time', title: 'Join Creator Channel', icon: '👨‍💻', reward_pts: 200, target: 1, actionUrl: 'https://t.me/stayrational', tgChannel: '@stayrational' },
