@@ -40,6 +40,7 @@ const REDIS_URL     = process.env.REDIS_URL;
 const PG_SSL_MODE   = (process.env.PG_SSL || 'require').toLowerCase(); 
 const DEBUG         = !!Number(process.env.DEBUG || '0');
 const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '';
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'SuperSecretPassword123';
 
 if (!DATABASE_URL) { console.error('❌ DATABASE_URL is not set'); process.exit(1); }
 if (!BOT_TOKEN)    { console.error('❌ BOT_TOKEN is not set');    process.exit(1); }
@@ -155,6 +156,9 @@ async function ensureSchema() {
   // Колонки для покупок энергии
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_energy_buy_date text;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS energy_bought_count integer not null default 0;`);
+
+   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS range_start integer default 0;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS range_end integer default 0;`);
   
   console.log('✅ Database schema initialized');
 }
@@ -720,6 +724,44 @@ app.post('/api/user/me/missions/claim', requireTelegramSigned, async (req, res) 
 });
 
 /* =========================
+   API: ИТОГИ СЕЗОНА (FINISH PAGE)
+========================= */
+app.get('/api/user/me/season-results', requireTelegramSigned, async (req, res) => {
+  try {
+    const userId = `tg_${req.tg.user.id}`;
+
+    const { rows } = await pool.query(
+      `SELECT tickets, range_start, range_end FROM users WHERE user_id = $1`, 
+      [userId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ status: "error", message: "User not found" });
+    }
+
+    const u = rows[0];
+
+    res.json({
+      status: "success",
+      data: {
+        totalTickets: u.tickets || 0,
+        globalStartNumber: u.range_start || 0,
+        globalEndNumber: u.range_end || 0,
+        isDrawFinished: false, // <-- Поменяешь на true после проведения эфира!
+        channelUrl: "https://t.me/digit_community"
+      }
+    });
+
+  } catch (e) {
+    console.error("Season Results API Error:", e);
+    res.status(500).json({ status: "error", message: "Internal server error" });
+  }
+});
+
+
+
+
+/* =========================
    API: TELEGRAM STARS (ПЛАТЕЖИ С ДИНАМИЧЕСКИМ ЛИМИТОМ)
 ========================= */
 
@@ -825,6 +867,87 @@ app.post('/api/webhook/telegram', async (req, res) => {
   
   res.sendStatus(200); 
 });
+
+/* =========================
+   API: АДМИН ПАНЕЛЬ (ЗАМОРОЗКА И ОТКАТ СЕЗОНА)
+========================= */
+
+// 1. ЗАМОРОЗКА (Раздача номеров)
+app.post('/api/admin/force-freeze', async (req, res) => {
+  const providedSecret = req.headers['x-admin-secret'];
+  if (providedSecret !== ADMIN_SECRET) {
+    return res.status(403).json({ error: 'unauthorized', message: 'Wrong admin secret' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    console.log("❄️ НАЧИНАЕМ ЗАМОРОЗКУ СЕЗОНА...");
+
+    const { rows: users } = await client.query(`
+      SELECT user_id, tickets 
+      FROM users 
+      WHERE tickets > 0 
+      ORDER BY created_at ASC, user_id ASC
+      FOR UPDATE
+    `);
+
+    let currentTicketNumber = 1;
+    let processedUsers = 0;
+
+    for (const user of users) {
+      const startNumber = currentTicketNumber;
+      const endNumber = currentTicketNumber + user.tickets - 1;
+
+      await client.query(`
+        UPDATE users SET range_start = $1, range_end = $2 WHERE user_id = $3
+      `, [startNumber, endNumber, user.user_id]);
+
+      currentTicketNumber = endNumber + 1;
+      processedUsers++;
+    }
+
+    await client.query('COMMIT');
+    const totalTicketsPool = currentTicketNumber - 1;
+    console.log(`✅ ЗАМОРОЗКА УСПЕШНА! Юзеров: ${processedUsers}. Билетов: ${totalTicketsPool}`);
+
+    res.json({ success: true, stats: { processed_users: processedUsers, total_tickets_pool: totalTicketsPool } });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error("Freeze Error:", e);
+    res.status(500).json({ error: 'internal_error', details: e.message });
+  } finally {
+    client.release();
+  }
+});
+
+// 2. ОТКАТ (Обнуление номеров)
+app.post('/api/admin/unfreeze', async (req, res) => {
+  const providedSecret = req.headers['x-admin-secret'];
+  if (providedSecret !== ADMIN_SECRET) {
+    return res.status(403).json({ error: 'unauthorized', message: 'Wrong admin secret' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    console.log("🔥 ОТМЕНА ЗАМОРОЗКИ: Стираем номера билетов...");
+
+    await client.query(`UPDATE users SET range_start = 0, range_end = 0`);
+    
+    await client.query('COMMIT');
+    console.log(`✅ ОТКАТ УСПЕШЕН! Игра вернулась в нормальный режим.`);
+
+    res.json({ success: true, message: "Rollback complete! Ranges reset to 0." });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    console.error("Unfreeze Error:", e);
+    res.status(500).json({ error: 'internal_error', details: e.message });
+  } finally {
+    client.release();
+  }
+});
+
 
 /* =========================
    СТАРТ СЕРВЕРА
