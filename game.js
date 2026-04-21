@@ -675,7 +675,7 @@ async buyEnergy() {
     }
   }
 
-  // ==========================================
+// ==========================================
   // МИССИИ (С КЭШИРОВАНИЕМ И ПРОВЕРКОЙ ВКЛАДКИ)
   // ==========================================
   async loadMissions() {
@@ -737,10 +737,18 @@ async buyEnergy() {
         btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
       }
 
-// 👇 1. СОЗДАЕМ ПРОВЕРКУ ДЛЯ ИКОНКИ 👇
-      const iconContent = m.icon === 'icon_up_gradient' 
-          ? '<i class="mission-icon-up"></i>' 
-          : m.icon;
+      // 👇 1. СОЗДАЕМ ПРОВЕРКУ ДЛЯ ИКОНКИ 👇
+      let iconContent = m.icon;
+      if (m.icon === 'icon_up_gradient') {
+          // Твоя старая кастомная иконка
+          iconContent = '<i class="mission-icon-up"></i>';
+      } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
+          // НОВАЯ ЛОГИКА: Вставляем файл "как есть" с сохранением всех его родных цветов
+          iconContent = `<img src="${m.icon}" alt="icon" class="mission-custom-icon">`;
+      } else {
+          // Текстовые эмодзи ('⭐', '🏆' и т.д.)
+          iconContent = `<span class="mission-emoji">${m.icon}</span>`;
+      }
 
       // 👇 2. ВСТАВЛЯЕМ iconContent ВМЕСТО m.icon 👇
       const itemHtml = `
