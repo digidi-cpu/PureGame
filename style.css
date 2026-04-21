@@ -1413,3 +1413,18 @@ body {
     
     vertical-align: middle;
 }
+
+
+.mission-custom-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    display: block;
+    margin: 0; 
+    padding: 0;
+}
+
+.mission-emoji {
+    font-size: 24px;
+    line-height: 1;
+}
