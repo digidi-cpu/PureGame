@@ -1428,3 +1428,29 @@ body {
     font-size: 24px;
     line-height: 1;
 }
+
+
+.icon-coin-pts-inline {
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: -0.2em;
+    flex-shrink: 0;
+    
+    /* Тот самый ярко-зеленый (неоновый) цвет */
+    background-color: #39FF14; 
+    
+    /* Используем твой coin.svg как трафарет */
+    -webkit-mask-image: url('assets/coin.svg');
+    mask-image: url('assets/coin.svg');
+    
+    -webkit-mask-size: contain; 
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat; 
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center; 
+    mask-position: center;
+    
+    /* Легкое неоновое свечение в тон */
+    filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.6));
+}
