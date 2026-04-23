@@ -674,7 +674,6 @@ async buyEnergy() {
       alert("Daily Claim Error: " + (e.reason || e.message || "Already claimed"));
     }
   }
-
 // ==========================================
   // МИССИИ (С КЭШИРОВАНИЕМ И ПРОВЕРКОЙ ВКЛАДКИ)
   // ==========================================
@@ -742,11 +741,14 @@ async buyEnergy() {
       if (m.icon === 'icon_up_gradient') {
           // Твоя старая кастомная иконка
           iconContent = '<i class="mission-icon-up"></i>';
+      } else if (m.icon === 'coin_pts') {
+          // НОВАЯ ЛОГИКА: Вставляем неоновую монету PTS (для карточек, где иконка 'coin_pts')
+          iconContent = '<i class="icon-coin-pts-inline"></i>';
       } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
-          // НОВАЯ ЛОГИКА: Вставляем файл "как есть" с сохранением всех его родных цветов
+          // Вставляем файл "как есть" с сохранением всех его родных цветов
           iconContent = `<img src="${m.icon}" alt="icon" class="mission-custom-icon">`;
       } else {
-          // Текстовые эмодзи ('⭐', '🏆' и т.д.)
+          // Текстовые эмодзи ('🏆' и т.д.)
           iconContent = `<span class="mission-emoji">${m.icon}</span>`;
       }
 
@@ -756,7 +758,7 @@ async buyEnergy() {
           <div class="mc-icon">${iconContent}</div>
           <div class="mc-info">
             <div class="mc-title">${m.title}</div>
-            <div class="mc-reward" style="color: #ffd700;">+${m.reward_pts} PTS</div>
+            <div class="mc-reward" style="color: #ffd700;">+${m.reward_pts} <i class="icon-coin-pts-inline"></i></div>
           </div>
           ${btnHtml}
         </div>
