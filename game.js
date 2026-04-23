@@ -654,7 +654,7 @@ async buyEnergy() {
     }
   }
 
-  async claimDailyReward() {
+async claimDailyReward() {
     window.TelegramAPI?.vibrate('medium');
     try {
       const res = await window.API.claimDaily();
@@ -663,6 +663,11 @@ async buyEnergy() {
         if (res.tickets_earned > 0) {
           setTimeout(() => {
             this.showScorePopup(window.innerWidth/2, window.innerHeight/2 + 50, `+${res.tickets_earned} <i class="icon-ticket-inline"></i>`);
+            
+            // 👇 ДОБАВЛЕНО: Запуск анимации билета 👇
+            if (typeof window.startWinFlow === 'function') {
+                window.startWinFlow();
+            }
           }, 600);
         }
         
@@ -767,7 +772,7 @@ async buyEnergy() {
     });
   }
 
-  async claimMission(dbId) {
+async claimMission(dbId) {
     window.TelegramAPI?.vibrate('medium');
     try {
       const result = await window.API.claimMission(dbId);
@@ -776,6 +781,11 @@ async buyEnergy() {
         if (result.tickets_earned > 0) {
           setTimeout(() => {
             this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2 + 50, `+${result.tickets_earned} <i class="icon-ticket-inline"></i>`);
+            
+            // 👇 ДОБАВЛЕНО: Запуск анимации билета 👇
+            if (typeof window.startWinFlow === 'function') {
+                window.startWinFlow();
+            }
           }, 600);
         }
         
