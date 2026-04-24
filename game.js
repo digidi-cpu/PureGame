@@ -472,7 +472,7 @@ async buyEnergy() {
     }
   }
 
-  async loadMatchHistory(isLoadMore = false) {
+async loadMatchHistory(isLoadMore = false) {
     const historyList = document.getElementById("historyList");
     const loadMoreBtn = document.getElementById("historyLoadMore");
     if (!historyList) return;
@@ -496,26 +496,54 @@ async buyEnergy() {
     }
 
     data.matches.forEach(match => {
-      const dateObj = new Date(match.started_at);
+      const dateObj = new Date(match.started_at || match.created_at || Date.now());
       const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
       
-      const matchScore = (match.final_score || 0).toLocaleString();
+      const matchScore = (match.final_score || match.reward_pts || 0).toLocaleString();
       const eventTitle = match.title || "Match played";
+      
+      const ticketsEarned = match.tickets_earned || match.tickets || 0;
 
-      const itemHtml = `
-        <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-          <div class="h-left" style="display: flex; flex-direction: column; gap: 4px;">
-            <div style="font-weight: 700; font-size: 1rem; color: #fff;">${eventTitle}</div>
-            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">
-              ${dateStr}, ${timeStr}
+      let itemHtml = "";
+
+      if (ticketsEarned > 0) {
+        // 👇 ОСОБАЯ КАРТОЧКА С ТВОЕЙ ИКОНКОЙ БИЛЕТА ВМЕСТО ЭМОДЗИ 👇
+        itemHtml = `
+          <div class="history-item special-ticket-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%); border-left: 3px solid #ffd700;">
+            <div class="h-left" style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-weight: 700; font-size: 1rem; color: #ffd700; text-shadow: 0 0 5px rgba(255,215,0,0.3); display: flex; align-items: center; gap: 6px;">
+                <i class="icon-ticket-inline"></i> ${eventTitle}
+              </div>
+              <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">
+                ${dateStr}, ${timeStr}
+              </div>
+            </div>
+            <div class="h-right" style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+              <span style="font-weight: 900; font-size: 1.2rem; color: #ffd700; text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);">
+                +${ticketsEarned} <i class="icon-ticket-inline"></i>
+              </span>
+              ${matchScore !== "0" ? `<span style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">+${matchScore} PTS</span>` : ""}
             </div>
           </div>
-          <div class="h-right" style="text-align: right;">
-            <span style="font-weight: 900; font-size: 1.1rem; color: #ffcc00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.2);">+${matchScore}</span>
+        `;
+      } else {
+        // 👇 СТАНДАРТНАЯ КАРТОЧКА 👇
+        itemHtml = `
+          <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div class="h-left" style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-weight: 700; font-size: 1rem; color: #fff;">${eventTitle}</div>
+              <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">
+                ${dateStr}, ${timeStr}
+              </div>
+            </div>
+            <div class="h-right" style="text-align: right;">
+              <span style="font-weight: 900; font-size: 1.1rem; color: #ffcc00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.2);">+${matchScore}</span>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
+
       historyList.insertAdjacentHTML('beforeend', itemHtml);
     });
 
