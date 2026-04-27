@@ -1501,3 +1501,40 @@ body {
     /* Золотистое неоновое свечение */
     filter: drop-shadow(0 0 5px rgba(255, 204, 0, 0.6));
 }
+
+
+/* =========================================
+   ГЛОБАЛЬНЫЙ СЧЕТЧИК БИЛЕТОВ (MAIN PAGE)
+   ========================================= */
+.global-tickets-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px; /* Воздух между счетчиком и бегущей строкой */
+    padding: 8px 16px;
+    
+    /* Полупрозрачный золотой фон со стеклянным эффектом */
+    background: rgba(255, 204, 0, 0.05); 
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.1);
+}
+
+.gtc-text {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.gtc-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--cosmic-accent); /* Твой золотой цвет */
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
