@@ -1510,3 +1510,33 @@ window.spawnConfetti = function() {
       }).onfinish = () => p.remove();
   }
 };
+
+// ==========================================
+// ГЛОБАЛЬНЫЙ СЧЕТЧИК БИЛЕТОВ
+// ==========================================
+async function loadGlobalTickets() {
+  const counterEl = document.getElementById('globalTicketsCount');
+  if (!counterEl) return;
+
+  // Проверяем, доступно ли API
+  if (!window.API || !window.API.getGlobalStats) {
+    console.warn("API для getGlobalStats еще не готово");
+    return;
+  }
+
+  const stats = await window.API.getGlobalStats();
+  
+  if (stats && stats.success) {
+    // Форматируем число (например: 12450 -> 12,450)
+    counterEl.innerText = stats.total_tickets.toLocaleString();
+  } else {
+    counterEl.innerText = "0";
+  }
+}
+
+// Запускаем счетчик после загрузки страницы
+document.addEventListener('DOMContentLoaded', () => {
+  // Вызываем с небольшой задержкой (100мс), 
+  // чтобы скрипт api.js гарантированно успел загрузиться
+  setTimeout(loadGlobalTickets, 100);
+});
