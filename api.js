@@ -35,6 +35,21 @@ class GameAPI {
     return response.json();
   }
 
+  // Получить общую статистику (публичный роут, подпись не обязательна)
+  async getGlobalStats() {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/global-stats`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (e) {
+      console.error('API Error (getGlobalStats):', e);
+      return null;
+    }
+  }
+
   // ==========================================
   // 🎮 ИГРОВОЙ ЦИКЛ (Старт и Финиш)
   // ==========================================
