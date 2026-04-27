@@ -120,10 +120,9 @@ body {
 }
 
 /* UI */
+/* UI - ЕДИНАЯ ИГРОВАЯ ПАНЕЛЬ (HUD) */
 .minimal-stats-vertical { 
   position: absolute; 
-  /* Берем размер выреза телефона. Если браузер его не знает, берем 20px. 
-     И прибавляем 50px (примерная высота шапки Telegram с кнопкой "Закрыть"). */
   top: calc(env(safe-area-inset-top, 20px) + 50px); 
   left: 15px; 
   right: 15px; 
@@ -131,10 +130,32 @@ body {
   display: flex; 
   flex-direction: row; 
   justify-content: space-between; 
+  align-items: center;
+  
+  /* Перенесли фон, размытие и рамку на общий контейнер */
+  background: rgba(10, 10, 26, 0.85); 
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 107, 53, 0.6);
+  border-radius: 100px; /* Делает края круглыми, как у капсулы */
+  padding: 10px 25px; /* Даем воздуху внутри плашки */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 107, 53, 0.1);
+}
+
+.minimal-stat-vertical { 
+  /* Убрали индивидуальные фоны и рамки, оставили только выравнивание */
+  display: flex; 
+  align-items: center; 
   gap: 8px; 
 }
-.minimal-stat-vertical { background: rgba(26,10,10,.9); padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255, 107, 53, 0.7); display: flex; align-items: center; gap: 6px; min-width: 70px; }
-.minimal-value { font-weight: 700; color: #ffcc00; font-family: 'Orbitron', monospace; }
+
+.minimal-value { 
+  font-weight: 900; 
+  color: #fff; /* Сделал белым, так как иконки у нас уже цветные и неоновые */
+  font-family: 'Orbitron', monospace; 
+  font-size: 1.15rem;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
 
 /* Игровые объекты (ФИКС МОРГАНИЯ: добавлено top: 0) */
 .rocket, .planet { position: absolute; top: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; will-change: transform; transition: none; z-index: 10; }
