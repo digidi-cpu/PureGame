@@ -377,7 +377,23 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     client.release();
   }
 });
-
+/* =========================
+   API: ГЛОБАЛЬНАЯ СТАТИСТИКА
+========================= */
+app.get('/api/global-stats', async (req, res) => {
+  try {
+    // Считаем сумму всех билетов у всех пользователей
+    const { rows } = await pool.query(`SELECT SUM(tickets) as total_tickets FROM users`);
+    
+    // Если база пустая, вернет null, поэтому делаем || 0
+    const total = parseInt(rows[0].total_tickets) || 0; 
+    
+    res.json({ success: true, total_tickets: total });
+  } catch (e) {
+    console.error("Global Stats API Error:", e);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
 /* =========================
    API: ЛИДЕРБОРД И ПРОФИЛЬ
 ========================= */
