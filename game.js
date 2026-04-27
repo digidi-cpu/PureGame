@@ -1412,14 +1412,15 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
   const obScreen = document.getElementById('onboardingScreen');
   const mainScreen = document.getElementById('startScreen');
-  const hasSeenOnboarding = localStorage.getItem('digit_tutorial_done');
 
-  if (hasSeenOnboarding === 'true') {
-    if (obScreen) obScreen.classList.remove('active');
-    if (mainScreen) mainScreen.classList.add('active');
-    return; 
-  }
+  
+  //const hasSeenOnboarding = localStorage.getItem('digit_tutorial_done');
 
+  //if (hasSeenOnboarding === 'true') {
+    //if (obScreen) obScreen.classList.remove('active');
+    //if (mainScreen) mainScreen.classList.add('active');
+    //return; 
+  //}
   const slides = document.querySelectorAll('.ob-slide');
   const dots = document.querySelectorAll('.ob-dot');
   const btnPrev = document.getElementById('obPrevBtn');
