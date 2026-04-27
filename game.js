@@ -1512,31 +1512,38 @@ window.spawnConfetti = function() {
 };
 
 // ==========================================
-// ГЛОБАЛЬНЫЙ СЧЕТЧИК БИЛЕТОВ
+// ГЛОБАЛЬНЫЙ СЧЕТЧИК БИЛЕТОВ (DEBUG ВЕРСИЯ)
 // ==========================================
 async function loadGlobalTickets() {
+  console.log("[TICKETS] Запускаем загрузку счетчика...");
   const counterEl = document.getElementById('globalTicketsCount');
-  if (!counterEl) return;
-
-  // Проверяем, доступно ли API
-  if (!window.API || !window.API.getGlobalStats) {
-    console.warn("API для getGlobalStats еще не готово");
+  
+  if (!counterEl) {
+    console.error("[TICKETS] Ошибка: Элемент #globalTicketsCount не найден в HTML!");
     return;
   }
 
-  const stats = await window.API.getGlobalStats();
-  
-  if (stats && stats.success) {
-    // Форматируем число (например: 12450 -> 12,450)
-    counterEl.innerText = stats.total_tickets.toLocaleString();
-  } else {
-    counterEl.innerText = "0";
+  if (!window.API || typeof window.API.getGlobalStats !== 'function') {
+    console.error("[TICKETS] Ошибка: Метод getGlobalStats не найден в window.API. Проверь файл api.js!");
+    return;
+  }
+
+  try {
+    console.log("[TICKETS] Отправляем запрос на сервер...");
+    const stats = await window.API.getGlobalStats();
+    console.log("[TICKETS] Получен ответ:", stats);
+    
+    if (stats && stats.success) {
+      counterEl.innerText = stats.total_tickets.toLocaleString();
+      console.log("[TICKETS] Успех! Счетчик обновлен.");
+    } else {
+      console.error("[TICKETS] Сервер не вернул success: true", stats);
+    }
+  } catch (err) {
+    console.error("[TICKETS] Ошибка запроса:", err);
   }
 }
 
-// Запускаем счетчик после загрузки страницы
 document.addEventListener('DOMContentLoaded', () => {
-  // Вызываем с небольшой задержкой (100мс), 
-  // чтобы скрипт api.js гарантированно успел загрузиться
-  setTimeout(loadGlobalTickets, 100);
+  setTimeout(loadGlobalTickets, 500); // Сделали задержку чуть больше для верности
 });
