@@ -1454,3 +1454,29 @@ body {
     /* Легкое неоновое свечение в тон */
     filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.6));
 }
+
+/* ИКОНКА ТАЙМЕРА */
+.icon-time-inline {
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: -0.2em;
+    flex-shrink: 0;
+    
+    /* Цвет заливки иконки */
+    background-color: #ffcc00; 
+    
+    /* Маска через твой time.svg */
+    -webkit-mask-image: url('assets/time.svg');
+    mask-image: url('assets/time.svg');
+    
+    -webkit-mask-size: contain; 
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat; 
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center; 
+    mask-position: center;
+    
+    /* Золотистое неоновое свечение */
+    filter: drop-shadow(0 0 5px rgba(255, 204, 0, 0.6));
+}
