@@ -35,10 +35,11 @@ class GameAPI {
     return response.json();
   }
 
-  // Получить общую статистику (публичный роут, подпись не обязательна)
+// Получить общую статистику (публичный роут, подпись не обязательна)
   async getGlobalStats() {
     try {
-      const response = await fetch(`${this.baseUrl}/api/global-stats`, {
+      // Используем правильный this.baseURL
+      const response = await fetch(`${this.baseURL}/api/global-stats`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
