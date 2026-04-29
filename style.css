@@ -335,7 +335,7 @@ body {
 #home .header--tournament { 
   padding: 0 0 10px; 
   text-align: center; 
-  margin-bottom: 40px; /* <--- Вот этот отступ даст нужный "воздух" */
+  margin-bottom: 20px; /* <--- Вот этот отступ даст нужный "воздух" */
 }
 #home .header--tournament h1 { 
   font-family: 'Orbitron', monospace; 
