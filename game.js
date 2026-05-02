@@ -1041,28 +1041,49 @@ spawnRocket() {
     return true;
   }
 
-  spawnPlanet() {
+spawnPlanet() {
     const id = this.idSeq++; 
     const lane = this.pickFreeLane(); 
     if (lane === null) return false;
 
     let answer, isBomb = false, contentHtml = '';
 
-    if (Math.random() < 0.3) { 
-      answer = randInt(1, 50); 
+    // 👇 1. УМНЫЙ ПОИСК "ГОЛОДНЫХ" РАКЕТ 👇
+    const hasMatchingPlanet = (ans) => { 
+      for (const e of this.active.values()) { 
+        if (e.type === "planet" && e.answer !== undefined && equalsNum(e.answer, ans)) return true; 
+      } 
+      return false; 
+    };
+    
+    // Находим правильные ответы, которых сейчас НЕТ на экране
+    const starvingAnswers = [...this.correctAnswers.values()].filter(a => !hasMatchingPlanet(a));
+
+    // 👇 2. УМНАЯ ВЫДАЧА ПЛАНЕТ 👇
+    if (starvingAnswers.length > 0) {
+      // ЭКСТРЕННО спавним нужный ответ для "голодной" ракеты (никаких пауз!)
+      answer = starvingAnswers[Math.floor(Math.random() * starvingAnswers.length)];
+    } else if (Math.random() < 0.25) { 
+      // Если у всех ракет уже есть пары, кидаем бомбу с шансом 25%
+      // Делаем обманку реалистичной: берем реальный ответ и искажаем его
+      const pool = [...this.correctAnswers.values()];
+      if (pool.length > 0) {
+          const base = pool[Math.floor(Math.random() * pool.length)];
+          const offset = Number.isInteger(base) ? 1 : 0.1; // Для целых +-1, для дробей +-0.1
+          answer = base + (Math.random() < 0.5 ? offset : -offset);
+          // Округляем, чтобы не было кривых математических артефактов (типа 1.20000000001)
+          if (!Number.isInteger(answer)) answer = Math.round(answer * 10) / 10;
+      } else {
+          answer = randInt(1, 30);
+      }
       isBomb = ![...this.correctAnswers.values()].some(v => equalsNum(v, answer)); 
     } else {
-      const hasMatchingPlanet = (ans) => { 
-        for (const e of this.active.values()) { 
-          if (e.type === "planet" && e.answer !== undefined && equalsNum(e.answer, ans)) return true; 
-        } 
-        return false; 
-      };
-      const starvingAnswers = [...this.correctAnswers.values()].filter(a => !hasMatchingPlanet(a));
-      const pool = starvingAnswers.length ? starvingAnswers : [...this.correctAnswers.values()];
-      answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 50);
+      // Иначе просто дублируем любой существующий правильный ответ для массовки
+      const pool = [...this.correctAnswers.values()];
+      answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 30);
     }
 
+    // 👇 3. ОТРИСОВКА И АНИМАЦИЯ 👇
     if (isBomb) {
       contentHtml = `<div class="planet-svg-wrap bomb-asteroid">${BOMB_ASTEROID_SVG}</div>`;
     } else {
