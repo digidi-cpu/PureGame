@@ -200,7 +200,7 @@ bindUI() {
     }
   }
 
-  async startGame() {
+async startGame() {
     const startBtn = document.getElementById("startGameBtn");
     if (startBtn) startBtn.style.opacity = "0.5";
 
@@ -208,6 +208,11 @@ bindUI() {
       const sessionData = await window.API.sessionStart();
       this.currentSessionId = sessionData.session_id; 
       this.equationsPool = sessionData.equations || [];
+      
+      // 👇 НОВЫЕ ДАННЫЕ ДЛЯ АНТИЧИТА 👇
+      this.serverComets = sessionData.comets || []; // Получаем карту спавна комет от сервера
+      this.sessionLog = [];                         // Очищаем лог кликов для новой игры
+      this.equationsServed = 0;                     // Сбрасываем счетчик выданных примеров
 
       document.getElementById("startScreen").classList.remove("active");
       document.getElementById("gameScreen").classList.add("active");
@@ -218,8 +223,11 @@ bindUI() {
         requestAnimationFrame((now) => {
           this.score = 0; 
           this.timeLeft = sessionData.duration_sec || 30; 
-          this.streak = 0; this.multiplier = 1;
-          this.selectedRocket = null; this.freezeUntil = 0; this.isPlaying = true;
+          this.streak = 0; 
+          this.multiplier = 1;
+          this.selectedRocket = null; 
+          this.freezeUntil = 0; 
+          this.isPlaying = true;
           this.activeFreezeType = null;
           
           this.clearGameArea();
@@ -264,6 +272,11 @@ bindUI() {
                 overlay.classList.add("hidden");
                 overlay.classList.remove("hiding");
                 this.isWarmup = false;
+                
+                // 👇 ЗАПУСК СЕКУНДОМЕРА ДЛЯ ЛОГА АНТИЧИТА 👇
+                // Начинаем отсчет миллисекунд ровно в тот момент, когда исчезает надпись START!
+                this.gameStartTime = performance.now(); 
+                
                 this.startTimer();
               }, 500);
             }
@@ -295,6 +308,18 @@ bindUI() {
     cancelAnimationFrame(this.rafId); clearInterval(this.timerId);
     const area = document.getElementById("fullscreenGameArea");
     if (area) area.querySelectorAll('.rocket, .planet, .bonus-ice').forEach(n => n.remove());
+  }
+
+  logAction(type, answer, eqIndex, questionStr) {
+    if (!this.isPlaying || this.isWarmup) return;
+    const ms = Math.floor(performance.now() - this.gameStartTime);
+    this.sessionLog.push({
+      i: eqIndex, 
+      q: questionStr, 
+      a: answer, 
+      t: type, 
+      ms: ms
+    });
   }
 
   startTimer() {
@@ -903,7 +928,7 @@ showScorePopup(x, y, textHtml) {
 
   countType(type) { let n = 0; this.active.forEach(e => (n += e.type === type ? 1 : 0)); return n; }
 
-  startMainLoop() {
+startMainLoop() {
     const loop = (now) => {
       if (!this.isPlaying) return;
       this.fx.update(); this.fx.draw();
@@ -951,28 +976,38 @@ showScorePopup(x, y, textHtml) {
       if (this.countType("rocket") < this.maxRockets && now - this.lastRocketSpawnAt >= dynamicRocketDelay) { 
         if (this.spawnRocket()) this.lastRocketSpawnAt = now; 
       }
+      
       if (this.countType("planet") + this.countType("bonus") < this.maxPlanets && now - this.lastPlanetSpawnAt >= dynamicPlanetDelay) { 
         if (this.spawnPlanet()) this.lastPlanetSpawnAt = now; 
       }
-      if (Math.random() < 0.0015 && this.countType("bonus") < 1 && !isFrozen) {
-        this.spawnComet();
-      }
+
+      // ✂️ Рандомный спавн комет отсюда удален навсегда! ✂️
 
       this.rafId = requestAnimationFrame(loop);
     };
     this.rafId = requestAnimationFrame(loop);
   }
 
-  spawnRocket() {
+spawnRocket() {
     const id = this.idSeq++; 
     
-    let example, answer;
+    let example, answer, eqIndex;
     if (this.equationsPool && this.equationsPool.length > 0) {
-      const eq = this.equationsPool.pop();
+      const eq = this.equationsPool.shift(); // 👈 Берем с начала массива (shift), чтобы индексы совпали с сервером
       example = eq.q; answer = eq.a;
+      eqIndex = this.equationsServed++; // 👈 Увеличиваем счетчик выданных примеров
     } else {
       const a = randInt(1, 9); const b = randInt(1, 9);
       example = `${a}+${b}`; answer = a + b;
+      eqIndex = 999;
+    }
+
+    // 👇 СЕРВЕРНЫЙ СПАВН КОМЕТ 👇
+    if (this.serverComets) {
+      const scheduledComet = this.serverComets.find(c => c.index === eqIndex);
+      if (scheduledComet && this.countType("bonus") < 1) {
+          this.spawnComet(eqIndex, scheduledComet.type);
+      }
     }
 
     const lane = this.pickFreeLane(); 
@@ -1000,7 +1035,8 @@ showScorePopup(x, y, textHtml) {
     });
     
     document.getElementById("fullscreenGameArea").appendChild(el);
-    this.active.set(id, { id, type:"rocket", node: el, answer, lane, x: xStart, y: yStart, vy, scale: 1, solved:false });
+    // 👇 Сохраняем eqIndex и example 👇
+    this.active.set(id, { id, type:"rocket", node: el, answer, lane, x: xStart, y: yStart, vy, scale: 1, solved:false, eqIndex, example });
     this.correctAnswers.set(id, answer);
     return true;
   }
@@ -1059,10 +1095,11 @@ showScorePopup(x, y, textHtml) {
     return true;
   }
 
-  spawnComet() {
+ spawnComet(eqIndex, cometType) {
     const id = this.idSeq++;
     const area = document.getElementById("fullscreenGameArea");
     
+    // Полет оставляем рандомным (визуал на античит не влияет)
     const isFromLeft = Math.random() < 0.5;
     let xStart, yStart, xEnd, yEnd;
 
@@ -1077,11 +1114,11 @@ showScorePopup(x, y, textHtml) {
     const angleRad = Math.atan2(yEnd - yStart, xEnd - xStart);
     const angleDeg = (angleRad * (180 / Math.PI)) - 135;
 
-    const rand = Math.random();
-    let cometType = 'ice', svg = FREEZE_SVG;
-    if (rand < 0.25) { cometType = 'toxic'; svg = COMET_TOXIC_SVG; }
-    else if (rand < 0.5) { cometType = 'solar'; svg = COMET_SOLAR_SVG; }
-    else if (rand < 0.75) { cometType = 'magnet'; svg = MAGNET_SVG; }
+    // 👇 ВЫБИРАЕМ ИКОНКУ ПО СЕРВЕРНОМУ ТИПУ 👇
+    let svg = FREEZE_SVG; // По умолчанию лед
+    if (cometType === 'toxic') svg = COMET_TOXIC_SVG;
+    else if (cometType === 'solar') svg = COMET_SOLAR_SVG;
+    else if (cometType === 'magnet') svg = MAGNET_SVG;
 
     const el = document.createElement("div");
     el.className = `planet bonus-${cometType}`;
@@ -1092,11 +1129,16 @@ showScorePopup(x, y, textHtml) {
     el.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
       if (this.isWarmup) return;
+      
       if (cometType === 'magnet') {
+        // 👇 ПИШЕМ КЛИК В ЛОГ АНТИЧИТА (Для магнита) 👇
+        this.logAction('magnet', null, eqIndex, 'MAGNET');
+        
         this.magnetUntil = performance.now() + 1000;
         this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, "🧲 MAGNET!"); 
         this.fadeAndRemove(id); 
       } else {
+        // Остальные кометы пойдут в activateFreeze, там мы их и запишем в лог
         this.activateFreeze(id, cometType); 
       }
     });
@@ -1107,7 +1149,8 @@ showScorePopup(x, y, textHtml) {
     const vx = (xEnd - xStart) / duration;
     const vy = (yEnd - yStart) / duration;
   
-    this.active.set(id, { id, type: "bonus", cometType: cometType, node: el, x: xStart, y: yStart, vx, vy, scale: 1, solved: false });
+    // 👇 СОХРАНЯЕМ eqIndex 👇
+    this.active.set(id, { id, type: "bonus", cometType: cometType, node: el, x: xStart, y: yStart, vx, vy, scale: 1, solved: false, eqIndex: eqIndex });
   }
 
   autoCollectAnswers() {
@@ -1132,16 +1175,27 @@ showScorePopup(x, y, textHtml) {
     }
   }
 
-  activateFreeze(id, type) {
+activateFreeze(id, type) {
     const e = this.active.get(id);
     if (!e) return;
+
+    // 👇 ПИШЕМ КЛИК ПО КОМЕТЕ В ЛОГ АНТИЧИТА 👇
+    // Передаем тип кометы, null вместо ответа, индекс и понятное название
+    this.logAction(type, null, e.eqIndex, `BONUS_${type.toUpperCase()}`);
 
     const durations = this.gameConfig?.freeze_durations || { ice: 5000, toxic: 3500, solar: 8000 };
     const toxicMult = this.gameConfig?.toxic_multiplier || 2;
 
     let duration = durations.ice, popupText = "❄️ FROZEN!", explodeColor = '#00f3ff';
-    if (type === 'toxic') { duration = durations.toxic; popupText = `🧪 TOXIC x${toxicMult}!`; explodeColor = '#39ff14'; } 
-    else if (type === 'solar') { duration = durations.solar; popupText = "☀️ SOLAR SLOW!"; explodeColor = '#ffcc00'; }
+    if (type === 'toxic') { 
+      duration = durations.toxic; 
+      popupText = `🧪 TOXIC x${toxicMult}!`; 
+      explodeColor = '#39ff14'; 
+    } else if (type === 'solar') { 
+      duration = durations.solar; 
+      popupText = "☀️ SOLAR SLOW!"; 
+      explodeColor = '#ffcc00'; 
+    }
 
     this.fx.explode(e.x + 40, e.y + 40, explodeColor, 30);
     this.fadeAndRemove(id);
@@ -1161,13 +1215,23 @@ showScorePopup(x, y, textHtml) {
     if (r) { r.scale = 1.08; r.node.classList.add("selected"); this.selectedRocket = id; }
   }
 
-  tryAnswer(planetId) {
+tryAnswer(planetId) {
     if (this.selectedRocket === null) return;
-    const p = this.active.get(planetId); const r = this.active.get(this.selectedRocket);
+    const p = this.active.get(planetId); 
+    const r = this.active.get(this.selectedRocket);
     if (!p || !r) return;
 
-    if (p.isBomb) { this.applyBomb(planetId); return; }
+    // 👇 ПИШЕМ КЛИК В ЛОГ АНТИЧИТА 👇
+    // Передаем тип, выбранный ответ, индекс примера и текст примера
+    this.logAction(p.isBomb ? 'bomb' : 'planet', p.answer, r.eqIndex, r.example);
 
+    // Если это бомба — взрываем и выходим
+    if (p.isBomb) { 
+      this.applyBomb(planetId); 
+      return; 
+    }
+
+    // Если ответ правильный
     if (equalsNum(p.answer, r.answer)) {
       const rX = r.x + r.node.offsetWidth / 2; 
       const rY = r.y + r.node.offsetHeight / 2;
@@ -1180,6 +1244,7 @@ showScorePopup(x, y, textHtml) {
       
       this.applyCorrect(planetId);
     } else {
+      // Если ответ неверный
       this.applyWrong(planetId);
     }
   }
@@ -1258,13 +1323,15 @@ async endGame() {
     }
 
     try {
-      const result = await window.API.sessionFinish(this.currentSessionId, this.score);
+      // 👇 МАГИЯ УЛЕТАЕТ НА СЕРВЕР: Передаем this.sessionLog третьим аргументом 👇
+      const result = await window.API.sessionFinish(this.currentSessionId, this.score, this.sessionLog);
 
       if (result.success) {
         document.getElementById("finalScore").textContent = this.score;
         
         if (result.is_valid === false) {
           if (hintEl) {
+            // Если сессия признана недействительной, честно пишем об этом
             hintEl.textContent = "⚠️ Result rejected (Anti-cheat)";
             hintEl.style.color = "#ff3333";
           }
