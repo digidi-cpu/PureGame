@@ -389,7 +389,7 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     });
 
     // --- ПРИНЯТИЕ РЕШЕНИЯ ---
-    if (fakeAnswers > 0) { isValid = false; fraudFlags.push(`fake_answers_${fakeAnswers}`); }
+    if (fakeAnswers > 0) { fraudFlags.push(`made_mistakes_${fakeAnswers}`); } 
     if (fakeComets > 0) { isValid = false; fraudFlags.push(`fake_comets_${fakeComets}`); }
     if (inhumanSpeedFlags > 5) { isValid = false; fraudFlags.push(`bot_speed_${inhumanSpeedFlags}`); }
     
