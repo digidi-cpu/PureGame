@@ -249,18 +249,17 @@
         <div class="p-avatar-box">👨‍🚀</div>
         <div class="p-info">
           <div class="p-name" id="profileName">Astronaut_99</div>
-          <div class="p-level" id="profileLevel">LEVEL 1</div>
         </div>
       </div>
 
-      <div class="level-progress-wrap" style="margin: 0 15px 20px; padding: 15px; background: rgba(10,10,26,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; color: #fff; font-weight: 600; font-family: 'Orbitron', monospace;">
-          <span>PROGRESS</span>
-          <span id="levelProgressText">0 / 500</span>
+      <div class="profile-level-section">
+        <div class="level-badge current-level" id="lvlCurrent">1</div>
+        <div class="level-progress-container">
+          <div class="level-progress-track">
+            <div class="level-progress-fill" id="levelProgressFill"></div>
+          </div>
         </div>
-        <div class="rt-bar" style="height: 10px; background: rgba(0,0,0,0.5); border-radius: 5px; overflow: hidden;">
-          <div id="levelProgressFill" class="rt-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff6b35, #f7c59f); border-radius: 5px; transition: width 0.5s ease;"></div>
-        </div>
+        <div class="level-badge next-level" id="lvlNext">2</div>
       </div>
 
       <div class="profile-balances-large">
