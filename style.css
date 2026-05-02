@@ -773,7 +773,7 @@ body {
   height: 100%;
   overflow-y: auto;
   /* Единые отступы: сверху под балансы, снизу под меню */
-  padding: calc(env(safe-area-inset-top, 20px) + 80px) 20px calc(env(safe-area-inset-bottom, 20px) + 100px) 20px;
+  padding: calc(env(safe-area-inset-top, 20px) + 40px) 20px calc(env(safe-area-inset-bottom, 20px) + 100px) 20px;
 }
 
 /* Единый стиль для заголовков на всех вкладках */
