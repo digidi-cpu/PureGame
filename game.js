@@ -369,6 +369,10 @@ async syncProfile() {
 
         // --- УРОВНИ ---
         
+        // 👇 Вернули обновление надписи под аватаркой профиля 👇
+        const profileLevel = document.getElementById("profileLevel");
+        if (profileLevel) profileLevel.textContent = `LEVEL ${stats.level || 1}`;
+
         // Обновление уровня на главном экране (оставляем как было)
         const mainPageLevel = document.getElementById("mainPageLevel");
         if (mainPageLevel) mainPageLevel.textContent = `LEVEL ${stats.level || 1}`;
