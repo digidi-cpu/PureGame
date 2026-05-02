@@ -1059,11 +1059,11 @@ spawnPlanet() {
     // Находим правильные ответы, которых сейчас НЕТ на экране
     const starvingAnswers = [...this.correctAnswers.values()].filter(a => !hasMatchingPlanet(a));
 
-    // 👇 2. СБАЛАНСИРОВАННАЯ ВЫДАЧА ПЛАНЕТ 👇
+    // 👇 2. ИДЕАЛЬНЫЙ БАЛАНС (ВЕРСИЯ 85%) 👇
     const rand = Math.random();
 
-    if (rand < 0.35) { 
-      // 35% шанс на обманку-бомбу (чтобы жизнь медом не казалась)
+    if (rand < 0.30) { 
+      // 30% шанс на обманку-бомбу 
       const pool = [...this.correctAnswers.values()];
       if (pool.length > 0) {
           const base = pool[Math.floor(Math.random() * pool.length)];
@@ -1076,12 +1076,12 @@ spawnPlanet() {
       isBomb = ![...this.correctAnswers.values()].some(v => equalsNum(v, answer)); 
       
     } else {
-      // 65% шанс выдать правильный ответ
-      if (starvingAnswers.length > 0 && Math.random() < 0.7) {
-        // Из этих 65%, с шансом 70% помогаем "голодной" ракете
+      // 70% шанс выдать правильный ответ
+      if (starvingAnswers.length > 0 && Math.random() < 0.85) {
+        // 👈 ИЗ НИХ 85% ШАНС ПОМОЧЬ "ГОЛОДНОЙ" РАКЕТЕ 👈
         answer = starvingAnswers[Math.floor(Math.random() * starvingAnswers.length)];
       } else {
-        // Иначе просто дублируем любой существующий правильный ответ для массовки на экране
+        // Иначе дублируем любой существующий правильный ответ для массовки
         const pool = [...this.correctAnswers.values()];
         answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 30);
       }
