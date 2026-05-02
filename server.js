@@ -159,6 +159,9 @@ async function ensureSchema() {
 
    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS range_start integer default 0;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS range_end integer default 0;`);
+
+   // 👇 НОВАЯ КОЛОНКА ДЛЯ ЛОГОВ АНТИЧИТА 👇
+  await pool.query(`ALTER TABLE game_sessions ADD COLUMN IF NOT EXISTS action_log jsonb not null default '[]'::jsonb;`);
   
   console.log('✅ Database schema initialized');
 }
@@ -221,10 +224,10 @@ function requireTelegramSigned(req, res, next) {
 }
 
 /* =========================
-   API: ИГРОВОЙ ЦИКЛ
+   API: ИГРОВОЙ ЦИКЛ (С АНТИЧИТОМ)
 ========================= */
 
-// 1. СТАРТ ИГРЫ (Списание энергии)
+// 1. СТАРТ ИГРЫ (Списание энергии + Генерация комет)
 app.post('/api/session/start', requireTelegramSigned, async (req, res) => {
   const client = await pool.connect();
   try {
@@ -270,18 +273,44 @@ app.post('/api/session/start', requireTelegramSigned, async (req, res) => {
     await client.query('COMMIT');
 
     const session_id = crypto.randomUUID();
-    const payload = { user_id: userId, username, start_ms: Date.now() };
-    await redis.set(`sess:${session_id}`, JSON.stringify(payload), { EX: SESSION_TTL });
-
+    
+    // --- ГЕНЕРАЦИЯ ДАННЫХ СЕССИИ ---
     const equations = [];
     for(let i = 0; i < 150; i++) {
       equations.push(generateExample());
     }
 
+    // Карта комет (4-6 штук за игру)
+    const cometsMap = [];
+    const cometTypes = ['toxic', 'ice', 'solar'];
+    const cometsCount = randInt(4, 6); 
+    let lastSpawnIndex = 5; // Первая комета не раньше 5-го примера
+    
+    for(let i = 0; i < cometsCount; i++) {
+      const step = randInt(8, 20); 
+      lastSpawnIndex += step;
+      if (lastSpawnIndex > 140) break;
+      cometsMap.push({
+        index: lastSpawnIndex, 
+        type: cometTypes[randInt(0, 2)] 
+      });
+    }
+
+    // Сохраняем в Redis "правильные" данные
+    const payload = { 
+      user_id: userId, 
+      username, 
+      start_ms: Date.now(),
+      equations: equations,
+      comets: cometsMap 
+    };
+    await redis.set(`sess:${session_id}`, JSON.stringify(payload), { EX: SESSION_TTL });
+
     res.json({ 
       session_id, 
       energy_left: newEnergy,
       equations: equations,
+      comets: cometsMap, // 👈 Отправляем карту комет на клиент
       duration_sec: GAME_CONFIG.duration_sec
     });
 
@@ -293,12 +322,15 @@ app.post('/api/session/start', requireTelegramSigned, async (req, res) => {
   }
 });
 
-// 2. ФИНИШ ИГРЫ (Начисление билетов)
+
+// 2. ФИНИШ ИГРЫ (Проверка логов и начисление билетов)
 app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
   const client = await pool.connect();
   try {
-    const { session_id, score } = req.body || {};
+    const { session_id, score, log } = req.body || {};
     const finalScore = Math.max(0, parseInt(score, 10) || 0);
+    const userLog = Array.isArray(log) ? log : [];
+
     if (!session_id) return res.status(400).json({ error: 'session_id_required' });
 
     const redisKey = `sess:${session_id}`;
@@ -306,40 +338,79 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
     if (!sessionJson) return res.status(410).json({ error: 'session_expired' });
     
     const sessionData = JSON.parse(sessionJson);
+    const originalEquations = sessionData.equations || [];
+    const originalComets = sessionData.comets || [];
     const userId = sessionData.user_id;
     const duration_ms = Date.now() - sessionData.start_ms;
 
     let isValid = true;
     const fraudFlags = [];
     
-    if (duration_ms < 2000) { 
-      isValid = false; 
-      fraudFlags.push('too_short'); 
-    }
-
-    const durationSeconds = duration_ms / 1000;
-    const dynamicScoreCap = durationSeconds * 100;
+    // --- БАЗОВЫЕ ПРОВЕРКИ ---
+    if (duration_ms < 2000) { isValid = false; fraudFlags.push('too_short'); }
     const HARD_CAP = (GAME_CONFIG.duration_sec * 100) + 500; 
+    if (finalScore > HARD_CAP) { isValid = false; fraudFlags.push('score_too_high'); }
 
-    if (finalScore > dynamicScoreCap || finalScore > HARD_CAP) { 
-      isValid = false; 
-      fraudFlags.push('score_too_high'); 
+    // --- СЕРВЕРНАЯ СИМУЛЯЦИЯ (ТЕНЕВОЙ АНТИЧИТ) ---
+    let serverScore = 0;
+    let combo = 1;
+    let fakeAnswers = 0;
+    let fakeComets = 0;
+    let inhumanSpeedFlags = 0;
+    let lastActionMs = 0;
+
+    userLog.forEach(action => {
+      const { i: index, a: answer, t: type, ms: timeMs } = action;
+      
+      // Проверка на автокликер (< 150мс между ответами)
+      if (timeMs - lastActionMs < 150) inhumanSpeedFlags++;
+      lastActionMs = timeMs;
+
+      if (type === 'planet' || type === 'rocket') {
+        const original = originalEquations[index];
+        // Если пример существует и ответ верный
+        if (original && Number(answer) === Number(original.a)) {
+          serverScore += 10 * combo;
+          if (combo < GAME_CONFIG.max_streak_multiplier) combo++;
+        } else {
+          fakeAnswers++;
+          combo = 1; // Ошибка сбрасывает комбо
+        }
+      } else {
+        // Кометы: Проверяем, должна ли была быть такая комета на этом шаге
+        const expectedComet = originalComets.find(c => c.index === index && c.type === type);
+        if (expectedComet) {
+          if (type === 'toxic') serverScore += 10 * (combo * GAME_CONFIG.toxic_multiplier);
+          else serverScore += 10 * combo; 
+        } else {
+          fakeComets++;
+        }
+      }
+    });
+
+    // --- ПРИНЯТИЕ РЕШЕНИЯ ---
+    if (fakeAnswers > 0) { isValid = false; fraudFlags.push(`fake_answers_${fakeAnswers}`); }
+    if (fakeComets > 0) { isValid = false; fraudFlags.push(`fake_comets_${fakeComets}`); }
+    if (inhumanSpeedFlags > 5) { isValid = false; fraudFlags.push(`bot_speed_${inhumanSpeedFlags}`); }
+    
+    // Допускаем небольшую разницу очков между фронтом и сервером из-за бонусов времени
+    if (serverScore > 0 && finalScore > serverScore * 1.15) {
+      isValid = false;
+      fraudFlags.push(`score_mismatch_front_${finalScore}_srv_${serverScore}`);
     }
 
+    // --- НАЧИСЛЕНИЕ (ТОЛЬКО ЕСЛИ isValid = true) ---
+    let ticketsEarnedNow = 0;
+    
     await client.query('BEGIN');
-
+    
     const { rows: userRows } = await client.query(
       `SELECT tickets, score_balance FROM users WHERE user_id = $1 FOR UPDATE`, [userId]
     );
-
-    if (userRows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({ error: 'user_not_found' });
-    }
+    if (userRows.length === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'user_not_found' }); }
 
     let newTickets = userRows[0].tickets;
     let newBalance = userRows[0].score_balance;
-    let ticketsEarnedNow = 0;
 
     if (isValid) {
       const totalPointsNow = newBalance + finalScore;
@@ -359,10 +430,11 @@ app.post('/api/session/finish', requireTelegramSigned, async (req, res) => {
 
     const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || null;
     
+    // Пишем итог и весь ЛОГ в базу
     await client.query(
-      `INSERT INTO game_sessions (session_id, user_id, started_at, finished_at, duration_ms, final_score, tickets_earned, is_valid, fraud_flags, ip_address)
-       VALUES ($1, $2, $3, now(), $4, $5, $6, $7, $8::jsonb, $9)`,
-      [session_id, userId, new Date(sessionData.start_ms), duration_ms, finalScore, ticketsEarnedNow, isValid, JSON.stringify(fraudFlags), clientIp]
+      `INSERT INTO game_sessions (session_id, user_id, started_at, finished_at, duration_ms, final_score, tickets_earned, is_valid, fraud_flags, ip_address, action_log)
+       VALUES ($1, $2, $3, now(), $4, $5, $6, $7, $8::jsonb, $9, $10::jsonb)`,
+      [session_id, userId, new Date(sessionData.start_ms), duration_ms, finalScore, ticketsEarnedNow, isValid, JSON.stringify(fraudFlags), clientIp, JSON.stringify(userLog)]
     );
 
     await client.query('COMMIT');
