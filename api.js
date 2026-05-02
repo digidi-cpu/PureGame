@@ -60,13 +60,14 @@ class GameAPI {
     return this.request("/api/session/start", { method: "POST" });
   }
 
-  // Вызывается когда время вышло: отправляет очки и получает билеты 🎟️
-  async sessionFinish(sessionId, finalScore) {
+// Вызывается когда время вышло: отправляет очки и получает билеты 🎟️
+  async sessionFinish(sessionId, finalScore, logData = []) {
     return this.request("/api/session/finish", {
       method: "POST",
       body: JSON.stringify({ 
         session_id: sessionId, 
-        score: finalScore 
+        score: finalScore,
+        log: logData // 👈 Добавили отправку лога
       })
     });
   }
