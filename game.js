@@ -368,10 +368,8 @@ async syncProfile() {
         if (profileTotalPointsLarge) profileTotalPointsLarge.textContent = (stats.total_score || 0).toLocaleString();
 
         // --- УРОВНИ ---
-        const profileLevel = document.getElementById("profileLevel");
-        if (profileLevel) profileLevel.textContent = `LEVEL ${stats.level || 1}`;
-
-        // 👇 Обновление уровня на главном экране
+        
+        // Обновление уровня на главном экране (оставляем как было)
         const mainPageLevel = document.getElementById("mainPageLevel");
         if (mainPageLevel) mainPageLevel.textContent = `LEVEL ${stats.level || 1}`;
 
@@ -388,22 +386,30 @@ async syncProfile() {
             profileName.textContent = window.TelegramAPI.initDataUnsafe.user.first_name;
         }
 
-        const levelProgressFill = document.getElementById("levelProgressFill");
-        const levelProgressText = document.getElementById("levelProgressText");
+        // 👇 НОВАЯ ЛОГИКА ШКАЛЫ ПРОФИЛЯ 👇
+        const currentLvl = stats.level || 1;
+        const score = stats.total_score || 0;
+        const step = this.gameConfig.level_step || 500; 
         
-        if (levelProgressFill && levelProgressText) {
-          const currentLvl = stats.level || 1;
-          const score = stats.total_score || 0;
-          const step = this.gameConfig.level_step; 
-          
-          const nextLevelThreshold = currentLvl * step;
+        const lvlCurrentEl = document.getElementById("lvlCurrent");
+        const lvlNextEl = document.getElementById("lvlNext");
+        const levelProgressFill = document.getElementById("levelProgressFill");
+        
+        // Записываем цифры по краям
+        if (lvlCurrentEl) lvlCurrentEl.textContent = currentLvl;
+        if (lvlNextEl) lvlNextEl.textContent = currentLvl + 1;
+
+        // Заполняем саму полоску
+        if (levelProgressFill) {
           const currentLevelStart = (currentLvl - 1) * step;
           const pointsInCurrentLevel = score - currentLevelStart;
+          
+          // Вычисляем процент заполнения (от 0 до 100)
           const percent = Math.min(100, Math.max(0, (pointsInCurrentLevel / step) * 100));
           
           levelProgressFill.style.width = `${percent}%`;
-          levelProgressText.textContent = `${score.toLocaleString()} / ${nextLevelThreshold.toLocaleString()} to LVL ${currentLvl + 1}`;
         }
+        // 👆 ================================ 👆
 
         // 👇 ЛОГИКА ПОКУПКИ ЭНЕРГИИ И ЛИМИТОВ 👇
         const buyBtn = document.getElementById("buyEnergyBtn");
