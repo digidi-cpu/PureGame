@@ -1059,28 +1059,32 @@ spawnPlanet() {
     // Находим правильные ответы, которых сейчас НЕТ на экране
     const starvingAnswers = [...this.correctAnswers.values()].filter(a => !hasMatchingPlanet(a));
 
-    // 👇 2. УМНАЯ ВЫДАЧА ПЛАНЕТ 👇
-    if (starvingAnswers.length > 0) {
-      // ЭКСТРЕННО спавним нужный ответ для "голодной" ракеты (никаких пауз!)
-      answer = starvingAnswers[Math.floor(Math.random() * starvingAnswers.length)];
-    } else if (Math.random() < 0.25) { 
-      // Если у всех ракет уже есть пары, кидаем бомбу с шансом 25%
-      // Делаем обманку реалистичной: берем реальный ответ и искажаем его
+    // 👇 2. СБАЛАНСИРОВАННАЯ ВЫДАЧА ПЛАНЕТ 👇
+    const rand = Math.random();
+
+    if (rand < 0.35) { 
+      // 35% шанс на обманку-бомбу (чтобы жизнь медом не казалась)
       const pool = [...this.correctAnswers.values()];
       if (pool.length > 0) {
           const base = pool[Math.floor(Math.random() * pool.length)];
           const offset = Number.isInteger(base) ? 1 : 0.1; // Для целых +-1, для дробей +-0.1
           answer = base + (Math.random() < 0.5 ? offset : -offset);
-          // Округляем, чтобы не было кривых математических артефактов (типа 1.20000000001)
           if (!Number.isInteger(answer)) answer = Math.round(answer * 10) / 10;
       } else {
           answer = randInt(1, 30);
       }
       isBomb = ![...this.correctAnswers.values()].some(v => equalsNum(v, answer)); 
+      
     } else {
-      // Иначе просто дублируем любой существующий правильный ответ для массовки
-      const pool = [...this.correctAnswers.values()];
-      answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 30);
+      // 65% шанс выдать правильный ответ
+      if (starvingAnswers.length > 0 && Math.random() < 0.7) {
+        // Из этих 65%, с шансом 70% помогаем "голодной" ракете
+        answer = starvingAnswers[Math.floor(Math.random() * starvingAnswers.length)];
+      } else {
+        // Иначе просто дублируем любой существующий правильный ответ для массовки на экране
+        const pool = [...this.correctAnswers.values()];
+        answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 30);
+      }
     }
 
     // 👇 3. ОТРИСОВКА И АНИМАЦИЯ 👇
