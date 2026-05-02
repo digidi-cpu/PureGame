@@ -1546,9 +1546,14 @@ body {
 .profile-level-section {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* 👈 РАСТЯГИВАЕМ по краям вместо центрирования */
+  justify-content: space-between;
   gap: 15px;
-  margin: 0 15px 20px;
+  
+  /* 👇 ВОТ МАГИЯ, КОТОРАЯ НЕ ДАСТ ЕМУ СХЛОПНУТЬСЯ 👇 */
+  width: 100%; 
+  max-width: 360px; 
+  margin: 0 auto 25px auto; 
+  
   padding: 15px 20px;
   background: rgba(10,10,26,0.6);
   border: 1px solid rgba(255,255,255,0.05);
@@ -1578,8 +1583,8 @@ body {
 }
 
 .level-progress-container {
-  flex: 1; /* 👈 МАГИЯ ЗДЕСЬ: забирает ВСЮ свободную ширину экрана */
-  min-width: 0; 
+  flex: 1;
+  width: 100%;
 }
 
 .level-progress-track {
