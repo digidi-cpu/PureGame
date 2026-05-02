@@ -282,7 +282,7 @@ app.post('/api/session/start', requireTelegramSigned, async (req, res) => {
 
     // Карта комет (4-6 штук за игру)
     const cometsMap = [];
-    const cometTypes = ['toxic', 'ice', 'solar'];
+    const cometTypes = ['toxic', 'ice', 'solar', 'magnet'];
     const cometsCount = randInt(4, 6); 
     let lastSpawnIndex = 5; // Первая комета не раньше 5-го примера
     
