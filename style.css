@@ -1577,15 +1577,16 @@ body {
   font-size: 1.1rem;
 }
 
-/* Трек прогресса */
 .level-progress-container {
   flex-grow: 1;
+  width: 100%; /* 👈 Принудительно растягиваем контейнер */
   max-width: 250px; 
 }
 
 .level-progress-track {
   background: rgba(0, 0, 0, 0.6);
   height: 12px;
+  width: 100%; /* 👈 Принудительно растягиваем сам трек */
   border-radius: 10px;
   overflow: hidden;
   position: relative;
