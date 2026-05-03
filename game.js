@@ -810,7 +810,7 @@ async claimDailyReward() {
           // Твоя старая кастомная иконка
           iconContent = '<i class="mission-icon-up"></i>';
       } else if (m.icon === 'coin_pts') {
-          // НОВАЯ ЛОГИКА: Вставляем неоновую монету PTS (для карточек, где иконка 'coin_pts')
+          // Вставляем неоновую монету PTS (для карточек, где иконка 'coin_pts')
           iconContent = '<i class="icon-coin-pts-inline"></i>';
       } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
           // Вставляем файл "как есть" с сохранением всех его родных цветов
@@ -821,12 +821,13 @@ async claimDailyReward() {
       }
 
       // 👇 2. ВСТАВЛЯЕМ iconContent ВМЕСТО m.icon 👇
+      // ❗️ ТУТ МЫ УБРАЛИ СЛОВО PTS И ИКОНКУ, ОСТАВИЛИ ТОЛЬКО + И ЦИФРУ ❗️
       const itemHtml = `
         <div class="mission-card ${doneClass}">
           <div class="mc-icon">${iconContent}</div>
           <div class="mc-info">
             <div class="mc-title">${m.title}</div>
-            <div class="mc-reward" style="color: #ffd700;">+${m.reward_pts} <i class="icon-coin-pts-inline"></i></div>
+            <div class="mc-reward" style="color: #ffd700;">+${m.reward_pts}</div>
           </div>
           ${btnHtml}
         </div>
