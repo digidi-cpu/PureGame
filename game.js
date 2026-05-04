@@ -804,16 +804,19 @@ async claimDailyReward() {
         btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
       }
 
-      // 👇 1. СОЗДАЕМ ПРОВЕРКУ ДЛЯ ИКОНКИ 👇
+// 👇 1. СОЗДАЕМ ПРОВЕРКУ ДЛЯ ИКОНКИ 👇
       let iconContent = m.icon;
       if (m.icon === 'icon_up_gradient') {
-          // Твоя старая кастомная иконка
+          // Иконка повышения уровня (стрелка)
           iconContent = '<i class="mission-icon-up"></i>';
       } else if (m.icon === 'coin_pts') {
-          // Вставляем неоновую монету PTS (для карточек, где иконка 'coin_pts')
+          // Неоновая монета PTS
           iconContent = '<i class="icon-coin-pts-inline"></i>';
+      } else if (m.icon === 'assets/gamepad.svg') {
+          // 👇 НОВОЕ: Наш неоновый геймпад 👇
+          iconContent = '<i class="mission-icon-gamepad"></i>';
       } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
-          // Вставляем файл "как есть" с сохранением всех его родных цветов
+          // Остальные файлы "как есть" с сохранением всех их родных цветов
           iconContent = `<img src="${m.icon}" alt="icon" class="mission-custom-icon">`;
       } else {
           // Текстовые эмодзи ('🏆' и т.д.)
