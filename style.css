@@ -1612,8 +1612,8 @@ body {
 /* Класс для иконки геймпада (неоновый стиль) */
 .mission-icon-gamepad {
     display: inline-block;
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     vertical-align: middle;
     flex-shrink: 0;
     
