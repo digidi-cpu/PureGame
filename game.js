@@ -705,7 +705,7 @@ async loadMatchHistory(isLoadMore = false) {
     // 4. Склеиваем финальную карточку в едином стиле с миссиями
     const checkinBlock = `
       <div class="mission-card daily-checkin-card ${cardClass}">
-        <div class="mc-icon"><span class="mission-emoji">🗓️</span></div>
+        <div class="mc-icon"><i class="mission-icon-calendar"></i></div>
         <div class="mc-info">
           <div class="mc-title">Daily Check-in</div>
           <div class="mc-reward" style="color: #ffd700;">+${currentRewardPts}</div>
