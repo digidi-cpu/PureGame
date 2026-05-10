@@ -655,8 +655,8 @@ async loadMatchHistory(isLoadMore = false) {
     });
   }
 
-  // ==========================================
-  // ЕЖЕДНЕВНЫЙ ВХОД (С КЭШИРОВАНИЕМ)
+// ==========================================
+  // ЕЖЕДНЕВНЫЙ ВХОД (ФОРМАТ MISSION CARD)
   // ==========================================
   async loadDailyCheckin() {
     const container = document.querySelector(".missions-list");
@@ -678,63 +678,74 @@ async loadMatchHistory(isLoadMore = false) {
 
     if (!data || !data.rewards) return;
 
-    let daysHtml = "";
-    data.rewards.forEach((pts, i) => {
-      const isToday = i === data.streak && data.canClaim;
-      const isDone = i < data.streak;
-      const activeClass = isToday ? "daily-day--active" : "";
-      const doneClass = isDone ? "daily-day--done" : "";
+    // 1. Формируем 7 тонких неоновых линий прогресса
+    let dotsHtml = '<div class="streak-dots">';
+    for (let i = 0; i < 7; i++) {
+      let dotClass = "streak-dot";
+      if (i < data.streak) {
+         dotClass += " streak-dot--done"; // Пройденные дни (зеленые)
+      } else if (i === data.streak && data.canClaim) {
+         dotClass += " streak-dot--current"; // Текущий день (золотой пульс)
+      }
+      dotsHtml += `<div class="${dotClass}"></div>`;
+    }
+    dotsHtml += '</div>';
 
-      daysHtml += `
-        <div class="daily-day ${activeClass} ${doneClass}">
-          <div class="dd-label">Day ${i+1}</div>
-          <div class="dd-pts">+${pts}</div>
-        </div>
-      `;
-    });
+    // 2. Вычисляем текущую награду
+    const currentRewardPts = data.canClaim 
+        ? data.rewards[data.streak % 7] 
+        : data.rewards[Math.max(0, data.streak - 1) % 7];
 
-    const btnStyle = data.canClaim 
-      ? "width: 100%; margin-top: 15px; padding: 12px; font-size: 1rem;" 
-      : "width: 100%; margin-top: 15px; padding: 12px; font-size: 1rem; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); border: none;";
+    // 3. Формируем классы и кнопку (Активная / Выполненная)
+    const cardClass = data.canClaim ? "" : "done";
+    const btnHtml = data.canClaim 
+        ? `<button id="claimDailyBtn" class="mc-btn mc-btn--claim">CLAIM</button>`
+        : `<button class="mc-btn mc-btn--done" disabled>✔</button>`;
 
+    // 4. Склеиваем финальную карточку в едином стиле с миссиями
     const checkinBlock = `
-      <div class="daily-checkin-card">
-        <div class="dc-title">🗓️ 7-DAY LOGIN STREAK</div>
-        <div class="dc-grid">${daysHtml}</div>
-        <button id="claimDailyBtn" class="mc-btn mc-btn--claim" ${!data.canClaim ? "disabled" : ""} style="${btnStyle}">
-          ${data.canClaim ? "CLAIM DAILY REWARD" : "COME BACK TOMORROW"}
-        </button>
+      <div class="mission-card daily-checkin-card ${cardClass}">
+        <div class="mc-icon"><span class="mission-emoji">🗓️</span></div>
+        <div class="mc-info">
+          <div class="mc-title">Daily Check-in</div>
+          <div class="mc-reward" style="color: #ffd700;">+${currentRewardPts}</div>
+          ${dotsHtml}
+        </div>
+        ${btnHtml}
       </div>
     `;
 
+    // Удаляем старый блок, если он был, и вставляем новый в самый верх списка
     const oldBlock = document.querySelector(".daily-checkin-card");
     if (oldBlock) oldBlock.remove();
     container.insertAdjacentHTML('afterbegin', checkinBlock);
 
+    // Вешаем обработчик на кнопку CLAIM
     const claimBtn = document.getElementById("claimDailyBtn");
     if (claimBtn && data.canClaim) {
       claimBtn.addEventListener("click", () => this.claimDailyReward());
     }
   }
 
-async claimDailyReward() {
+  async claimDailyReward() {
     window.TelegramAPI?.vibrate('medium');
     try {
       const res = await window.API.claimDaily();
       if (res && res.success) {
-        this.showScorePopup(window.innerWidth/2, window.innerHeight/2, `+${res.reward_pts} PTS`);
+        // Минималистичный попап (без лишних слов, только цифры)
+        this.showScorePopup(window.innerWidth/2, window.innerHeight/2, `+${res.reward_pts}`);
         if (res.tickets_earned > 0) {
           setTimeout(() => {
             this.showScorePopup(window.innerWidth/2, window.innerHeight/2 + 50, `+${res.tickets_earned} <i class="icon-ticket-inline"></i>`);
             
-            // 👇 ДОБАВЛЕНО: Запуск анимации билета 👇
+            // Запуск анимации билета
             if (typeof window.startWinFlow === 'function') {
                 window.startWinFlow();
             }
           }, 600);
         }
         
-        // Сбрасываем кэш, чтобы загрузить новые данные
+        // Сбрасываем кэш, чтобы обновить UI
         this.invalidateCache();
         this.syncProfile(); 
       }
