@@ -1002,49 +1002,6 @@ body {
 }
 
 
-/* ==========================================
-   ЕЖЕДНЕВНЫЙ ВХОД (ФОРМАТ MISSION CARD)
-========================================== */
-.daily-checkin-card {
-    /* Добавляем чуть больше свечения самой карточке, чтобы она выделялась как главная */
-    border: 1px solid rgba(255, 204, 0, 0.3) !important;
-    background: linear-gradient(135deg, rgba(255, 204, 0, 0.05), rgba(255, 255, 255, 0.02)) !important;
-    margin-bottom: 20px;
-}
-
-.streak-dots {
-    display: flex;
-    gap: 4px;
-    margin-top: 8px;
-    width: 100%;
-}
-
-.streak-dot {
-    height: 4px;
-    flex: 1; /* Растягивает черточки равномерно на всю ширину */
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-    transition: background 0.3s, box-shadow 0.3s;
-}
-
-/* Пройденные дни (Неоново-зеленые) */
-.streak-dot--done {
-    background: #39FF14;
-    box-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
-}
-
-/* День, который ждет нажатия CLAIM (Пульсирующий золотой) */
-.streak-dot--current {
-    background: #ffcc00;
-    box-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
-    animation: pulse-streak-dot 1s infinite alternate;
-}
-
-@keyframes pulse-streak-dot {
-    from { opacity: 0.6; box-shadow: 0 0 4px rgba(255, 204, 0, 0.4); }
-    to { opacity: 1; box-shadow: 0 0 12px rgba(255, 204, 0, 0.9); }
-}
-
 /* =========================================
    СТИЛИ ДЛЯ АНИМАЦИИ ПОБЕДЫ (TICKET & NFT)
    ========================================= */
