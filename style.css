@@ -1630,3 +1630,30 @@ body {
     
     filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.6));
 }
+
+/* Класс для иконки календаря (ежедневный вход) */
+.mission-icon-calendar {
+    display: inline-block;
+    
+    /* Точно такие же размеры и выравнивание, как у остальных значков */
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: -0.2em;
+    flex-shrink: 0;
+    
+    /* Наш фирменный неоново-зеленый цвет */
+    background-color: #39FF14; 
+    
+    /* Используем твой новый calendar.svg как трафарет */
+    -webkit-mask-image: url('assets/calendar.svg');
+    mask-image: url('assets/calendar.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    
+    /* Свечение */
+    filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.6));
+}
