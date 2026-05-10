@@ -1628,7 +1628,7 @@ body {
     display: flex;
     gap: 4px;
     margin-top: 6px; 
-    width: 70%;
+    width: 80%;
 }
 
 .streak-dot {
