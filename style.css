@@ -1657,3 +1657,43 @@ body {
     /* Свечение */
     filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.6));
 }
+
+
+/* ==========================================
+   ЕЖЕДНЕВНЫЙ ВХОД (ФОРМАТ MISSION CARD)
+========================================== */
+/* Мы убрали золотые рамки и фон. Теперь она выглядит ровно как остальные миссии! */
+.daily-checkin-card {
+    /* Оставляем пустым, все стили берутся из базового класса .mission-card */
+}
+
+.streak-dots {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px; 
+    width: 100%;
+}
+
+.streak-dot {
+    height: 4px;
+    flex: 1; 
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    transition: background 0.3s, box-shadow 0.3s;
+}
+
+.streak-dot--done {
+    background: #39FF14;
+    box-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
+}
+
+.streak-dot--current {
+    background: #ffcc00;
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+    animation: pulse-streak-dot 1s infinite alternate;
+}
+
+@keyframes pulse-streak-dot {
+    from { opacity: 0.6; box-shadow: 0 0 4px rgba(255, 204, 0, 0.4); }
+    to { opacity: 1; box-shadow: 0 0 12px rgba(255, 204, 0, 0.9); }
+}
