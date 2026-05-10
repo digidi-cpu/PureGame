@@ -1003,50 +1003,47 @@ body {
 
 
 /* ==========================================
-   ЕЖЕДНЕВНЫЙ ВХОД (DAILY CHECK-IN)
+   ЕЖЕДНЕВНЫЙ ВХОД (ФОРМАТ MISSION CARD)
 ========================================== */
 .daily-checkin-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 15px;
+    /* Добавляем чуть больше свечения самой карточке, чтобы она выделялась как главная */
+    border: 1px solid rgba(255, 204, 0, 0.3) !important;
+    background: linear-gradient(135deg, rgba(255, 204, 0, 0.05), rgba(255, 255, 255, 0.02)) !important;
     margin-bottom: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.dc-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.9rem;
-    color: #ffcc00;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    text-align: center;
-    font-weight: 900;
+
+.streak-dots {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+    width: 100%;
 }
-.dc-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+
+.streak-dot {
+    height: 4px;
+    flex: 1; /* Растягивает черточки равномерно на всю ширину */
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    transition: background 0.3s, box-shadow 0.3s;
 }
-.daily-day {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 8px;
-    border-radius: 10px;
-    text-align: center;
-    border: 1px solid transparent;
-    transition: all 0.3s ease;
+
+/* Пройденные дни (Неоново-зеленые) */
+.streak-dot--done {
+    background: #39FF14;
+    box-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
 }
-.daily-day--active {
-    border-color: #ffcc00;
-    background: rgba(255, 204, 0, 0.1);
-    box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
-    transform: scale(1.05);
+
+/* День, который ждет нажатия CLAIM (Пульсирующий золотой) */
+.streak-dot--current {
+    background: #ffcc00;
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+    animation: pulse-streak-dot 1s infinite alternate;
 }
-.daily-day--done {
-    opacity: 0.5;
-    background: rgba(0, 255, 100, 0.1);
+
+@keyframes pulse-streak-dot {
+    from { opacity: 0.6; box-shadow: 0 0 4px rgba(255, 204, 0, 0.4); }
+    to { opacity: 1; box-shadow: 0 0 12px rgba(255, 204, 0, 0.9); }
 }
-.dd-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); }
-.dd-pts { font-weight: 900; font-size: 0.8rem; color: #fff; margin-top: 2px; }
 
 /* =========================================
    СТИЛИ ДЛЯ АНИМАЦИИ ПОБЕДЫ (TICKET & NFT)
