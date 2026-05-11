@@ -756,6 +756,9 @@ async loadMatchHistory(isLoadMore = false) {
 // ==========================================
   // МИССИИ (С КЭШИРОВАНИЕМ И ПРОВЕРКОЙ ВКЛАДКИ)
   // ==========================================
+// ==========================================
+  // МИССИИ (С КЭШИРОВАНИЕМ И ПРОВЕРКОЙ ВКЛАДКИ)
+  // ==========================================
   async loadMissions() {
     const missionsList = document.querySelector(".missions-list");
     if (!missionsList) return;
@@ -827,8 +830,11 @@ async loadMatchHistory(isLoadMore = false) {
           // Наш неоновый геймпад
           iconContent = '<i class="mission-icon-gamepad"></i>';
       } else if (m.icon === '🏆' || m.icon === 'assets/trophy.svg') {
-          // 👇 НОВОЕ: Перехватываем кубок и вставляем неоновый SVG 👇
+          // Перехватываем кубок и вставляем неоновый SVG
           iconContent = '<i class="mission-icon-trophy"></i>';
+      } else if (m.icon === '👑' || m.icon === 'assets/winner.svg') {
+          // 👇 НОВОЕ: Перехватываем корону и вставляем неоновый winner.svg 👇
+          iconContent = '<i class="mission-icon-winner"></i>';
       } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
           // Остальные файлы "как есть" с сохранением всех их родных цветов
           iconContent = `<img src="${m.icon}" alt="icon" class="mission-custom-icon">`;
