@@ -815,7 +815,7 @@ async loadMatchHistory(isLoadMore = false) {
         btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
       }
 
-// 👇 1. СОЗДАЕМ ПРОВЕРКУ ДЛЯ ИКОНКИ 👇
+      // 👇 1. СОЗДАЕМ ПРОВЕРКУ ДЛЯ ИКОНКИ 👇
       let iconContent = m.icon;
       if (m.icon === 'icon_up_gradient') {
           // Иконка повышения уровня (стрелка)
@@ -824,13 +824,16 @@ async loadMatchHistory(isLoadMore = false) {
           // Неоновая монета PTS
           iconContent = '<i class="icon-coin-pts-inline"></i>';
       } else if (m.icon === 'assets/gamepad.svg') {
-          // 👇 НОВОЕ: Наш неоновый геймпад 👇
+          // Наш неоновый геймпад
           iconContent = '<i class="mission-icon-gamepad"></i>';
+      } else if (m.icon === '🏆' || m.icon === 'assets/trophy.svg') {
+          // 👇 НОВОЕ: Перехватываем кубок и вставляем неоновый SVG 👇
+          iconContent = '<i class="mission-icon-trophy"></i>';
       } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
           // Остальные файлы "как есть" с сохранением всех их родных цветов
           iconContent = `<img src="${m.icon}" alt="icon" class="mission-custom-icon">`;
       } else {
-          // Текстовые эмодзи ('🏆' и т.д.)
+          // Текстовые эмодзи
           iconContent = `<span class="mission-emoji">${m.icon}</span>`;
       }
 
