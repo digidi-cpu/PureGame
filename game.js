@@ -756,9 +756,6 @@ async loadMatchHistory(isLoadMore = false) {
 // ==========================================
   // МИССИИ (С КЭШИРОВАНИЕМ И ПРОВЕРКОЙ ВКЛАДКИ)
   // ==========================================
-// ==========================================
-  // МИССИИ (С КЭШИРОВАНИЕМ И ПРОВЕРКОЙ ВКЛАДКИ)
-  // ==========================================
   async loadMissions() {
     const missionsList = document.querySelector(".missions-list");
     if (!missionsList) return;
@@ -833,8 +830,11 @@ async loadMatchHistory(isLoadMore = false) {
           // Перехватываем кубок и вставляем неоновый SVG
           iconContent = '<i class="mission-icon-trophy"></i>';
       } else if (m.icon === '👑' || m.icon === 'assets/winner.svg') {
-          // 👇 НОВОЕ: Перехватываем корону и вставляем неоновый winner.svg 👇
+          // Перехватываем корону и вставляем неоновый winner.svg
           iconContent = '<i class="mission-icon-winner"></i>';
+      } else if (m.icon === '👨‍💻' || m.icon === 'assets/creator.svg') {
+          // 👇 НОВОЕ: Перехватываем эмодзи программиста и вставляем creator.svg 👇
+          iconContent = '<i class="mission-icon-creator"></i>';
       } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
           // Остальные файлы "как есть" с сохранением всех их родных цветов
           iconContent = `<img src="${m.icon}" alt="icon" class="mission-custom-icon">`;
@@ -844,7 +844,6 @@ async loadMatchHistory(isLoadMore = false) {
       }
 
       // 👇 2. ВСТАВЛЯЕМ iconContent ВМЕСТО m.icon 👇
-      // ❗️ ТУТ МЫ УБРАЛИ СЛОВО PTS И ИКОНКУ, ОСТАВИЛИ ТОЛЬКО + И ЦИФРУ ❗️
       const itemHtml = `
         <div class="mission-card ${doneClass}">
           <div class="mc-icon">${iconContent}</div>
