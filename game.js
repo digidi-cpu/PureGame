@@ -815,35 +815,29 @@ async loadMatchHistory(isLoadMore = false) {
         btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
       }
 
-      // 👇 1. СОЗДАЕМ ПРОВЕРКУ ДЛЯ ИКОНКИ 👇
+      // 👇 ПЕРЕХВАТ И ЗАМЕНА ИКОНОК 👇
       let iconContent = m.icon;
       if (m.icon === 'icon_up_gradient') {
-          // Иконка повышения уровня (стрелка)
           iconContent = '<i class="mission-icon-up"></i>';
       } else if (m.icon === 'coin_pts') {
-          // Неоновая монета PTS
           iconContent = '<i class="icon-coin-pts-inline"></i>';
       } else if (m.icon === 'assets/gamepad.svg') {
-          // Наш неоновый геймпад
           iconContent = '<i class="mission-icon-gamepad"></i>';
       } else if (m.icon === '🏆' || m.icon === 'assets/trophy.svg') {
-          // Перехватываем кубок и вставляем неоновый SVG
           iconContent = '<i class="mission-icon-trophy"></i>';
       } else if (m.icon === '👑' || m.icon === 'assets/winner.svg') {
-          // Перехватываем корону и вставляем неоновый winner.svg
           iconContent = '<i class="mission-icon-winner"></i>';
       } else if (m.icon === '👨‍💻' || m.icon === 'assets/creator.svg') {
-          // 👇 НОВОЕ: Перехватываем эмодзи программиста и вставляем creator.svg 👇
           iconContent = '<i class="mission-icon-creator"></i>';
+      } else if (m.icon === '📢' || m.icon === 'assets/speaker.svg') {
+          // 👇 НОВОЕ: Перехватываем рупор и вставляем speaker.svg 👇
+          iconContent = '<i class="mission-icon-speaker"></i>';
       } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
-          // Остальные файлы "как есть" с сохранением всех их родных цветов
           iconContent = `<img src="${m.icon}" alt="icon" class="mission-custom-icon">`;
       } else {
-          // Текстовые эмодзи
           iconContent = `<span class="mission-emoji">${m.icon}</span>`;
       }
 
-      // 👇 2. ВСТАВЛЯЕМ iconContent ВМЕСТО m.icon 👇
       const itemHtml = `
         <div class="mission-card ${doneClass}">
           <div class="mc-icon">${iconContent}</div>
