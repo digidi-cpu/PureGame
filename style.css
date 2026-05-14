@@ -1370,15 +1370,15 @@ body {
 /* Класс для иконки UP (теперь в едином неоновом стиле с coin) */
 .mission-icon-up {
     display: inline-block;
-    width: 24px;
-    height: 24px;
-    vertical-align: middle;
-    flex-shrink: 0;
     
-    /* 1. Убрали градиент, поставили неоновый зеленый цвет */
+    /* 👇 Меняем 24px на 1.2em и выравниваем точно так же, как остальные иконки 👇 */
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: -0.2em;
+    
+    flex-shrink: 0;
     background-color: #39FF14; 
     
-    /* Используем твой up.svg как трафарет */
     -webkit-mask-image: url('assets/up.svg');
     mask-image: url('assets/up.svg');
     -webkit-mask-size: contain;
@@ -1388,7 +1388,6 @@ body {
     -webkit-mask-position: center;
     mask-position: center;
     
-    /* 2. Добавили фирменное неоновое свечение */
     filter: drop-shadow(0 0 5px rgba(57, 255, 20, 0.6));
 }
 
