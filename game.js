@@ -802,6 +802,9 @@ async loadMatchHistory(isLoadMore = false) {
 
       if (m.status === 'claimed') {
         btnHtml = `<button class="mc-btn mc-btn--done" disabled>✔</button>`;
+      } else if (m.id === 'daily_ad') {
+        // 👇 НОВОЕ: Специальная кнопка WATCH для рекламы 👇
+        btnHtml = `<button class="mc-btn mc-btn--claim" style="background: #00f3ff; color: #000;" onclick="window.gameSandbox.watchDailyAd('${m.dbId}')">WATCH</button>`;
       } else if (m.actionUrl) {
         btnHtml = `
           <div style="display: flex; gap: 6px;">
@@ -830,8 +833,10 @@ async loadMatchHistory(isLoadMore = false) {
       } else if (m.icon === '👨‍💻' || m.icon === 'assets/creator.svg') {
           iconContent = '<i class="mission-icon-creator"></i>';
       } else if (m.icon === '📢' || m.icon === 'assets/speaker.svg') {
-          // 👇 НОВОЕ: Перехватываем рупор и вставляем speaker.svg 👇
           iconContent = '<i class="mission-icon-speaker"></i>';
+      } else if (m.icon === 'assets/tv.svg') {
+          // 👇 НОВОЕ: Иконка рекламы 👇
+          iconContent = '<i class="mission-icon-ad"></i>';
       } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
           iconContent = `<img src="${m.icon}" alt="icon" class="mission-custom-icon">`;
       } else {
