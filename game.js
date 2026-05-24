@@ -888,6 +888,94 @@ async claimMission(dbId) {
     }
   }
 
+  // ==========================================
+  // РЕКЛАМНАЯ МИССИЯ (ADSGRAM)
+  // ==========================================
+  async watchDailyAd(dbId) {
+    // 1. Проверяем, не запущена ли уже реклама, чтобы избежать спама кликами
+    if (this._adBusy) return;
+    this._adBusy = true;
+
+    // Опционально: можешь добавить легкую вибрацию
+    if (this.tg?.HapticFeedback) {
+      this.tg.HapticFeedback.impactOccurred("light");
+    }
+
+    try {
+      // 2. Инициализируем плеер Adsgram
+      // ВСТАВЬ СЮДА СВОЙ РЕАЛЬНЫЙ blockId от Adsgram
+      const AdController = window.Adsgram?.init({ blockId: "21334" }); 
+      
+      if (!AdController) {
+        this.showToast("AdsGram not loaded. Try later.");
+        return;
+      }
+
+      let rewardHandled = false;
+
+      // 3. Коллбэк УСПЕХА (игрок досмотрел)
+      const onReward = async () => {
+        if (rewardHandled) return;
+        rewardHandled = true;
+
+        try {
+          // Вызываем твой стандартный эндпоинт клейма миссий!
+          // Сервер сам начислит очки и запишет выполнение
+          const res = await window.API.claimMission(dbId);
+
+          if (res && res.success) {
+            if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred("success");
+            
+            // Если у тебя есть функция всплывающего текста, вызываем её
+            if (typeof this.showToast === 'function') {
+              this.showToast(`+${res.reward_pts} PTS!`);
+            }
+
+            // Очищаем кэш миссий и перерисовываем UI
+            this.cache.missionsTime = 0; 
+            await this.loadMissions();
+            
+            // Если нужно, обновляем баланс на экране профиля
+            if (typeof this.syncProfile === 'function') {
+                this.syncProfile();
+            }
+          } else {
+             this.showToast("Reward already claimed or error.");
+          }
+        } catch (e) {
+          console.error("Ad claim error:", e);
+          this.showToast("Reward sync failed.");
+        }
+      };
+
+      // 4. Коллбэк ОШИБКИ (нет рекламы или игрок закрыл)
+      const onError = () => {
+        if (rewardHandled) return;
+        this.showToast("Ad unavailable. Try later.");
+      };
+
+      // Подписываемся на события
+      AdController.addEventListener("onReward", onReward);
+      AdController.addEventListener("onError", onError);
+
+      // 5. ПОКАЗЫВАЕМ РЕКЛАМУ И ОБЯЗАТЕЛЬНО ЧИСТИМ СЛУШАТЕЛЕЙ
+      try {
+        await AdController.show();
+      } finally {
+        // Защита от багов Adsgram: удаляем слушатели, чтобы не сработали дважды
+        AdController.removeEventListener("onReward", onReward);
+        AdController.removeEventListener("onError", onError);
+      }
+
+    } catch (e) {
+      console.error("AdsGram Error:", e);
+      this.showToast("Try later");
+    } finally {
+      // Снимаем блокировку кнопки
+      this._adBusy = false;
+    }
+  }
+
   openMissionLink(url) {
     window.TelegramAPI?.vibrate('light');
     if (window.Telegram?.WebApp?.openTelegramLink) {
