@@ -146,7 +146,7 @@ class GameSandbox {
     this.cache.leaderboardTime = 0;
   }
 
-bindUI() {
+  bindUI() {
     document.getElementById("startGameBtn").addEventListener("click", () => {
       window.TelegramAPI?.vibrate('medium'); 
       this.startGame();
@@ -162,7 +162,6 @@ bindUI() {
       this.startGame();
     });
 
-    // 👇 ДОБАВЛЯЕМ ОБРАБОТЧИК ДЛЯ КНОПКИ HOME СЮДА 👇
     document.getElementById("homeBtn")?.addEventListener("click", () => {
       window.TelegramAPI?.vibrate('light'); 
       document.getElementById("resultModal").style.display = "none";
@@ -178,7 +177,6 @@ bindUI() {
       const homeTab = document.querySelector('.nav-btn[data-tab="home"]');
       if (homeTab) homeTab.click();
     });
-    // 👆 ==================================== 👆
 
     const loadMoreBtn = document.getElementById("historyLoadMore");
     if (loadMoreBtn) {
@@ -200,7 +198,7 @@ bindUI() {
     }
   }
 
-async startGame() {
+  async startGame() {
     const startBtn = document.getElementById("startGameBtn");
     if (startBtn) startBtn.style.opacity = "0.5";
 
@@ -210,9 +208,9 @@ async startGame() {
       this.equationsPool = sessionData.equations || [];
       
       // 👇 НОВЫЕ ДАННЫЕ ДЛЯ АНТИЧИТА 👇
-      this.serverComets = sessionData.comets || []; // Получаем карту спавна комет от сервера
-      this.sessionLog = [];                         // Очищаем лог кликов для новой игры
-      this.equationsServed = 0;                     // Сбрасываем счетчик выданных примеров
+      this.serverComets = sessionData.comets || [];
+      this.sessionLog = [];                         
+      this.equationsServed = 0;                     
 
       document.getElementById("startScreen").classList.remove("active");
       document.getElementById("gameScreen").classList.add("active");
@@ -274,7 +272,6 @@ async startGame() {
                 this.isWarmup = false;
                 
                 // 👇 ЗАПУСК СЕКУНДОМЕРА ДЛЯ ЛОГА АНТИЧИТА 👇
-                // Начинаем отсчет миллисекунд ровно в тот момент, когда исчезает надпись START!
                 this.gameStartTime = performance.now(); 
                 
                 this.startTimer();
@@ -336,7 +333,7 @@ async startGame() {
     document.getElementById("multiplier").textContent = this.multiplier;
   }
 
-async syncProfile() {
+  async syncProfile() {
     try {
       const stats = await window.API.getMyStats();
       if (stats && stats.exists) {
@@ -367,13 +364,9 @@ async syncProfile() {
         const profileTotalPointsLarge = document.getElementById("profileTotalPointsLarge");
         if (profileTotalPointsLarge) profileTotalPointsLarge.textContent = (stats.total_score || 0).toLocaleString();
 
-        // --- УРОВНИ ---
-        
-        // 👇 Вернули обновление надписи под аватаркой профиля 👇
         const profileLevel = document.getElementById("profileLevel");
         if (profileLevel) profileLevel.textContent = `LEVEL ${stats.level || 1}`;
 
-        // Обновление уровня на главном экране (оставляем как было)
         const mainPageLevel = document.getElementById("mainPageLevel");
         if (mainPageLevel) mainPageLevel.textContent = `LEVEL ${stats.level || 1}`;
 
@@ -390,7 +383,6 @@ async syncProfile() {
             profileName.textContent = window.TelegramAPI.initDataUnsafe.user.first_name;
         }
 
-        // 👇 НОВАЯ ЛОГИКА ШКАЛЫ ПРОФИЛЯ 👇
         const currentLvl = stats.level || 1;
         const score = stats.total_score || 0;
         const step = this.gameConfig.level_step || 500; 
@@ -399,23 +391,16 @@ async syncProfile() {
         const lvlNextEl = document.getElementById("lvlNext");
         const levelProgressFill = document.getElementById("levelProgressFill");
         
-        // Записываем цифры по краям
         if (lvlCurrentEl) lvlCurrentEl.textContent = currentLvl;
         if (lvlNextEl) lvlNextEl.textContent = currentLvl + 1;
 
-        // Заполняем саму полоску
         if (levelProgressFill) {
           const currentLevelStart = (currentLvl - 1) * step;
           const pointsInCurrentLevel = score - currentLevelStart;
-          
-          // Вычисляем процент заполнения (от 0 до 100)
           const percent = Math.min(100, Math.max(0, (pointsInCurrentLevel / step) * 100));
-          
           levelProgressFill.style.width = `${percent}%`;
         }
-        // 👆 ================================ 👆
 
-        // 👇 ЛОГИКА ПОКУПКИ ЭНЕРГИИ И ЛИМИТОВ 👇
         const buyBtn = document.getElementById("buyEnergyBtn");
         const buyHint = document.getElementById("buyEnergyHint");
         const maxHint = document.getElementById("mainPageMaxHint"); 
@@ -423,17 +408,14 @@ async syncProfile() {
         const limit = stats.daily_energy_limit || 1;
         const bought = stats.energy_bought_today || 0;
         
-        // Обновляем текст мелким шрифтом "Max X purchase / day"
         if (maxHint) {
             maxHint.textContent = `Max ${limit} purchase${limit > 1 ? 's' : ''} / day`;
         }
 
-        // Убираем "Loading limits..." и ставим реальные цифры
         if (buyHint) {
           buyHint.textContent = `Purchases available today: ${limit - bought} / ${limit}`;
         }
         
-        // Блокируем кнопку, если лимит на сегодня исчерпан
         if (bought >= limit) {
           if (buyBtn) { 
               buyBtn.disabled = true; 
@@ -447,7 +429,6 @@ async syncProfile() {
               buyBtn.style.cursor = "pointer"; 
           }
         }
-        // 👆 ===================================== 👆
 
         this.loadMatchHistory(false);
         this.loadLeaderboard();
@@ -458,32 +439,24 @@ async syncProfile() {
     }
   }
 
-async buyEnergy() {
+  async buyEnergy() {
     window.TelegramAPI?.vibrate('medium');
     const btn = document.getElementById("buyEnergyBtn");
     if (btn) btn.innerHTML = "WAIT...";
 
     try {
-      // 1. Просим сервер создать чек
       const res = await window.API.getEnergyInvoice();
 
       if (res && res.invoiceLink) {
-        // 2. Открываем окно оплаты Telegram
         if (window.Telegram?.WebApp?.openInvoice) {
           window.Telegram.WebApp.openInvoice(res.invoiceLink, async (status) => {
             
             if (status === 'paid') {
-              // ИГРОК ОПЛАТИЛ! 
-              // Меняем текст кнопки, чтобы игрок видел процесс синхронизации
               if (btn) btn.innerHTML = "SYNCING... ⏳";
               
-              // Даем серверу ровно 2 секунды на обработку вебхука от Telegram
               setTimeout(async () => {
-                // Сбрасываем кэш и запрашиваем реальные данные из базы
                 this.invalidateCache();
                 await this.syncProfile(); 
-                
-                // Красивый пупыш +3 появится только тогда, когда данные реально обновились
                 this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "+3 ⚡");
               }, 2000); 
 
@@ -491,7 +464,6 @@ async buyEnergy() {
               alert("Payment failed.");
               if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
             } else {
-              // Если игрок просто закрыл окно оплаты (status === 'cancelled' или 'pending')
               if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
             }
 
@@ -507,7 +479,7 @@ async buyEnergy() {
     }
   }
 
-async loadMatchHistory(isLoadMore = false) {
+  async loadMatchHistory(isLoadMore = false) {
     const historyList = document.getElementById("historyList");
     const loadMoreBtn = document.getElementById("historyLoadMore");
     if (!historyList) return;
@@ -543,7 +515,6 @@ async loadMatchHistory(isLoadMore = false) {
       let itemHtml = "";
 
       if (ticketsEarned > 0) {
-        // 👇 ОСОБАЯ КАРТОЧКА С ТВОЕЙ ИКОНКОЙ БИЛЕТА ВМЕСТО ЭМОДЗИ 👇
         itemHtml = `
           <div class="history-item special-ticket-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%); border-left: 3px solid #ffd700;">
             <div class="h-left" style="display: flex; flex-direction: column; gap: 4px;">
@@ -563,7 +534,6 @@ async loadMatchHistory(isLoadMore = false) {
           </div>
         `;
       } else {
-        // 👇 СТАНДАРТНАЯ КАРТОЧКА 👇
         itemHtml = `
           <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div class="h-left" style="display: flex; flex-direction: column; gap: 4px;">
@@ -591,7 +561,6 @@ async loadMatchHistory(isLoadMore = false) {
     }
   }
 
-// ЗАГРУЗКА ТОП-10 (С КЭШИРОВАНИЕМ)
   async loadLeaderboard() {
     const list = document.getElementById("leaderboardList"); 
     if (!list) return;
@@ -599,7 +568,6 @@ async loadMatchHistory(isLoadMore = false) {
     const now = Date.now();
     let data = this.cache.leaderboard;
 
-    // Если кэш пустой или старше 2 минут (120000 мс) — грузим заново
     if (!data || now - this.cache.leaderboardTime > 120000) {
       list.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Loading Top 10... 🏆</div>`;
       try {
@@ -622,12 +590,8 @@ async loadMatchHistory(isLoadMore = false) {
     const myId = window.TelegramAPI?.initDataUnsafe?.user?.id ? `tg_${window.TelegramAPI.initDataUnsafe.user.id}` : null;
 
     data.items.forEach(player => {
-      
-      // === НОВАЯ ЛОГИКА МЕДАЛЕЙ (CSS-МАСКИ) ===
-      // По умолчанию показываем номер с решеткой (например, #4)
       let rankDisplay = `<span style="color: rgba(255,255,255,0.4); font-size: 1.1rem; font-weight: 900; font-family: 'Orbitron', monospace;">#${player.rank}</span>`;
       
-      // Если это топ-3, подменяем на картинки
       if (player.rank === 1) rankDisplay = `<img src="assets/medal1.svg?v=3" class="lb-medal" alt="1">`;
       if (player.rank === 2) rankDisplay = `<img src="assets/medal2.svg?v=3" class="lb-medal" alt="2">`;
       if (player.rank === 3) rankDisplay = `<img src="assets/medal3.svg?v=3" class="lb-medal" alt="3">`;
@@ -655,9 +619,6 @@ async loadMatchHistory(isLoadMore = false) {
     });
   }
 
-// ==========================================
-  // ЕЖЕДНЕВНЫЙ ВХОД (ФОРМАТ MISSION CARD)
-  // ==========================================
   async loadDailyCheckin() {
     const container = document.querySelector(".missions-list");
     if (!container) return;
@@ -678,31 +639,27 @@ async loadMatchHistory(isLoadMore = false) {
 
     if (!data || !data.rewards) return;
 
-    // 1. Формируем 7 тонких неоновых линий прогресса
     let dotsHtml = '<div class="streak-dots">';
     for (let i = 0; i < 7; i++) {
       let dotClass = "streak-dot";
       if (i < data.streak) {
-         dotClass += " streak-dot--done"; // Пройденные дни (зеленые)
+         dotClass += " streak-dot--done"; 
       } else if (i === data.streak && data.canClaim) {
-         dotClass += " streak-dot--current"; // Текущий день (золотой пульс)
+         dotClass += " streak-dot--current"; 
       }
       dotsHtml += `<div class="${dotClass}"></div>`;
     }
     dotsHtml += '</div>';
 
-    // 2. Вычисляем текущую награду
     const currentRewardPts = data.canClaim 
         ? data.rewards[data.streak % 7] 
         : data.rewards[Math.max(0, data.streak - 1) % 7];
 
-    // 3. Формируем классы и кнопку (Активная / Выполненная)
     const cardClass = data.canClaim ? "" : "done";
     const btnHtml = data.canClaim 
         ? `<button id="claimDailyBtn" class="mc-btn mc-btn--claim">CLAIM</button>`
         : `<button class="mc-btn mc-btn--done" disabled>✔</button>`;
 
-    // 4. Склеиваем финальную карточку в едином стиле с миссиями
     const checkinBlock = `
       <div class="mission-card daily-checkin-card ${cardClass}">
         <div class="mc-icon"><i class="mission-icon-calendar"></i></div>
@@ -715,12 +672,10 @@ async loadMatchHistory(isLoadMore = false) {
       </div>
     `;
 
-    // Удаляем старый блок, если он был, и вставляем новый в самый верх списка
     const oldBlock = document.querySelector(".daily-checkin-card");
     if (oldBlock) oldBlock.remove();
     container.insertAdjacentHTML('afterbegin', checkinBlock);
 
-    // Вешаем обработчик на кнопку CLAIM
     const claimBtn = document.getElementById("claimDailyBtn");
     if (claimBtn && data.canClaim) {
       claimBtn.addEventListener("click", () => this.claimDailyReward());
@@ -732,20 +687,17 @@ async loadMatchHistory(isLoadMore = false) {
     try {
       const res = await window.API.claimDaily();
       if (res && res.success) {
-        // Минималистичный попап (без лишних слов, только цифры)
         this.showScorePopup(window.innerWidth/2, window.innerHeight/2, `+${res.reward_pts}`);
         if (res.tickets_earned > 0) {
           setTimeout(() => {
             this.showScorePopup(window.innerWidth/2, window.innerHeight/2 + 50, `+${res.tickets_earned} <i class="icon-ticket-inline"></i>`);
             
-            // Запуск анимации билета
             if (typeof window.startWinFlow === 'function') {
                 window.startWinFlow();
             }
           }, 600);
         }
         
-        // Сбрасываем кэш, чтобы обновить UI
         this.invalidateCache();
         this.syncProfile(); 
       }
@@ -753,7 +705,8 @@ async loadMatchHistory(isLoadMore = false) {
       alert("Daily Claim Error: " + (e.reason || e.message || "Already claimed"));
     }
   }
-// ==========================================
+
+  // ==========================================
   // МИССИИ (С КЭШИРОВАНИЕМ И ПРОВЕРКОЙ ВКЛАДКИ)
   // ==========================================
   async loadMissions() {
@@ -778,13 +731,11 @@ async loadMatchHistory(isLoadMore = false) {
 
     if (!data || !data.missions) return;
 
-    // Очищаем список перед рендером
     missionsList.innerHTML = "";
     
     const activeTabBtn = document.querySelector(".custom-tabs .c-tab.active");
     const filterType = activeTabBtn && activeTabBtn.textContent === "DAILY" ? "daily" : "one_time";
 
-    // 👇 ВЫЗЫВАЕМ КАЛЕНДАРЬ ТОЛЬКО ВО ВКЛАДКЕ DAILY 👇
     if (filterType === "daily") {
       this.loadDailyCheckin();
     }
@@ -803,7 +754,7 @@ async loadMatchHistory(isLoadMore = false) {
       if (m.status === 'claimed') {
         btnHtml = `<button class="mc-btn mc-btn--done" disabled>✔</button>`;
       } else if (m.id === 'daily_ad') {
-        // 👇 НОВОЕ: Специальная кнопка WATCH для рекламы 👇
+        // 👇 Кнопка WATCH для рекламы 👇
         btnHtml = `<button class="mc-btn mc-btn--claim" style="background: #00f3ff; color: #000;" onclick="window.gameSandbox.watchDailyAd('${m.dbId}')">WATCH</button>`;
       } else if (m.actionUrl) {
         btnHtml = `
@@ -818,7 +769,6 @@ async loadMatchHistory(isLoadMore = false) {
         btnHtml = `<div style="font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);">${Math.min(m.progress, m.target)} / ${m.target}</div>`;
       }
 
-      // 👇 ПЕРЕХВАТ И ЗАМЕНА ИКОНОК 👇
       let iconContent = m.icon;
       if (m.icon === 'icon_up_gradient') {
           iconContent = '<i class="mission-icon-up"></i>';
@@ -835,7 +785,7 @@ async loadMatchHistory(isLoadMore = false) {
       } else if (m.icon === '📢' || m.icon === 'assets/speaker.svg') {
           iconContent = '<i class="mission-icon-speaker"></i>';
       } else if (m.icon === 'assets/tv.svg') {
-          // 👇 НОВОЕ: Иконка рекламы 👇
+          // 👇 Иконка рекламы 👇
           iconContent = '<i class="mission-icon-ad"></i>';
       } else if (m.icon.endsWith('.svg') || m.icon.endsWith('.png')) {
           iconContent = `<img src="${m.icon}" alt="icon" class="mission-custom-icon">`;
@@ -857,24 +807,22 @@ async loadMatchHistory(isLoadMore = false) {
     });
   }
 
-async claimMission(dbId) {
+  async claimMission(dbId) {
     window.TelegramAPI?.vibrate('medium');
     try {
       const result = await window.API.claimMission(dbId);
       if (result && result.success) {
-        this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, `+${result.reward_pts} PTS`);
+        this.showScorePopup(window.innerWidth/2, window.innerHeight/2, `+${result.reward_pts} PTS`);
         if (result.tickets_earned > 0) {
           setTimeout(() => {
-            this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2 + 50, `+${result.tickets_earned} <i class="icon-ticket-inline"></i>`);
+            this.showScorePopup(window.innerWidth/2, window.innerHeight/2 + 50, `+${result.tickets_earned} <i class="icon-ticket-inline"></i>`);
             
-            // 👇 ДОБАВЛЕНО: Запуск анимации билета 👇
             if (typeof window.startWinFlow === 'function') {
                 window.startWinFlow();
             }
           }, 600);
         }
         
-        // Сбрасываем кэш, чтобы загрузить свежие миссии
         this.invalidateCache();
         this.syncProfile();
       }
@@ -892,86 +840,71 @@ async claimMission(dbId) {
   // РЕКЛАМНАЯ МИССИЯ (ADSGRAM)
   // ==========================================
   async watchDailyAd(dbId) {
-    // 1. Проверяем, не запущена ли уже реклама, чтобы избежать спама кликами
     if (this._adBusy) return;
     this._adBusy = true;
 
-    // Опционально: можешь добавить легкую вибрацию
-    if (this.tg?.HapticFeedback) {
-      this.tg.HapticFeedback.impactOccurred("light");
-    }
+    window.TelegramAPI?.vibrate('light');
 
     try {
-      // 2. Инициализируем плеер Adsgram
+      // Инициализируем плеер Adsgram
       // ВСТАВЬ СЮДА СВОЙ РЕАЛЬНЫЙ blockId от Adsgram
       const AdController = window.Adsgram?.init({ blockId: "21334" }); 
       
       if (!AdController) {
-        this.showToast("AdsGram not loaded. Try later.");
+        this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "AdsGram loading...");
+        this._adBusy = false;
         return;
       }
 
       let rewardHandled = false;
 
-      // 3. Коллбэк УСПЕХА (игрок досмотрел)
+      // Коллбэк УСПЕХА
       const onReward = async () => {
         if (rewardHandled) return;
         rewardHandled = true;
 
         try {
-          // Вызываем твой стандартный эндпоинт клейма миссий!
-          // Сервер сам начислит очки и запишет выполнение
           const res = await window.API.claimMission(dbId);
 
           if (res && res.success) {
-            if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred("success");
+            window.TelegramAPI?.vibrate('success');
             
-            // Если у тебя есть функция всплывающего текста, вызываем её
-            if (typeof this.showToast === 'function') {
-              this.showToast(`+${res.reward_pts} PTS!`);
-            }
+            this.showScorePopup(window.innerWidth/2, window.innerHeight/2, `+${res.reward_pts} PTS!`);
 
-            // Очищаем кэш миссий и перерисовываем UI
-            this.cache.missionsTime = 0; 
+            this.invalidateCache(); 
             await this.loadMissions();
+            this.syncProfile();
             
-            // Если нужно, обновляем баланс на экране профиля
-            if (typeof this.syncProfile === 'function') {
-                this.syncProfile();
-            }
           } else {
-             this.showToast("Reward already claimed or error.");
+             this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "Reward claimed");
           }
         } catch (e) {
           console.error("Ad claim error:", e);
-          this.showToast("Reward sync failed.");
+          this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "Sync failed");
         }
       };
 
-      // 4. Коллбэк ОШИБКИ (нет рекламы или игрок закрыл)
+      // Коллбэк ОШИБКИ
       const onError = () => {
         if (rewardHandled) return;
-        this.showToast("Ad unavailable. Try later.");
+        this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "Ad unavailable");
       };
 
-      // Подписываемся на события
       AdController.addEventListener("onReward", onReward);
       AdController.addEventListener("onError", onError);
 
-      // 5. ПОКАЗЫВАЕМ РЕКЛАМУ И ОБЯЗАТЕЛЬНО ЧИСТИМ СЛУШАТЕЛЕЙ
+      // ПОКАЗЫВАЕМ РЕКЛАМУ И ЧИСТИМ СЛУШАТЕЛЕЙ
       try {
         await AdController.show();
       } finally {
-        // Защита от багов Adsgram: удаляем слушатели, чтобы не сработали дважды
         AdController.removeEventListener("onReward", onReward);
         AdController.removeEventListener("onError", onError);
       }
 
     } catch (e) {
       console.error("AdsGram Error:", e);
-      this.showToast("Try later");
+      this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "Try later");
     } finally {
-      // Снимаем блокировку кнопки
       this._adBusy = false;
     }
   }
@@ -984,7 +917,6 @@ async claimMission(dbId) {
        window.open(url, '_blank');
     }
     
-    // Сбрасываем кэш, чтобы после возвращения миссия обновилась
     setTimeout(() => {
       this.invalidateCache();
       this.loadMissions();
@@ -1026,12 +958,10 @@ async claimMission(dbId) {
     setTimeout(() => app.classList.remove(cls), 350);
   }
 
-showScorePopup(x, y, textHtml) {
+  showScorePopup(x, y, textHtml) {
     const el = document.createElement("div");
-    // Я добавил 'display: flex; align-items: center; gap: 5px;' для идеального выравнивания
     el.style.cssText = `position:fixed;left:${x}px;top:${y}px;transform:translate(-50%,-50%);font-size:1.5em;font-weight:900;color:#ffd700;text-shadow:0 0 10px #ffd700;z-index:2500;pointer-events:none;font-family:'Orbitron',monospace;opacity:0;transition:all 0.6s ease-out; display: flex; align-items: center; gap: 5px;`;
     
-    // Меняем textContent на innerHTML
     el.innerHTML = textHtml; 
     
     document.body.appendChild(el);
@@ -1048,7 +978,7 @@ showScorePopup(x, y, textHtml) {
 
   countType(type) { let n = 0; this.active.forEach(e => (n += e.type === type ? 1 : 0)); return n; }
 
-startMainLoop() {
+  startMainLoop() {
     const loop = (now) => {
       if (!this.isPlaying) return;
       this.fx.update(); this.fx.draw();
@@ -1101,28 +1031,25 @@ startMainLoop() {
         if (this.spawnPlanet()) this.lastPlanetSpawnAt = now; 
       }
 
-      // ✂️ Рандомный спавн комет отсюда удален навсегда! ✂️
-
       this.rafId = requestAnimationFrame(loop);
     };
     this.rafId = requestAnimationFrame(loop);
   }
 
-spawnRocket() {
+  spawnRocket() {
     const id = this.idSeq++; 
     
     let example, answer, eqIndex;
     if (this.equationsPool && this.equationsPool.length > 0) {
-      const eq = this.equationsPool.shift(); // 👈 Берем с начала массива (shift), чтобы индексы совпали с сервером
+      const eq = this.equationsPool.shift(); 
       example = eq.q; answer = eq.a;
-      eqIndex = this.equationsServed++; // 👈 Увеличиваем счетчик выданных примеров
+      eqIndex = this.equationsServed++; 
     } else {
       const a = randInt(1, 9); const b = randInt(1, 9);
       example = `${a}+${b}`; answer = a + b;
       eqIndex = 999;
     }
 
-    // 👇 СЕРВЕРНЫЙ СПАВН КОМЕТ 👇
     if (this.serverComets) {
       const scheduledComet = this.serverComets.find(c => c.index === eqIndex);
       if (scheduledComet && this.countType("bonus") < 1) {
@@ -1155,20 +1082,18 @@ spawnRocket() {
     });
     
     document.getElementById("fullscreenGameArea").appendChild(el);
-    // 👇 Сохраняем eqIndex и example 👇
     this.active.set(id, { id, type:"rocket", node: el, answer, lane, x: xStart, y: yStart, vy, scale: 1, solved:false, eqIndex, example });
     this.correctAnswers.set(id, answer);
     return true;
   }
 
-spawnPlanet() {
+  spawnPlanet() {
     const id = this.idSeq++; 
     const lane = this.pickFreeLane(); 
     if (lane === null) return false;
 
     let answer, isBomb = false, contentHtml = '';
 
-    // 👇 1. УМНЫЙ ПОИСК "ГОЛОДНЫХ" РАКЕТ 👇
     const hasMatchingPlanet = (ans) => { 
       for (const e of this.active.values()) { 
         if (e.type === "planet" && e.answer !== undefined && equalsNum(e.answer, ans)) return true; 
@@ -1176,18 +1101,15 @@ spawnPlanet() {
       return false; 
     };
     
-    // Находим правильные ответы, которых сейчас НЕТ на экране
     const starvingAnswers = [...this.correctAnswers.values()].filter(a => !hasMatchingPlanet(a));
 
-    // 👇 2. ИДЕАЛЬНЫЙ БАЛАНС (ВЕРСИЯ 85%) 👇
     const rand = Math.random();
 
     if (rand < 0.30) { 
-      // 30% шанс на обманку-бомбу 
       const pool = [...this.correctAnswers.values()];
       if (pool.length > 0) {
           const base = pool[Math.floor(Math.random() * pool.length)];
-          const offset = Number.isInteger(base) ? 1 : 0.1; // Для целых +-1, для дробей +-0.1
+          const offset = Number.isInteger(base) ? 1 : 0.1; 
           answer = base + (Math.random() < 0.5 ? offset : -offset);
           if (!Number.isInteger(answer)) answer = Math.round(answer * 10) / 10;
       } else {
@@ -1196,18 +1118,14 @@ spawnPlanet() {
       isBomb = ![...this.correctAnswers.values()].some(v => equalsNum(v, answer)); 
       
     } else {
-      // 70% шанс выдать правильный ответ
       if (starvingAnswers.length > 0 && Math.random() < 0.85) {
-        // 👈 ИЗ НИХ 85% ШАНС ПОМОЧЬ "ГОЛОДНОЙ" РАКЕТЕ 👈
         answer = starvingAnswers[Math.floor(Math.random() * starvingAnswers.length)];
       } else {
-        // Иначе дублируем любой существующий правильный ответ для массовки
         const pool = [...this.correctAnswers.values()];
         answer = pool.length ? pool[Math.floor(Math.random() * pool.length)] : randInt(1, 30);
       }
     }
 
-    // 👇 3. ОТРИСОВКА И АНИМАЦИЯ 👇
     if (isBomb) {
       contentHtml = `<div class="planet-svg-wrap bomb-asteroid">${BOMB_ASTEROID_SVG}</div>`;
     } else {
@@ -1240,11 +1158,10 @@ spawnPlanet() {
     return true;
   }
 
- spawnComet(eqIndex, cometType) {
+  spawnComet(eqIndex, cometType) {
     const id = this.idSeq++;
     const area = document.getElementById("fullscreenGameArea");
     
-    // Полет оставляем рандомным (визуал на античит не влияет)
     const isFromLeft = Math.random() < 0.5;
     let xStart, yStart, xEnd, yEnd;
 
@@ -1259,8 +1176,7 @@ spawnPlanet() {
     const angleRad = Math.atan2(yEnd - yStart, xEnd - xStart);
     const angleDeg = (angleRad * (180 / Math.PI)) - 135;
 
-    // 👇 ВЫБИРАЕМ ИКОНКУ ПО СЕРВЕРНОМУ ТИПУ 👇
-    let svg = FREEZE_SVG; // По умолчанию лед
+    let svg = FREEZE_SVG;
     if (cometType === 'toxic') svg = COMET_TOXIC_SVG;
     else if (cometType === 'solar') svg = COMET_SOLAR_SVG;
     else if (cometType === 'magnet') svg = MAGNET_SVG;
@@ -1276,14 +1192,12 @@ spawnPlanet() {
       if (this.isWarmup) return;
       
       if (cometType === 'magnet') {
-        // 👇 ПИШЕМ КЛИК В ЛОГ АНТИЧИТА (Для магнита) 👇
         this.logAction('magnet', null, eqIndex, 'MAGNET');
         
         this.magnetUntil = performance.now() + 1000;
         this.showScorePopup(this.gameSize.w/2, this.gameSize.h/2, "🧲 MAGNET!"); 
         this.fadeAndRemove(id); 
       } else {
-        // Остальные кометы пойдут в activateFreeze, там мы их и запишем в лог
         this.activateFreeze(id, cometType); 
       }
     });
@@ -1294,7 +1208,6 @@ spawnPlanet() {
     const vx = (xEnd - xStart) / duration;
     const vy = (yEnd - yStart) / duration;
   
-    // 👇 СОХРАНЯЕМ eqIndex 👇
     this.active.set(id, { id, type: "bonus", cometType: cometType, node: el, x: xStart, y: yStart, vx, vy, scale: 1, solved: false, eqIndex: eqIndex });
   }
 
@@ -1320,12 +1233,10 @@ spawnPlanet() {
     }
   }
 
-activateFreeze(id, type) {
+  activateFreeze(id, type) {
     const e = this.active.get(id);
     if (!e) return;
 
-    // 👇 ПИШЕМ КЛИК ПО КОМЕТЕ В ЛОГ АНТИЧИТА 👇
-    // Передаем тип кометы, null вместо ответа, индекс и понятное название
     this.logAction(type, null, e.eqIndex, `BONUS_${type.toUpperCase()}`);
 
     const durations = this.gameConfig?.freeze_durations || { ice: 5000, toxic: 3500, solar: 8000 };
@@ -1360,23 +1271,19 @@ activateFreeze(id, type) {
     if (r) { r.scale = 1.08; r.node.classList.add("selected"); this.selectedRocket = id; }
   }
 
-tryAnswer(planetId) {
+  tryAnswer(planetId) {
     if (this.selectedRocket === null) return;
     const p = this.active.get(planetId); 
     const r = this.active.get(this.selectedRocket);
     if (!p || !r) return;
 
-    // 👇 ПИШЕМ КЛИК В ЛОГ АНТИЧИТА 👇
-    // Передаем тип, выбранный ответ, индекс примера и текст примера
     this.logAction(p.isBomb ? 'bomb' : 'planet', p.answer, r.eqIndex, r.example);
 
-    // Если это бомба — взрываем и выходим
     if (p.isBomb) { 
       this.applyBomb(planetId); 
       return; 
     }
 
-    // Если ответ правильный
     if (equalsNum(p.answer, r.answer)) {
       const rX = r.x + r.node.offsetWidth / 2; 
       const rY = r.y + r.node.offsetHeight / 2;
@@ -1389,7 +1296,6 @@ tryAnswer(planetId) {
       
       this.applyCorrect(planetId);
     } else {
-      // Если ответ неверный
       this.applyWrong(planetId);
     }
   }
@@ -1443,7 +1349,7 @@ tryAnswer(planetId) {
 
   removeEntity(id) { const e = this.active.get(id); if (!e) return; e.node?.remove(); this.active.delete(id); if (e.type === "rocket") this.correctAnswers.delete(id); }
 
-async endGame() {
+  async endGame() {
     this.isPlaying = false; 
     clearInterval(this.timerId); 
     cancelAnimationFrame(this.rafId);
@@ -1456,19 +1362,15 @@ async endGame() {
     document.getElementById("finalScore").textContent = "Calculating...";
     if (hintEl) hintEl.textContent = "Syncing with server...";
     
-    // 1. Сначала показываем окно
     document.getElementById("resultModal").style.display = "flex";
 
-    // 2. МАГИЯ ЗДЕСЬ: Сбрасываем полоску ВНУТРИ уже открытого окна
     if (fillEl) {
       fillEl.style.transition = "none"; 
       fillEl.style.width = "0%";
-      // Эта команда заставляет браузер принудительно перерисовать элемент (Forced Reflow)
       void fillEl.offsetWidth; 
     }
 
     try {
-      // 👇 МАГИЯ УЛЕТАЕТ НА СЕРВЕР: Передаем this.sessionLog третьим аргументом 👇
       const result = await window.API.sessionFinish(this.currentSessionId, this.score, this.sessionLog);
 
       if (result.success) {
@@ -1476,7 +1378,6 @@ async endGame() {
         
         if (result.is_valid === false) {
           if (hintEl) {
-            // Если сессия признана недействительной, честно пишем об этом
             hintEl.textContent = "⚠️ Result rejected (Anti-cheat)";
             hintEl.style.color = "#ff3333";
           }
@@ -1491,9 +1392,7 @@ async endGame() {
           
           const percent = Math.min(100, Math.max(0, Math.round((balance / tCost) * 100)));
           
-          // 3. Запускаем красивую анимацию
           if (fillEl) {
-            // Небольшая задержка, чтобы глаз успел зацепиться
             setTimeout(() => {
                 fillEl.style.transition = "width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)";
                 fillEl.style.width = `${percent}%`;
@@ -1757,5 +1656,5 @@ async function loadGlobalTickets() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(loadGlobalTickets, 500); // Сделали задержку чуть больше для верности
+  setTimeout(loadGlobalTickets, 500); 
 });
