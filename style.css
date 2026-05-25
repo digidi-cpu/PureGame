@@ -571,12 +571,20 @@ body {
 .mc-title { font-weight: 700; color: #fff; font-size: 0.95rem; margin-bottom: 4px; }
 .mc-reward { font-family: 'Orbitron', monospace; font-size: 0.8rem; color: var(--cosmic-accent); font-weight: 700; }
 .mc-btn {
-  border: none; padding: 10px 18px; border-radius: 10px;
+  border: none; padding: 10px 15px; border-radius: 10px;
   font-family: 'Orbitron', monospace; font-weight: 900; cursor: pointer; transition: transform 0.1s;
+  /* 👇 Задаем минимальную ширину, чтобы WATCH и CLAIM были одинаковыми 👇 */
+  min-width: 95px;
+  text-align: center;
 }
 .mc-btn:active { transform: scale(0.95); }
 .mc-btn--go { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
-.mc-btn--claim { background: var(--cosmic-primary); color: #fff; box-shadow: 0 0 15px rgba(255,107,53,0.4); }
+.mc-btn--claim { 
+  /* 👇 Оранжевый градиент (как у кнопки PLAY). !important перебьет голубой цвет из JS 👇 */
+  background: linear-gradient(135deg, var(--cosmic-primary), var(--rocket-surface)) !important; 
+  color: #fff !important; 
+  box-shadow: 0 5px 15px rgba(255,107,53,0.4); 
+}
 .mc-btn--done { background: rgba(0,0,0,0.3); color: rgba(255,255,255,0.3); cursor: default; }
 
 /* =========================================
