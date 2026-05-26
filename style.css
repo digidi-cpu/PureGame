@@ -595,6 +595,11 @@ body {
 .lb-item {
   display: flex; align-items: center; background: rgba(10,10,26,0.8);
   padding: 12px 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);
+  text-transform: none !important; /* 👈 Отменяет капс для всей строки игрока (для имени и PTS) */
+}
+
+.lb-item div[style*="rgba(255,255,255,0.5)"] {
+  text-transform: uppercase !important; /* 👈 Принудительно возвращает капс для надписи PTS */
 }
 .lb-rank { font-family: 'Orbitron', monospace; font-size: 1.1rem; font-weight: 900; color: rgba(255,255,255,0.3); width: 30px; }
 .lb-avatar { font-size: 1.5rem; margin: 0 15px 0 5px; }
@@ -1815,5 +1820,16 @@ body {
 
 /* Содержимое карточек миссий и ежедневного входа */
 .mission-card, .mc-title, .mc-btn, .streak-dot {
+  text-transform: uppercase !important;
+}
+
+/* 🟢 ДОБАВЬ (или обнови существующий .my-position-sticky): */
+.my-position-sticky {
+  /* ... твои старые стили ... */
+  text-transform: none !important; /* 👈 Отменяет капс для плашки твоего ранга */
+}
+
+/* И сразу возвращаем капс для надписи "YOUR RANK:" на этой плашке */
+.my-pos-label {
   text-transform: uppercase !important;
 }
