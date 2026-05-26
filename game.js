@@ -281,14 +281,20 @@ class GameSandbox {
           setTimeout(tick, 1000);
         });
       });
-    } catch (error) {
+} catch (error) {
       console.error("Start Game Error:", error);
       window.TelegramAPI?.vibrate('error');
-      if (error.message === 'not_enough_energy' || error.reason === 'not_enough_energy') {
+      
+      // 👇 ДОБАВЛЯЕМ ПРОВЕРКУ НА БАН ВОТ СЮДА 👇
+      if (error.message === 'banned' || error.error === 'banned') {
+        alert("⛔ Your account has been suspended for suspicious activity."); 
+      } else if (error.message === 'not_enough_energy' || error.reason === 'not_enough_energy') {
         alert("Not enough energy! Come back tomorrow or buy more."); 
       } else {
         alert("Server error: " + (error.reason || error.message));
       }
+      // 👆 =================================== 👆
+
       document.getElementById("gameScreen").classList.remove("active");
       document.getElementById("startScreen").classList.add("active");
       if (this.startBg) this.startBg.start(); 
