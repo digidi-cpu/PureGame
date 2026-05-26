@@ -614,18 +614,22 @@ body {
 .lb-item.rank-3 { border-color: #cd7f32; background: rgba(205,127,50,0.1); }
 .lb-item.rank-3 .lb-rank { color: #cd7f32; }
 
-/* Твоя позиция (Прилипающий подвал) */
+
 .my-position-sticky {
   position: absolute; left: 20px; right: 20px;
-  /* Поднимаем над нижним меню навигации */
   bottom: calc(env(safe-area-inset-bottom, 20px) + 85px);
   background: linear-gradient(90deg, var(--cosmic-primary), #d63806);
   padding: 15px 20px; border-radius: 16px; display: flex; justify-content: space-between;
   align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.5), 0 0 15px rgba(255,107,53,0.3);
   z-index: 50; border: 1px solid var(--cosmic-accent);
+  text-transform: none !important; /* 👈 Отменяем капс для всей плашки */
 }
 .my-pos-left { display: flex; flex-direction: column; }
-.my-pos-label { font-size: 0.7rem; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; }
+.my-pos-label { 
+  font-size: 0.7rem; color: rgba(255,255,255,0.7); 
+  letter-spacing: 1px; 
+  text-transform: uppercase !important; /* 👈 Принудительно возвращаем капс слову YOUR RANK */
+}
 .my-pos-val { font-family: 'Orbitron', monospace; font-size: 1.2rem; font-weight: 900; color: #fff; }
 .my-pos-right { font-family: 'Orbitron', monospace; font-size: 1.3rem; font-weight: 900; color: var(--cosmic-accent); text-shadow: 0 0 10px rgba(0,0,0,0.5);}
 
@@ -1823,13 +1827,4 @@ body {
   text-transform: uppercase !important;
 }
 
-/* 🟢 ДОБАВЬ (или обнови существующий .my-position-sticky): */
-.my-position-sticky {
-  /* ... твои старые стили ... */
-  text-transform: none !important; /* 👈 Отменяет капс для плашки твоего ранга */
-}
 
-/* И сразу возвращаем капс для надписи "YOUR RANK:" на этой плашке */
-.my-pos-label {
-  text-transform: uppercase !important;
-}
