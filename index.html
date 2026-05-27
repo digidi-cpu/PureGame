@@ -13,7 +13,34 @@
 </head>
 <body>
 
-  <div id="onboardingScreen" class="screen active">
+  <div id="loadingScreen" class="screen active" style="z-index: 5000; background: #0a0a1a;">
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 360px;">
+      
+      <h1 class="title" style="font-size: 3.5rem; margin-bottom: 0;">DIGIT</h1>
+      <div class="subtitle--tournament" style="margin-bottom: 40px; text-shadow: 0 0 10px #ffcc00; letter-spacing: 0.15em;">DO MATH WIN GIFTS</div>
+
+      <div class="orbit-scene" style="transform: scale(0.9); margin-bottom: 50px;">
+        <div class="main-ticket-anchor">
+            <div class="main-ticket"></div>
+        </div>
+        <div class="orbit-wrapper">
+            <div class="nft-item nft0"></div>
+            <div class="nft-item nft1"></div>
+            <div class="nft-item nft2"></div>
+            <div class="nft-item nft3"></div>
+        </div>
+      </div>
+
+      <div style="width: 80%; text-align: center;">
+        <div style="font-family: 'Orbitron', monospace; font-size: 0.8rem; color: var(--cosmic-accent); margin-bottom: 8px;" id="loadingText">SYNCING... 0%</div>
+        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);">
+          <div id="loadingFill" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--cosmic-primary), var(--cosmic-accent)); box-shadow: 0 0 10px var(--cosmic-accent); transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div id="onboardingScreen" class="screen">
     <video autoplay loop muted playsinline class="ob-video-bg">
       <source src="assets/gameplay-demo.mp4" type="video/mp4">
     </video>
@@ -62,7 +89,7 @@
   <div id="startScreen" class="screen">
     <canvas id="startBgCanvas" class="bg-canvas"></canvas>
 
-    <div id="home" class="tab-content active">
+    <div id="home" class="tab-content">
       <div class="header header--tournament">
         <h1>DIGIT</h1>
         <div class="subtitle subtitle--tournament">MATH</div>
@@ -121,7 +148,7 @@
         </div>
         <div class="hero-timer hero-timer--lux">
           <p class="hero-timer__label">Season ends in</p>
-          <span id="heroTimer" class="hero-timer__clock hero-timer__clock--source">90:12:45</span>
+          <span id="heroTimer" class="hero-timer__clock hero-timer--source">90:12:45</span>
           <div class="lux-timer" aria-label="Tournament countdown">
             <div class="lux-unit" aria-label="Days">
               <span class="lux-digit lux-digit--slot" id="heroTimerD1">9</span>
@@ -200,33 +227,7 @@
       </div>
 
       <div class="missions-list">
-        <div class="mission-card">
-          <div class="mc-icon">📺</div>
-          <div class="mc-info">
-            <div class="mc-title">Subscribe to Channel</div>
-            <div class="mc-reward">+1 <i class="icon-ticket-inline"></i></div>
-          </div>
-          <button class="mc-btn mc-btn--go">GO</button>
         </div>
-
-        <div class="mission-card">
-          <div class="mc-icon">🎮</div>
-          <div class="mc-info">
-            <div class="mc-title">Play 5 Games</div>
-            <div class="mc-reward">+2 <i class="icon-ticket-inline"></i></div>
-          </div>
-          <button class="mc-btn mc-btn--claim">CLAIM</button>
-        </div>
-
-        <div class="mission-card done">
-          <div class="mc-icon">🤝</div>
-          <div class="mc-info">
-            <div class="mc-title">Invite a Friend</div>
-            <div class="mc-reward">Done</div>
-          </div>
-          <button class="mc-btn mc-btn--done" disabled>✔</button>
-        </div>
-      </div>
     </div>
 
     <div id="leaderboard" class="tab-content" style="display: none;">
@@ -236,7 +237,7 @@
       </div>
 
       <div id="leaderboardList" class="leaderboard-list">
-      </div>
+        </div>
       
       <div class="my-position-sticky">
         <div class="my-pos-left">
