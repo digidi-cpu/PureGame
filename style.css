@@ -1832,4 +1832,12 @@ body {
   text-transform: uppercase !important;
 }
 
-
+/* Плавное исчезновение загрузочного экрана */
+#loadingScreen {
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+#loadingScreen.hidden-smooth {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
