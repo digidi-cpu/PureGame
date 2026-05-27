@@ -1514,13 +1514,19 @@ async function runSmartPreloader() {
   setTimeout(() => {
     loadingScreen.classList.add('hidden-smooth');
     
-    // Проверяем, прошел ли игрок онбординг
+// Проверяем, прошел ли игрок онбординг
     const hasSeenOnboarding = localStorage.getItem('digit_tutorial_done');
     const obScreen = document.getElementById('onboardingScreen');
     const mainScreen = document.getElementById('startScreen');
 
     if (hasSeenOnboarding === 'true' || !obScreen) {
-      if (mainScreen) mainScreen.classList.add('active');
+      if (mainScreen) {
+        mainScreen.classList.add('active');
+        // 👇 ВОТ ЭТА СТРОЧКА ЗАПУСТИТ АНИМАЦИЮ ЗВЕЗД В МЕНЮ 👇
+        if (window.gameSandbox && window.gameSandbox.startBg) {
+            window.gameSandbox.startBg.start(); 
+        }
+      }
     } else {
       if (obScreen) obScreen.classList.add('active');
     }
@@ -1648,12 +1654,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnNext) { btnNext.addEventListener('click', () => { window.TelegramAPI?.vibrate('light'); if (currentSlide < slides.length - 1) { currentSlide++; updateSlider(); } }); }
   if (btnPrev) { btnPrev.addEventListener('click', () => { window.TelegramAPI?.vibrate('light'); if (currentSlide > 0) { currentSlide--; updateSlider(); } }); }
-  if (btnStartGame) {
+if (btnStartGame) {
     btnStartGame.addEventListener('click', () => {
       window.TelegramAPI?.vibrate('medium'); 
       localStorage.setItem('digit_tutorial_done', 'true');
       if (obScreen) obScreen.classList.remove('active');
-      if (mainScreen) mainScreen.classList.add('active');
+      if (mainScreen) {
+        mainScreen.classList.add('active');
+        // 👇 ВКЛЮЧАЕМ ЗВЕЗДЫ ПОСЛЕ ОНБОРДИНГА 👇
+        if (window.gameSandbox && window.gameSandbox.startBg) {
+            window.gameSandbox.startBg.start(); 
+        }
+      }
     });
   }
 
