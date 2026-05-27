@@ -1429,12 +1429,107 @@ class GameSandbox {
 } // Конец класса GameSandbox
 
 // ==========================================
-// ИНИЦИАЛИЗАЦИЯ ИГРЫ
+// ==========================================
+// ИНИЦИАЛИЗАЦИЯ ИГРЫ И УМНЫЙ ПРЕДЗАГРУЗЧИК
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => { 
   window.gameSandbox = new GameSandbox(); 
-  window.gameSandbox.syncProfile();
+
+  // Запускаем красивый процесс предзагрузки вместо мгновенного открытия
+  runSmartPreloader();
 });
+
+async function runSmartPreloader() {
+  const loadingScreen = document.getElementById('loadingScreen');
+  const loadingFill = document.getElementById('loadingFill');
+  const loadingText = document.getElementById('loadingText');
+  
+  if (!loadingScreen || !loadingFill || !loadingText) return;
+
+  // Чтобы игрок успел насладиться анимацией, задаем минимальное время показа (2.5 секунды)
+  const MIN_LOADING_TIME = 2500; 
+  const startTime = Date.now();
+
+  let progress = 0;
+  const updateProgress = (val, text) => {
+    progress += val;
+    if (progress > 100) progress = 100;
+    loadingFill.style.width = `${progress}%`;
+    if (text) loadingText.textContent = `${text} ${Math.floor(progress)}%`;
+  };
+
+  try {
+    updateProgress(10, 'LOADING ASSETS...');
+
+    // 1. Предзагрузка тяжелых SVG-картинок
+    const imagesToPreload = [
+      'assets/ticket.svg', 'assets/energy.svg', 'assets/star.svg', 
+      'assets/coin.svg', 'assets/tv.svg', 'assets/gamepad.svg', 
+      'assets/calendar.svg', 'assets/trophy.svg', 'assets/winner.svg', 
+      'assets/nft.svg', 'assets/nft1.svg', 'assets/nft2.svg', 'assets/nft3.svg'
+    ];
+    
+    await Promise.all(imagesToPreload.map(src => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = resolve;
+        img.onerror = resolve; // Если картинки нет, игнорируем
+        img.src = src;
+      });
+    }));
+    updateProgress(30, 'CONNECTING SERVER...');
+
+    // 2. Делаем запросы к БД (Синхронизация профиля и глобального счетчика билетов)
+    if (window.gameSandbox) {
+      await Promise.all([
+        window.gameSandbox.syncProfile(),
+        loadGlobalTickets() // Загружаем счетчик билетов параллельно
+      ]);
+    }
+    updateProgress(40, 'BUILDING UI...');
+
+    // 3. Высчитываем, сколько времени прошло. Если всё загрузилось за 0.5 сек,
+    // искусственно ждем оставшиеся 2 секунды, плавно двигая бар.
+    const elapsedTime = Date.now() - startTime;
+    const timeLeft = Math.max(0, MIN_LOADING_TIME - elapsedTime);
+
+    const steps = 10;
+    const stepTime = Math.floor(timeLeft / steps);
+    const progressLeft = 100 - progress;
+    const stepProgress = progressLeft / steps;
+
+    for (let i = 0; i < steps; i++) {
+      if (stepTime > 0) {
+        await new Promise(r => setTimeout(r, stepTime));
+      }
+      updateProgress(stepProgress, 'READY...');
+    }
+
+  } catch (error) {
+    console.error("Preloader Error:", error);
+    updateProgress(100, 'ERROR RECOVERING...');
+  }
+
+  // Завершение загрузки: Прячем лоадер, показываем нужный экран
+  setTimeout(() => {
+    loadingScreen.classList.add('hidden-smooth');
+    
+    // Проверяем, прошел ли игрок онбординг
+    const hasSeenOnboarding = localStorage.getItem('digit_tutorial_done');
+    const obScreen = document.getElementById('onboardingScreen');
+    const mainScreen = document.getElementById('startScreen');
+
+    if (hasSeenOnboarding === 'true' || !obScreen) {
+      if (mainScreen) mainScreen.classList.add('active');
+    } else {
+      if (obScreen) obScreen.classList.add('active');
+    }
+
+    // Удаляем лоадер из DOM через 600мс (когда закончится анимация прозрачности)
+    setTimeout(() => loadingScreen.remove(), 600);
+
+  }, 300);
+}
 
 // ==========================================
 // СЕРВЕРНЫЙ ТАЙМЕР СЕЗОНА
@@ -1530,14 +1625,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const obScreen = document.getElementById('onboardingScreen');
   const mainScreen = document.getElementById('startScreen');
 
-  
   const hasSeenOnboarding = localStorage.getItem('digit_tutorial_done');
 
+  // Если туториал пройден, ничего не делаем. Экран включит сам Прелоадер.
   if (hasSeenOnboarding === 'true') {
-    if (obScreen) obScreen.classList.remove('active');
-    if (mainScreen) mainScreen.classList.add('active');
     return; 
   }
+
   const slides = document.querySelectorAll('.ob-slide');
   const dots = document.querySelectorAll('.ob-dot');
   const btnPrev = document.getElementById('obPrevBtn');
@@ -1558,17 +1652,17 @@ document.addEventListener('DOMContentLoaded', () => {
     btnStartGame.addEventListener('click', () => {
       window.TelegramAPI?.vibrate('medium'); 
       localStorage.setItem('digit_tutorial_done', 'true');
-      obScreen.classList.remove('active');
-      mainScreen.classList.add('active');
+      if (obScreen) obScreen.classList.remove('active');
+      if (mainScreen) mainScreen.classList.add('active');
     });
   }
 
   if (obScreen && slides.length > 0) updateSlider();
 });
+
 // ==========================================
 // ЛОГИКА АНИМАЦИИ ПОБЕДЫ (TICKET & NFT)
 // ==========================================
-
 window.startWinFlow = function() {
   const overlay = document.getElementById('fxOverlay');
   if(overlay) overlay.classList.add('active');
@@ -1629,38 +1723,18 @@ window.spawnConfetti = function() {
 };
 
 // ==========================================
-// ГЛОБАЛЬНЫЙ СЧЕТЧИК БИЛЕТОВ (DEBUG ВЕРСИЯ)
+// ГЛОБАЛЬНЫЙ СЧЕТЧИК БИЛЕТОВ
 // ==========================================
 async function loadGlobalTickets() {
-  console.log("[TICKETS] Запускаем загрузку счетчика...");
   const counterEl = document.getElementById('globalTicketsCount');
-  
-  if (!counterEl) {
-    console.error("[TICKETS] Ошибка: Элемент #globalTicketsCount не найден в HTML!");
-    return;
-  }
-
-  if (!window.API || typeof window.API.getGlobalStats !== 'function') {
-    console.error("[TICKETS] Ошибка: Метод getGlobalStats не найден в window.API. Проверь файл api.js!");
-    return;
-  }
+  if (!counterEl || !window.API || typeof window.API.getGlobalStats !== 'function') return;
 
   try {
-    console.log("[TICKETS] Отправляем запрос на сервер...");
     const stats = await window.API.getGlobalStats();
-    console.log("[TICKETS] Получен ответ:", stats);
-    
     if (stats && stats.success) {
       counterEl.innerText = stats.total_tickets.toLocaleString();
-      console.log("[TICKETS] Успех! Счетчик обновлен.");
-    } else {
-      console.error("[TICKETS] Сервер не вернул success: true", stats);
     }
   } catch (err) {
     console.error("[TICKETS] Ошибка запроса:", err);
   }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(loadGlobalTickets, 500); 
-});
