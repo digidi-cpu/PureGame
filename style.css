@@ -394,7 +394,16 @@ body {
 
 /* --- ЛЮКСОВЫЙ ТАЙМЕР --- */
 .hero-timer--lux { display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom: 30px; }
-.hero-timer__label { font-size: 0.8rem; color: var(--cosmic-accent); text-transform: uppercase; letter-spacing: 2px; }
+.hero-timer__label { 
+  font-family: 'Orbitron', monospace; 
+  font-weight: 700; 
+  font-size: 1rem; 
+  color: var(--cosmic-accent); 
+  text-transform: uppercase; 
+  letter-spacing: 0.15em; 
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
+  margin-bottom: 2px;
+}
 .hero-timer__clock--source { display:none !important; }
 
 .lux-timer { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; }
