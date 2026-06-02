@@ -1442,24 +1442,24 @@ document.addEventListener("DOMContentLoaded", () => {
 async function runSmartPreloader() {
   const loadingScreen = document.getElementById('loadingScreen');
   const loadingFill = document.getElementById('loadingFill');
-  const loadingText = document.getElementById('loadingText');
   
-  if (!loadingScreen || !loadingFill || !loadingText) return;
+  // Убрали loadingText из проверок
+  if (!loadingScreen || !loadingFill) return;
 
   // Чтобы игрок успел насладиться анимацией, задаем минимальное время показа (2.5 секунды)
   const MIN_LOADING_TIME = 2500; 
   const startTime = Date.now();
 
   let progress = 0;
-  const updateProgress = (val, text) => {
+  // Функция теперь только двигает полоску, без текста
+  const updateProgress = (val) => {
     progress += val;
     if (progress > 100) progress = 100;
     loadingFill.style.width = `${progress}%`;
-    if (text) loadingText.textContent = `${text} ${Math.floor(progress)}%`;
   };
 
   try {
-    updateProgress(10, 'LOADING ASSETS...');
+    updateProgress(10); // Даем первый импульс загрузке
 
     // 1. Предзагрузка тяжелых SVG-картинок
     const imagesToPreload = [
@@ -1477,7 +1477,7 @@ async function runSmartPreloader() {
         img.src = src;
       });
     }));
-    updateProgress(30, 'CONNECTING SERVER...');
+    updateProgress(20);
 
     // 2. Делаем запросы к БД (Синхронизация профиля и глобального счетчика билетов)
     if (window.gameSandbox) {
@@ -1486,7 +1486,7 @@ async function runSmartPreloader() {
         loadGlobalTickets() // Загружаем счетчик билетов параллельно
       ]);
     }
-    updateProgress(40, 'BUILDING UI...');
+    updateProgress(20);
 
     // 3. Высчитываем, сколько времени прошло. Если всё загрузилось за 0.5 сек,
     // искусственно ждем оставшиеся 2 секунды, плавно двигая бар.
@@ -1502,19 +1502,19 @@ async function runSmartPreloader() {
       if (stepTime > 0) {
         await new Promise(r => setTimeout(r, stepTime));
       }
-      updateProgress(stepProgress, 'READY...');
+      updateProgress(stepProgress);
     }
 
   } catch (error) {
     console.error("Preloader Error:", error);
-    updateProgress(100, 'ERROR RECOVERING...');
+    updateProgress(100); // В случае ошибки все равно доводим бар до конца, чтобы пустить в игру
   }
 
   // Завершение загрузки: Прячем лоадер, показываем нужный экран
   setTimeout(() => {
     loadingScreen.classList.add('hidden-smooth');
     
-// Проверяем, прошел ли игрок онбординг
+    // Проверяем, прошел ли игрок онбординг
     const hasSeenOnboarding = localStorage.getItem('digit_tutorial_done');
     const obScreen = document.getElementById('onboardingScreen');
     const mainScreen = document.getElementById('startScreen');
