@@ -1432,10 +1432,38 @@ class GameSandbox {
 // ==========================================
 // ИНИЦИАЛИЗАЦИЯ ИГРЫ И УМНЫЙ ПРЕДЗАГРУЗЧИК
 // ==========================================
-document.addEventListener("DOMContentLoaded", () => { 
-  window.gameSandbox = new GameSandbox(); 
 
-  // Запускаем красивый процесс предзагрузки вместо мгновенного открытия
+// Новая усиленная проверка на мобильное устройство
+function isMobileDevice() {
+  // 1. Сначала проверяем через Telegram API (самый надежный способ)
+  const tg = window.Telegram?.WebApp;
+  if (tg && tg.platform) {
+    const p = tg.platform;
+    if (p === 'tdesktop' || p === 'macos') return false; // Точно компьютер
+    if (p === 'android' || p === 'ios') return true;     // Точно телефон
+  }
+  // 2. Фолбэк на проверку браузера
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+document.addEventListener("DOMContentLoaded", () => { 
+  // Если это не мобильный телефон — рубим запуск
+  if (!isMobileDevice()) {
+    const desktopWarning = document.getElementById('desktopWarning');
+    const loadingScreen = document.getElementById('loadingScreen');
+    
+    if (desktopWarning) {
+      desktopWarning.style.display = 'flex';
+      desktopWarning.classList.add('active');
+    }
+    // Удаляем лоадер, чтобы он не крутился поверх заглушки
+    if (loadingScreen) loadingScreen.remove();
+    
+    return; // ⛔️ Выходим из функции, игра не инициализируется
+  }
+
+  // Если всё ок — запускаем игру как обычно
+  window.gameSandbox = new GameSandbox(); 
   runSmartPreloader();
 });
 
