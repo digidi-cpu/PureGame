@@ -445,41 +445,52 @@ class GameSandbox {
     }
   }
 
-  async buyEnergy() {
+async buyEnergy() {
+    console.log("[DEBUG] 1. Кнопка покупки нажата");
     window.TelegramAPI?.vibrate('medium');
     const btn = document.getElementById("buyEnergyBtn");
     if (btn) btn.innerHTML = "WAIT...";
 
     try {
+      console.log("[DEBUG] 2. Отправляем запрос на сервер getEnergyInvoice()...");
       const res = await window.API.getEnergyInvoice();
+      console.log("[DEBUG] 3. Ответ от сервера получен:", res);
 
       if (res && res.invoiceLink) {
+        console.log("[DEBUG] 4. Ссылка на инвойс есть:", res.invoiceLink);
+        console.log("[DEBUG] 5. Объект Telegram WebApp:", window.Telegram?.WebApp);
+
         if (window.Telegram?.WebApp?.openInvoice) {
+          console.log("[DEBUG] 6. Метод openInvoice найден, вызываем окно Telegram...");
+          
           window.Telegram.WebApp.openInvoice(res.invoiceLink, async (status) => {
+            console.log("[DEBUG] 7. ❗️ Telegram вернул статус оплаты:", status);
             
             if (status === 'paid') {
               if (btn) btn.innerHTML = "SYNCING... ⏳";
-              
               setTimeout(async () => {
                 this.invalidateCache();
                 await this.syncProfile(); 
                 this.showScorePopup(window.innerWidth/2, window.innerHeight/2, "+3 ⚡");
               }, 2000); 
-
             } else if (status === 'failed') {
               alert("Payment failed.");
               if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
             } else {
               if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
             }
-
           });
+          
         } else {
+          console.error("[DEBUG] ОШИБКА: метод openInvoice недоступен! Возможно мы открыли не через мини-апп Telegram.");
           alert("Telegram WebApp API is not fully loaded.");
           if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
         }
+      } else {
+        console.error("[DEBUG] ОШИБКА: Инвойс не получен или res.invoiceLink пустой!");
       }
     } catch (e) {
+      console.error("[DEBUG] ОШИБКА в buyEnergy (catch):", e);
       alert(e.reason || "Failed to generate invoice");
       if (btn) btn.innerHTML = "+3 ⚡ FOR 1 ⭐";
     }
@@ -1448,6 +1459,7 @@ function isMobileDevice() {
 
 document.addEventListener("DOMContentLoaded", () => { 
   // Если это не мобильный телефон — рубим запуск
+  /*
   if (!isMobileDevice()) {
     const desktopWarning = document.getElementById('desktopWarning');
     const loadingScreen = document.getElementById('loadingScreen');
@@ -1461,6 +1473,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     return; // ⛔️ Выходим из функции, игра не инициализируется
   }
+  */
 
   // Если всё ок — запускаем игру как обычно
   window.gameSandbox = new GameSandbox(); 
